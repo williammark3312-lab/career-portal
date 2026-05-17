@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows, MeshTransmissionMaterial } from "@react-three/drei";
+import { Float, Environment, ContactShadows } from "@react-three/drei";
 import { Briefcase } from "lucide-react";
 import Header from "../src/components/Header";
 
@@ -14,14 +14,16 @@ function FloatingRing() {
     <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
       <mesh rotation={[0.5, -0.5, 0]}>
         <torusGeometry args={[2, 0.45, 64, 128]} />
-        <MeshTransmissionMaterial
-          backside samples={6} thickness={0.6}
-          chromaticAberration={0.08} anisotropy={0.5}
-          distortion={0.12} distortionScale={0.2}
-          temporalDistortion={0.03} clearcoat={1}
-          clearcoatRoughness={0.05} color="#1a3bbd"
-          transmission={0.55} roughness={0.05}
-          resolution={1024}
+        <meshPhysicalMaterial 
+          transmission={0.95} 
+          opacity={1} 
+          transparent 
+          roughness={0.1} 
+          thickness={1} 
+          ior={1.5}
+          color="#1a3bbd" 
+          clearcoat={1} 
+          clearcoatRoughness={0.1}
         />
       </mesh>
     </Float>

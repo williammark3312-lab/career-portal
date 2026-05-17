@@ -2,7 +2,7 @@
 
 import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows, MeshTransmissionMaterial } from "@react-three/drei";
+import { Float, Environment, ContactShadows } from "@react-three/drei";
 import { motion } from "framer-motion";
 import { CheckCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -13,19 +13,16 @@ function AbstractShape() {
     <Float speed={2} rotationIntensity={1} floatIntensity={2}>
       <mesh rotation={[-0.5, 0.5, 0]}>
         <torusKnotGeometry args={[1, 0.3, 128, 32]} />
-        <MeshTransmissionMaterial
-          backside
-          samples={4}
-          thickness={0.5}
-          chromaticAberration={0.2}
-          anisotropy={0.3}
-          distortion={0.5}
-          distortionScale={0.5}
-          temporalDistortion={0.1}
-          clearcoat={1}
+        <meshPhysicalMaterial 
+          transmission={0.95} 
+          opacity={1} 
+          transparent 
+          roughness={0.1} 
+          thickness={1} 
+          ior={1.5}
+          color="#ffffff" 
+          clearcoat={1} 
           clearcoatRoughness={0.1}
-          color="#ffffff"
-          resolution={256}
         />
       </mesh>
     </Float>
