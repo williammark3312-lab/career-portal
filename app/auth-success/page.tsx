@@ -32,7 +32,7 @@ function AbstractShape() {
   );
 }
 
-export default function AuthSuccessPage() {
+function AuthSuccessContent() {
   const searchParams = useSearchParams();
   const app = searchParams.get("app") || "Antigravity";
 
@@ -109,5 +109,13 @@ export default function AuthSuccessPage() {
         </motion.div>
       </motion.div>
     </div>
+  );
+}
+
+export default function AuthSuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FC]" />}>
+      <AuthSuccessContent />
+    </Suspense>
   );
 }
