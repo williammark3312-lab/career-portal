@@ -25,7 +25,7 @@ function AbstractShape() {
           clearcoat={1}
           clearcoatRoughness={0.1}
           color="#ffffff"
-          resolution={1024}
+          resolution={256}
         />
       </mesh>
     </Float>

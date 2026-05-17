@@ -14,7 +14,7 @@ interface Job {
 }
 interface Application {
   id: string; job_id: string; name: string; email: string; phone: string;
-  location: string; resume_url: string; status: string; created_at: string;
+  location: string; resume_url: string; status: string; created_at: string; notes?: string;
 }
 
 function FloatingRing() {
@@ -22,11 +22,11 @@ function FloatingRing() {
     <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
       <mesh rotation={[0.5, -0.5, 0]}>
         <torusGeometry args={[2, 0.45, 64, 128]} />
-        <MeshTransmissionMaterial backside samples={6} thickness={0.6}
+        <MeshTransmissionMaterial backside samples={3} thickness={0.6}
           chromaticAberration={0.08} anisotropy={0.5} distortion={0.12}
           distortionScale={0.2} temporalDistortion={0.03} clearcoat={1}
           clearcoatRoughness={0.05} color="#1a3bbd"
-          transmission={0.55} roughness={0.05} resolution={1024}
+          transmission={0.55} roughness={0.05} resolution={256}
         />
       </mesh>
     </Float>
@@ -123,6 +123,21 @@ export default function AdminPage() {
     const { error } = await supabase.from("applications").update({ status }).eq("id", appId);
     if (error) alert(error.message);
     else loadApplications(selectedJob);
+  }
+
+  async function handleDeleteApp(appId: string) {
+    if (!confirm("Are you sure you want to permanently delete this candidate's application?")) return;
+    const { error } = await supabase.from("applications").delete().eq("id", appId);
+    if (error) alert(error.message);
+    else loadApplications(selectedJob);
+  }
+
+  async function handleUpdateNotes(appId: string, notes: string) {
+    const { error } = await supabase.from("applications").update({ notes }).eq("id", appId);
+    if (error) alert("Failed to save notes: " + error.message);
+    else {
+      setApplications(apps => apps.map(a => a.id === appId ? { ...a, notes } : a));
+    }
   }
 
   function insertBold() {
@@ -366,20 +381,33 @@ export default function AdminPage() {
                           Applied {new Date(app.created_at).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" })}
                         </p>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 shrink-0">
-                        <select value={app.status} onChange={e => handleStatus(app.id, e.target.value)}
-                          className="rounded-[10px] border border-[#E1E6EC] bg-white px-3 py-2 text-[13px] font-medium text-[#45474D] outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
-                        >
-                          <option>Pending</option>
-                          <option>Reviewed</option>
-                          <option>Shortlisted</option>
-                          <option>Rejected</option>
-                        </select>
-                        <button onClick={() => { setSelectedCV(app.resume_url); setCvOpen(true); }}
-                          className="flex items-center gap-1.5 rounded-[10px] border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D] hover:border-[#3279F9] hover:text-[#3279F9] transition-colors"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" /> View CV
-                        </button>
+                      <div className="flex flex-col gap-3 w-full lg:w-auto mt-4 lg:mt-0">
+                        <div className="flex flex-wrap items-center gap-3 shrink-0 self-start lg:self-end">
+                          <select value={app.status} onChange={e => handleStatus(app.id, e.target.value)}
+                            className="rounded-[10px] border border-[#E1E6EC] bg-white px-3 py-2 text-[13px] font-medium text-[#45474D] outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
+                          >
+                            <option>Pending</option>
+                            <option>Reviewed</option>
+                            <option>Shortlisted</option>
+                            <option>Rejected</option>
+                          </select>
+                          <button onClick={() => { setSelectedCV(app.resume_url); setCvOpen(true); }}
+                            className="flex items-center gap-1.5 rounded-[10px] border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D] hover:border-[#3279F9] hover:text-[#3279F9] transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" /> View CV
+                          </button>
+                          <button onClick={() => handleDeleteApp(app.id)}
+                            className="rounded-[10px] border border-[#E1E6EC] bg-white px-3 py-2 text-[13px] font-medium text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        <textarea
+                          placeholder="Add internal notes about this candidate..."
+                          defaultValue={app.notes || ""}
+                          onBlur={(e) => handleUpdateNotes(app.id, e.target.value)}
+                          className="w-full lg:w-[300px] h-[80px] rounded-[10px] border border-[#E1E6EC] bg-white/50 px-3 py-2 text-[13px] text-[#45474D] outline-none transition-all focus:border-[#3279F9] focus:bg-white resize-none"
+                        />
                       </div>
                     </motion.div>
                   ))}
@@ -462,8 +490,8 @@ export default function AdminPage() {
               className="absolute inset-0 bg-[rgba(18,19,23,0.4)] backdrop-blur-[6px]" onClick={() => setCvOpen(false)}
             />
             <motion.div initial={{ opacity: 0, scale: 0.94, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 24 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-4xl h-[85vh] rounded-[28px] bg-white border border-[#E1E6EC] overflow-hidden flex flex-col shadow-2xl"
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="relative w-full max-w-4xl max-h-[90vh] rounded-[28px] bg-white border border-[#E1E6EC] overflow-hidden flex flex-col shadow-2xl"
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-[#E1E6EC] bg-[#F8F9FC]">
                 <h3 className="text-[16px] font-semibold">Resume Viewer</h3>
