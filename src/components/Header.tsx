@@ -49,8 +49,9 @@ export default function Header({ session, handleLogout }: HeaderProps) {
             <div className="w-[14px] h-[14px] bg-white rounded-[4px] rotate-45 group-hover:rotate-90 transition-transform duration-500 relative z-10" />
           </div>
           <span className="text-[16px] font-bold text-white tracking-tight flex items-center gap-1.5">
-            Careers Portal
-            {isAdminPage && <span className="text-white/50 font-normal">/ Admin</span>}
+            <span className="hidden sm:inline">Careers Portal</span>
+            <span className="sm:hidden">Careers</span>
+            {isAdminPage && <span className="text-white/50 font-normal hidden sm:inline">/ Admin</span>}
           </span>
         </div>
 
@@ -60,31 +61,31 @@ export default function Header({ session, handleLogout }: HeaderProps) {
             <>
               <button
                 onClick={() => router.push("/jobs")}
-                className="group relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
+                className="group relative flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors rounded-full" />
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                Back to site
+                <span className="hidden sm:inline">Back to site</span>
               </button>
               {session && handleLogout && (
                 <button
                   onClick={handleLogout}
-                  className="group relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-red-300 hover:text-red-200 transition-colors overflow-hidden ml-2"
+                  className="group relative flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-[13.5px] font-medium text-red-300 hover:text-red-200 transition-colors overflow-hidden sm:ml-2"
                 >
                   <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/15 transition-colors rounded-full" />
                   <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  Sign out
+                  <span className="hidden sm:inline">Sign out</span>
                 </button>
               )}
             </>
           ) : isJobDetails ? (
             <button
               onClick={() => router.push("/jobs")}
-              className="group relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
+              className="group relative flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
             >
               <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors rounded-full" />
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-              All Positions
+              <span className="hidden sm:inline">All Positions</span>
             </button>
           ) : (
             <>
@@ -92,7 +93,7 @@ export default function Header({ session, handleLogout }: HeaderProps) {
               <div className="relative flex items-center gap-1">
                 <button
                   onClick={() => router.push("/jobs")}
-                  className={`relative z-10 flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors ${
+                  className={`relative z-10 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors ${
                     pathname === "/jobs" ? "text-[#1a3bbd]" : "text-white/75 hover:text-white hover:bg-white/10"
                   }`}
                 >
@@ -104,18 +105,18 @@ export default function Header({ session, handleLogout }: HeaderProps) {
                     />
                   )}
                   <Briefcase className="w-4 h-4" />
-                  View Openings
+                  <span className="hidden sm:inline">View Openings</span>
                 </button>
 
                 <a
                   href="https://www.linkedin.com/in/anandugirish/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative z-10 flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
+                  className="group relative z-10 flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors rounded-full" />
                   <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  LinkedIn
+                  <span className="hidden sm:inline">LinkedIn</span>
                 </a>
               </div>
             </>
