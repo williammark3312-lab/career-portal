@@ -37,7 +37,7 @@ function AuthSuccessContent() {
     <div className="relative flex min-h-screen items-center justify-center bg-[#F8F9FC] font-sans selection:bg-[#3279F9]/30">
       {/* 3D Background */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+        <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
           <ambientLight intensity={1} />
           <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
           <directionalLight position={[-10, -10, -5]} intensity={1} color="#3279F9" />
