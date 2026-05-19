@@ -128,10 +128,8 @@ export default function JobDetailsPage() {
     if (!receiptRef.current) return;
     try {
       setIsDownloading(true);
-      
-      // Temporarily remove border radius for clean capture
-      const originalBorderRadius = receiptRef.current.style.borderRadius;
-      receiptRef.current.style.borderRadius = '0px';
+      // Wait a tick so the UI updates to show the loading spinner before html2canvas locks the main thread
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       const canvas = await html2canvas(receiptRef.current, { 
         scale: 4, // 4x scale for super high definition
@@ -139,8 +137,6 @@ export default function JobDetailsPage() {
         useCORS: true,
         allowTaint: true
       });
-      
-      receiptRef.current.style.borderRadius = originalBorderRadius;
       
       // Use lossless PNG for crisp text
       const imgData = canvas.toDataURL("image/png");
@@ -252,7 +248,7 @@ export default function JobDetailsPage() {
               className="bg-white rounded-[24px] shadow-[0_20px_40px_-12px_rgba(18,19,23,0.1)] overflow-hidden border border-[#E1E6EC]"
             >
               <div className="bg-[#3B54C4] px-8 py-8 text-center relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent)]" />
+                <div data-html2canvas-ignore="true" className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent)]" />
                 <motion.div 
                   initial={{ scale: 0 }} 
                   animate={{ scale: 1 }} 
