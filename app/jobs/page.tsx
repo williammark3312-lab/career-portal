@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../src/lib/supabase";
 import { Canvas } from "@react-three/fiber";
 import { Float, Environment, ContactShadows } from "@react-three/drei";
-import { ArrowRight, MapPin, Briefcase } from "lucide-react";
+import { ArrowRight, MapPin, Briefcase, Search, Filter } from "lucide-react";
 import Header from "../../src/components/Header";
 
 type Job = {
@@ -17,6 +17,7 @@ type Job = {
   description: string;
 };
 
+// ... FloatingRing and Card3D remain the same ...
 function FloatingRing() {
   return (
     <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
@@ -79,6 +80,11 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedLoc, setSelectedLoc] = useState("");
+
   useEffect(() => { fetchJobs(); }, []);
 
   async function fetchJobs() {
@@ -87,6 +93,19 @@ export default function JobsPage() {
     if (!error && data) setJobs(data);
     setLoading(false);
   }
+
+  // Derived filter options
+  const departments = Array.from(new Set(jobs.map(j => j.department))).filter(Boolean);
+  const locations = Array.from(new Set(jobs.map(j => j.location))).filter(Boolean);
+
+  // Apply filters
+  const filteredJobs = jobs.filter(job => {
+    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          job.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDept = selectedDept ? job.department === selectedDept : true;
+    const matchesLoc = selectedLoc ? job.location === selectedLoc : true;
+    return matchesSearch && matchesDept && matchesLoc;
+  });
 
   return (
     <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
@@ -126,6 +145,47 @@ export default function JobsPage() {
         </motion.div>
       </section>
 
+      {/* Search & Filter Bar */}
+      {!loading && jobs.length > 0 && (
+        <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 mb-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col md:flex-row gap-4 bg-white/60 backdrop-blur-md border border-white/40 p-3 rounded-[20px] shadow-[0_8px_32px_-12px_rgba(18,19,23,0.05)]"
+          >
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737A87]" />
+              <input 
+                type="text" 
+                placeholder="Search jobs by title or keyword..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-white/80 rounded-[14px] border border-[#E1E6EC] text-[14px] outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[#3279F9]/10 transition-all"
+              />
+            </div>
+            <div className="flex gap-4">
+              <select 
+                value={selectedDept} 
+                onChange={e => setSelectedDept(e.target.value)}
+                className="flex-1 md:w-[180px] px-4 py-3 bg-white/80 rounded-[14px] border border-[#E1E6EC] text-[14px] text-[#45474D] outline-none focus:border-[#3279F9] cursor-pointer appearance-none transition-all"
+              >
+                <option value="">All Departments</option>
+                {departments.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+              <select 
+                value={selectedLoc} 
+                onChange={e => setSelectedLoc(e.target.value)}
+                className="flex-1 md:w-[180px] px-4 py-3 bg-white/80 rounded-[14px] border border-[#E1E6EC] text-[14px] text-[#45474D] outline-none focus:border-[#3279F9] cursor-pointer appearance-none transition-all"
+              >
+                <option value="">All Locations</option>
+                {locations.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+          </motion.div>
+        </section>
+      )}
+
       {/* Job Cards */}
       <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-24">
         {loading ? (
@@ -136,9 +196,14 @@ export default function JobsPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center">
             <p className="text-[17px] text-[#737A87]">No open positions right now. Check back soon!</p>
           </motion.div>
+        ) : filteredJobs.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center border-dashed">
+            <p className="text-[17px] text-[#737A87]">No jobs match your search criteria. Try adjusting your filters.</p>
+            <button onClick={() => { setSearchQuery(""); setSelectedDept(""); setSelectedLoc(""); }} className="mt-4 text-[14px] font-medium text-[#3279F9] hover:underline">Clear all filters</button>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {jobs.map((job, i) => (
+            {filteredJobs.map((job, i) => (
               <Card3D key={job.id} delay={i * 0.08} onClick={() => router.push(`/jobs/${job.id}`)}
                 className="rounded-[24px] p-8 cursor-pointer"
               >
