@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { supabase } from "../../../src/lib/supabase";
 import { Canvas } from "@react-three/fiber";
 import { Float, Environment } from "@react-three/drei";
-import { ArrowLeft, CheckCircle2, Upload, Briefcase, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Upload, Briefcase, MapPin, Download } from "lucide-react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import Header from "../../../src/components/Header";
 
 type Job = {
@@ -117,6 +119,27 @@ export default function JobDetailsPage() {
   const [location, setLocation]     = useState("");
   const [resume, setResume]         = useState<File | null>(null);
   const [errors, setErrors]         = useState<Record<string, string>>({});
+  
+  const [submittedApp, setSubmittedApp] = useState<any>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+
+  async function handleDownloadPDF() {
+    if (!receiptRef.current) return;
+    try {
+      const canvas = await html2canvas(receiptRef.current, { scale: 2, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL("image/png");
+      
+      // Calculate aspect ratio to fit width
+      const pdfWidth = canvas.width;
+      const pdfHeight = canvas.height;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pdfWidth, pdfHeight] });
+      
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Application_Receipt_${submittedApp?.id?.slice(0, 8).toUpperCase() || 'Token'}.pdf`);
+    } catch (err) {
+      console.error("Error generating PDF", err);
+    }
+  }
 
   useEffect(() => { fetchJob(); }, []);
 
@@ -147,11 +170,15 @@ export default function JobDetailsPage() {
       const { error: uploadErr } = await supabase.storage.from("resumes").upload(fileName, resume);
       if (uploadErr) { alert(uploadErr.message); return; }
       const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(fileName);
-      const { error } = await supabase.from("applications").insert([
+      const { data, error } = await supabase.from("applications").insert([
         { name, email, phone: `+91 ${phone}`, location, resume_url: publicUrl, job_id: id, status: "Pending" },
-      ]);
+      ]).select().single();
       if (error) alert(error.message);
-      else { playSuccessChime(); setSubmitted(true); }
+      else { 
+        setSubmittedApp(data);
+        playSuccessChime(); 
+        setSubmitted(true); 
+      }
     } catch { alert("Something went wrong. Please try again."); }
     finally { setLoading(false); }
   }
@@ -186,53 +213,74 @@ export default function JobDetailsPage() {
             </span>
           </div>
         </header>
-        <div className="relative z-10 flex-1 flex items-center justify-center p-6">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 gap-6">
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }} 
-            animate={{ opacity: 1, scale: 1 }} 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+            animate={{ opacity: 1, scale: 1, y: 0 }} 
             transition={{ duration: 0.5, type: "spring", stiffness: 100 }} 
-            className="glass max-w-md w-full rounded-[28px] p-10 text-center"
+            className="w-full max-w-md"
           >
-            <motion.div 
-              initial={{ scale: 0 }} 
-              animate={{ scale: 1 }} 
-              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-              className="w-24 h-24 bg-[#3279F9]/10 text-[#3279F9] rounded-full flex items-center justify-center mx-auto mb-6"
+            {/* The Receipt Card */}
+            <div 
+              ref={receiptRef}
+              className="bg-white rounded-[24px] shadow-[0_20px_40px_-12px_rgba(18,19,23,0.1)] overflow-hidden border border-[#E1E6EC]"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12">
-                <motion.path
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
-                  d="M20 6L9 17l-5-5"
-                />
-              </svg>
-            </motion.div>
-            <motion.h2 
-              initial={{ opacity: 0, y: 15 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.4, duration: 0.4 }}
-              className="text-[32px] font-bold tracking-tight mb-3 text-[#1a3bbd]"
-            >
-              Application Submitted!
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              transition={{ delay: 0.6, duration: 0.5 }}
-              className="text-[15px] text-[#737A87] leading-[1.65] mb-8"
-            >
-              Thank you for applying. We&apos;ll review your application and get back to you soon.
-            </motion.p>
-            <motion.div
-               initial={{ opacity: 0, y: 10 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ delay: 0.8, duration: 0.4 }}
-            >
-               <button onClick={() => router.push("/jobs")} className="btn-dark w-full text-[14px]">
-                 Back to Careers
-               </button>
-            </motion.div>
+              <div className="bg-[#3B54C4] px-8 py-8 text-center relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent)]" />
+                <motion.div 
+                  initial={{ scale: 0 }} 
+                  animate={{ scale: 1 }} 
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                  className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg relative z-10"
+                >
+                  <CheckCircle2 className="w-8 h-8 text-[#3B54C4]" />
+                </motion.div>
+                <h2 className="text-[24px] font-bold text-white relative z-10">Application Received</h2>
+              </div>
+              
+              <div className="px-8 py-8">
+                <p className="text-[15px] text-[#737A87] text-center mb-8">
+                  Thank you for applying. Here is your application token for future reference.
+                </p>
+                
+                <div className="space-y-4 text-[14px]">
+                  <div className="flex justify-between items-center py-3 border-b border-[#E1E6EC]/60">
+                    <span className="text-[#737A87]">Reference No.</span>
+                    <span className="font-mono font-semibold text-[#1a3bbd] bg-[#3279F9]/10 px-2 py-0.5 rounded">
+                      #{submittedApp?.id?.slice(0, 8).toUpperCase() || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-[#E1E6EC]/60">
+                    <span className="text-[#737A87]">Applicant</span>
+                    <span className="font-medium text-[#121317]">{name}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-[#E1E6EC]/60">
+                    <span className="text-[#737A87]">Position</span>
+                    <span className="font-medium text-[#121317] text-right max-w-[60%]">{job.title}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-[#E1E6EC]/60">
+                    <span className="text-[#737A87]">Date</span>
+                    <span className="font-medium text-[#121317]">
+                      {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+             initial={{ opacity: 0, y: 10 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: 0.6, duration: 0.4 }}
+             className="w-full max-w-md flex flex-col sm:flex-row gap-3"
+          >
+             <button onClick={handleDownloadPDF} className="flex-1 btn-primary flex items-center justify-center gap-2">
+               <Download className="w-4 h-4" /> Download PDF Receipt
+             </button>
+             <button onClick={() => router.push("/jobs")} className="flex-1 btn-secondary bg-white">
+               Back to Careers
+             </button>
           </motion.div>
         </div>
         <footer className="site-footer">
