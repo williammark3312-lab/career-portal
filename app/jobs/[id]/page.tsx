@@ -121,23 +121,37 @@ export default function JobDetailsPage() {
   const [errors, setErrors]         = useState<Record<string, string>>({});
   
   const [submittedApp, setSubmittedApp] = useState<any>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   async function handleDownloadPDF() {
     if (!receiptRef.current) return;
     try {
-      const canvas = await html2canvas(receiptRef.current, { scale: 2, backgroundColor: "#ffffff" });
-      const imgData = canvas.toDataURL("image/png");
+      setIsDownloading(true);
+      const canvas = await html2canvas(receiptRef.current, { 
+        scale: 2, 
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false
+      });
       
-      // Calculate aspect ratio to fit width
+      const imgData = canvas.toDataURL("image/png");
       const pdfWidth = canvas.width;
       const pdfHeight = canvas.height;
-      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pdfWidth, pdfHeight] });
+      
+      const pdf = new jsPDF({ 
+        orientation: "portrait", 
+        unit: "px", 
+        format: [pdfWidth, pdfHeight] 
+      });
       
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Application_Receipt_${submittedApp?.id?.slice(0, 8).toUpperCase() || 'Token'}.pdf`);
-    } catch (err) {
-      console.error("Error generating PDF", err);
+    } catch (err: any) {
+      console.error("Error generating PDF:", err);
+      alert("Could not generate PDF. Please try again or take a screenshot.");
+    } finally {
+      setIsDownloading(false);
     }
   }
 
@@ -275,8 +289,12 @@ export default function JobDetailsPage() {
              transition={{ delay: 0.6, duration: 0.4 }}
              className="w-full max-w-md flex flex-col sm:flex-row gap-3"
           >
-             <button onClick={handleDownloadPDF} className="flex-1 btn-primary flex items-center justify-center gap-2">
-               <Download className="w-4 h-4" /> Download PDF Receipt
+             <button disabled={isDownloading} onClick={handleDownloadPDF} className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+               {isDownloading ? (
+                 <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Generating PDF...</>
+               ) : (
+                 <><Download className="w-4 h-4" /> Download PDF Receipt</>
+               )}
              </button>
              <button onClick={() => router.push("/jobs")} className="flex-1 btn-secondary bg-white">
                Back to Careers
