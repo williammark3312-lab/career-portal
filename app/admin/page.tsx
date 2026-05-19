@@ -499,9 +499,9 @@ export default function AdminPage() {
             />
             <motion.div initial={{ opacity: 0, scale: 0.94, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 24 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="relative w-full max-w-4xl max-h-[90vh] rounded-[28px] bg-white border border-[#E1E6EC] overflow-hidden flex flex-col shadow-2xl"
+              className="relative w-full max-w-4xl h-[90vh] rounded-[28px] bg-white border border-[#E1E6EC] overflow-hidden flex flex-col shadow-2xl"
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-[#E1E6EC] bg-[#F8F9FC]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[#E1E6EC] bg-[#F8F9FC] shrink-0">
                 <h3 className="text-[16px] font-semibold">Resume Viewer</h3>
                 <div className="flex items-center gap-3">
                   <a href={selectedCV} target="_blank" rel="noopener noreferrer"
@@ -512,7 +512,7 @@ export default function AdminPage() {
                   </button>
                 </div>
               </div>
-              <div className="flex-1 p-4 bg-[#E1E6EC]">
+              <div className="flex-1 min-h-0 p-4 bg-[#E1E6EC]">
                 <iframe src={selectedCV} className="w-full h-full rounded-[16px] bg-white border border-[#CDD4DC]" title="Resume" />
               </div>
             </motion.div>
