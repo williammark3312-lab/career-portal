@@ -190,6 +190,9 @@ export default function AdminPage() {
       setAuthLoading(false);
     } else {
       setLoginSuccess(true);
+      setAuthLoading(false);
+      // The onAuthStateChange listener will set the session automatically.
+      // We just wait for the success animation to finish, then it transitions.
       setTimeout(() => setLoginSuccess(false), 1500);
     }
   }
