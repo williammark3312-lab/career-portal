@@ -128,28 +128,38 @@ export default function JobDetailsPage() {
     if (!receiptRef.current) return;
     try {
       setIsDownloading(true);
+      
+      // Temporarily remove border radius for clean capture
+      const originalBorderRadius = receiptRef.current.style.borderRadius;
+      receiptRef.current.style.borderRadius = '0px';
+      
       const canvas = await html2canvas(receiptRef.current, { 
         scale: 2, 
         backgroundColor: "#ffffff",
         useCORS: true,
-        logging: false
+        allowTaint: true
       });
       
-      const imgData = canvas.toDataURL("image/png");
-      const pdfWidth = canvas.width;
-      const pdfHeight = canvas.height;
+      receiptRef.current.style.borderRadius = originalBorderRadius;
       
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
+      
+      // Use standard A4 size
       const pdf = new jsPDF({ 
         orientation: "portrait", 
         unit: "px", 
-        format: [pdfWidth, pdfHeight] 
+        format: "a4" 
       });
       
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Application_Receipt_${submittedApp?.id?.slice(0, 8).toUpperCase() || 'Token'}.pdf`);
     } catch (err: any) {
       console.error("Error generating PDF:", err);
-      alert("Could not generate PDF. Please try again or take a screenshot.");
+      // Fallback to native print dialog
+      window.print();
     } finally {
       setIsDownloading(false);
     }
