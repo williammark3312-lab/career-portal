@@ -134,7 +134,7 @@ export default function JobDetailsPage() {
       receiptRef.current.style.borderRadius = '0px';
       
       const canvas = await html2canvas(receiptRef.current, { 
-        scale: 2, 
+        scale: 4, // 4x scale for super high definition
         backgroundColor: "#ffffff",
         useCORS: true,
         allowTaint: true
@@ -142,19 +142,21 @@ export default function JobDetailsPage() {
       
       receiptRef.current.style.borderRadius = originalBorderRadius;
       
-      const imgData = canvas.toDataURL("image/jpeg", 1.0);
+      // Use lossless PNG for crisp text
+      const imgData = canvas.toDataURL("image/png");
       
-      // Use standard A4 size
+      // Scale down by 4 to get original physical size, keeping 4x pixel density
+      const pdfWidth = canvas.width / 4;
+      const pdfHeight = canvas.height / 4;
+      
+      // Create a PDF with the exact dimensions of the receipt card
       const pdf = new jsPDF({ 
-        orientation: "portrait", 
+        orientation: pdfWidth > pdfHeight ? "landscape" : "portrait", 
         unit: "px", 
-        format: "a4" 
+        format: [pdfWidth, pdfHeight] 
       });
       
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Application_Receipt_${submittedApp?.id?.slice(0, 8).toUpperCase() || 'Token'}.pdf`);
     } catch (err: any) {
       console.error("Error generating PDF:", err);
