@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../src/lib/supabase";
 import { Canvas } from "@react-three/fiber";
 import { Float, Environment } from "@react-three/drei";
-import { ArrowLeft, Plus, MapPin, Briefcase, FileText, ChevronRight, X, ExternalLink, LogOut, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Plus, MapPin, Briefcase, FileText, ChevronRight, X, ExternalLink, LogOut, CheckCircle2, Save, Check } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
 
@@ -58,6 +58,10 @@ export default function AdminPage() {
   const [selectedCV, setSelectedCV]     = useState("");
   const [cvOpen, setCvOpen]             = useState(false);
 
+  // Notes state: keyed by application id
+  const [noteValues, setNoteValues] = useState<Record<string, string>>({});
+  const [noteSaved,  setNoteSaved]  = useState<Record<string, boolean>>({});
+
   const descRef = useRef<HTMLTextAreaElement>(null);
   const [title, setTitle]           = useState("");
   const [department, setDepartment] = useState("");
@@ -94,7 +98,13 @@ export default function AdminPage() {
   }
   async function loadApplications(jobId: string) {
     const { data } = await supabase.from("applications").select("*").eq("job_id", jobId).order("created_at", { ascending: false });
-    if (data) setApplications(data);
+    if (data) {
+      setApplications(data);
+      // Seed controlled note values from DB
+      const seed: Record<string, string> = {};
+      data.forEach((a: Application) => { seed[a.id] = a.notes || ""; });
+      setNoteValues(seed);
+    }
   }
   function openCreate() {
     setEditingJob(null); setTitle(""); setDepartment(""); setLocation(""); setDescription(""); setShowModal(true);
@@ -410,12 +420,30 @@ export default function AdminPage() {
                             Delete
                           </button>
                         </div>
-                        <textarea
-                          placeholder="Add internal notes about this candidate..."
-                          defaultValue={app.notes || ""}
-                          onBlur={(e) => handleUpdateNotes(app.id, e.target.value)}
-                          className="w-full lg:w-[300px] h-[80px] rounded-[10px] border border-[#E1E6EC] bg-white/50 px-3 py-2 text-[13px] text-[#45474D] outline-none transition-all focus:border-[#3279F9] focus:bg-white resize-none"
-                        />
+                        <div className="flex flex-col gap-1.5 w-full lg:w-[300px]">
+                          <textarea
+                            placeholder="Add internal notes about this candidate..."
+                            value={noteValues[app.id] ?? ""}
+                            onChange={(e) => setNoteValues(v => ({ ...v, [app.id]: e.target.value }))}
+                            className="w-full h-[80px] rounded-[10px] border border-[#E1E6EC] bg-white/50 px-3 py-2 text-[13px] text-[#45474D] outline-none transition-all focus:border-[#3279F9] focus:bg-white resize-none"
+                          />
+                          <button
+                            onClick={async () => {
+                              await handleUpdateNotes(app.id, noteValues[app.id] ?? "");
+                              setNoteSaved(s => ({ ...s, [app.id]: true }));
+                              setTimeout(() => setNoteSaved(s => ({ ...s, [app.id]: false })), 2000);
+                            }}
+                            className={`flex items-center justify-center gap-1.5 self-end rounded-[9px] px-3 py-1.5 text-[12px] font-medium transition-all duration-300 ${
+                              noteSaved[app.id]
+                                ? "bg-emerald-50 border border-emerald-200 text-emerald-600"
+                                : "bg-white border border-[#E1E6EC] text-[#45474D] hover:border-[#3279F9] hover:text-[#3279F9]"
+                            }`}
+                          >
+                            {noteSaved[app.id]
+                              ? <><Check className="w-3 h-3" /> Saved</>  
+                              : <><Save className="w-3 h-3" /> Save Note</>}
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
