@@ -61,6 +61,47 @@ function renderMd(md: string): string {
   return out.join("\n");
 }
 
+function playSuccessChime() {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    // Rising triad: C5 (523 Hz) → E5 (659 Hz) → G5 (784 Hz)
+    const notes = [
+      { freq: 523.25, start: 0,    dur: 0.55 },
+      { freq: 659.25, start: 0.13, dur: 0.55 },
+      { freq: 783.99, start: 0.26, dur: 0.80 },
+    ];
+    notes.forEach(({ freq, start, dur }) => {
+      // Primary oscillator (sine — warm)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+      gain.gain.setValueAtTime(0, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur);
+
+      // Shimmer layer (triangle, one octave up, quieter)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(freq * 2, ctx.currentTime + start);
+      gain2.gain.setValueAtTime(0, ctx.currentTime + start);
+      gain2.gain.linearRampToValueAtTime(0.05, ctx.currentTime + start + 0.02);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur * 0.6);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(ctx.currentTime + start);
+      osc2.stop(ctx.currentTime + start + dur);
+    });
+    // Auto-close context after sound finishes
+    setTimeout(() => ctx.close(), 2000);
+  } catch { /* browser may block audio without user gesture — silent fail */ }
+}
+
 export default function JobDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -110,7 +151,7 @@ export default function JobDetailsPage() {
         { name, email, phone: `+91 ${phone}`, location, resume_url: publicUrl, job_id: id, status: "Pending" },
       ]);
       if (error) alert(error.message);
-      else setSubmitted(true);
+      else { playSuccessChime(); setSubmitted(true); }
     } catch { alert("Something went wrong. Please try again."); }
     finally { setLoading(false); }
   }
