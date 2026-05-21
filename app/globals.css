@@ -31,6 +31,36 @@
   --nav-border: rgba(255, 255, 255, 0.08);
 }
 
+.light {
+  /* ── Palette ── */
+  --grey-50:   #f4f5f8;
+  --grey-100:  #ffffff;
+  --grey-200:  rgba(18, 19, 23, 0.04);
+  --grey-300:  rgba(18, 19, 23, 0.06);
+  --grey-400:  rgba(18, 19, 23, 0.15);
+  --grey-500:  rgba(18, 19, 23, 0.4);
+  --grey-600:  rgba(18, 19, 23, 0.6);
+  --grey-700:  rgba(18, 19, 23, 0.75);
+  --grey-800:  rgba(18, 19, 23, 0.85);
+  --grey-900:  rgba(18, 19, 23, 0.95);
+  --grey-1000: #121317;
+
+  --blue-400:  #2563EB;
+  --blue-500:  #3279F9;
+  --blue-600:  #1d4ed8;
+
+  /* ── Semantic Tokens ── */
+  --bg:           #f4f5f8;
+  --fg:           #121317;
+  --muted:        rgba(18, 19, 23, 0.6);
+  --border:       rgba(18, 19, 23, 0.08);
+  --glass-bg:     rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(18, 19, 23, 0.08);
+  
+  --nav-bg:       rgba(255, 255, 255, 0.78);
+  --nav-border:   rgba(18, 19, 23, 0.08);
+}
+
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
@@ -56,6 +86,20 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+.light body {
+  background-image:
+    radial-gradient(ellipse 60% 40% at 20% 60%, rgba(50,121,249,0.03), transparent),
+    radial-gradient(ellipse 50% 35% at 80% 25%, rgba(99,102,241,0.02), transparent);
+}
+
+.glass, select, input, textarea, button, a {
+  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ═══════ Minimal Footer ═══════ */
