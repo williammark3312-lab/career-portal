@@ -173,7 +173,7 @@ export default function AdminPage() {
     if (data) {
       setCvs(data);
       const seed: Record<string, string> = {};
-      data.forEach((cv: CVRecord) => { seed[cv.id] = cv.comments || ""; });
+      data.forEach((cv: CVRecord) => { seed[cv.id] = ""; });
       setCvCommentValues(seed);
     }
   }
