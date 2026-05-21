@@ -118,16 +118,19 @@ export default function AdminPage() {
   const [selectedCV, setSelectedCV]   = useState("");
   const [cvOpen, setCvOpen]           = useState(false);
 
-  /* Users */
-  const [users, setUsers]               = useState<UserRecord[]>([]);
-  const [showUserModal, setShowUserModal] = useState(false);
-  const [userName, setUserName]         = useState("");
-  const [userUsername, setUserUsername] = useState("");
-  const [userEmail, setUserEmail]       = useState("");
-  const [userRole, setUserRole]         = useState("candidate");
-  const [savingUser, setSavingUser]     = useState(false);
-  const [usersLoaded, setUsersLoaded]   = useState(false);
-  const [userCreatedName, setUserCreatedName] = useState("");
+  /* Admin Users */
+  interface AdminUser { id: string; email: string; name: string | null; created_at: string; last_sign_in_at?: string; }
+  const [adminUsers, setAdminUsers]         = useState<AdminUser[]>([]);
+  const [showUserModal, setShowUserModal]   = useState(false);
+  const [newUserName, setNewUserName]       = useState("");
+  const [newUserEmail, setNewUserEmail]     = useState("");
+  const [newUserPass, setNewUserPass]       = useState("");
+  const [newUserConfirm, setNewUserConfirm] = useState("");
+  const [showPass, setShowPass]             = useState(false);
+  const [savingUser, setSavingUser]         = useState(false);
+  const [usersLoaded, setUsersLoaded]       = useState(false);
+  const [createdUser, setCreatedUser]       = useState<AdminUser | null>(null);
+  const [copiedField, setCopiedField]       = useState<string | null>(null);
 
   /* Tabs */
   const [activeTab, setActiveTab]       = useState<"jobs" | "cvs" | "users">("jobs");
@@ -156,7 +159,7 @@ export default function AdminPage() {
 
   useEffect(() => { if (activeTab === "cvs") loadCvs(); }, [activeTab]);
   useEffect(() => {
-    if (activeTab === "users" && !usersLoaded) { loadUsers(); setUsersLoaded(true); }
+    if (activeTab === "users" && !usersLoaded) { loadAdminUsers(); setUsersLoaded(true); }
   }, [activeTab]);
 
   /* ── Data loaders ── */
@@ -173,9 +176,12 @@ export default function AdminPage() {
       setCvCommentValues(seed);
     }
   }
-  async function loadUsers() {
-    const { data } = await supabase.from("users").select("*").order("created_at", { ascending: false });
-    if (data) setUsers(data);
+  async function loadAdminUsers() {
+    try {
+      const res = await fetch("/api/create-admin");
+      const json = await res.json();
+      if (json.users) setAdminUsers(json.users);
+    } catch { /* silently fail */ }
   }
 
   /* ── Job CRUD ── */
@@ -281,31 +287,50 @@ export default function AdminPage() {
     else setCvs(prev => prev.map(c => c.id === cvId ? { ...c, comments } : c));
   }
 
-  /* ── Users ── */
-  function resetUserForm() { setUserName(""); setUserUsername(""); setUserEmail(""); setUserRole("candidate"); }
+  /* ── Admin Users ── */
+  function resetUserForm() {
+    setNewUserName(""); setNewUserEmail(""); setNewUserPass(""); setNewUserConfirm(""); setShowPass(false);
+  }
 
-  async function handleCreateUser() {
-    if (!userName.trim()) { alert("Name is required."); return; }
+  async function handleCreateAdminUser() {
+    if (!newUserEmail.trim() || !newUserPass.trim()) { alert("Email and password are required."); return; }
+    if (newUserPass !== newUserConfirm) { alert("Passwords do not match."); return; }
+    if (newUserPass.length < 6) { alert("Password must be at least 6 characters."); return; }
     setSavingUser(true);
     try {
-      const payload: Record<string, string> = { name: userName.trim(), role: userRole };
-      if (userUsername.trim()) payload.username = userUsername.trim();
-      if (userEmail.trim()) payload.email = userEmail.trim();
-      const { error } = await supabase.from("users").insert([payload]);
-      if (error) { alert(error.message); return; }
-      const created = userName.trim();
+      const res = await fetch("/api/create-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newUserEmail.trim(), password: newUserPass, name: newUserName.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) { alert(json.error ?? "Failed to create user."); return; }
+      setCreatedUser({ id: json.id, email: json.email, name: newUserName.trim() || null, created_at: json.created_at });
       resetUserForm();
-      loadUsers();
-      setUserCreatedName(created);
-      setTimeout(() => setUserCreatedName(""), 3000);
+      setUsersLoaded(false); // will re-fetch when user re-focuses tab
+      loadAdminUsers();
     } finally { setSavingUser(false); }
   }
 
-  async function handleDeleteUser(userId: string) {
-    if (!confirm("Delete this user?")) return;
-    const { error } = await supabase.from("users").delete().eq("id", userId);
-    if (error) alert(error.message);
-    else setUsers(prev => prev.filter(u => u.id !== userId));
+  async function handleDeleteAdminUser(id: string) {
+    if (!confirm("Are you sure you want to delete this admin user?")) return;
+    try {
+      const res = await fetch(`/api/create-admin?id=${id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok) { alert(json.error ?? "Failed to delete user."); return; }
+      loadAdminUsers();
+    } catch {
+      alert("Failed to delete user due to network error.");
+    }
+  }
+
+  function copyToClipboard(text: string, field: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    });
   }
 
   /* ── Auth ── */
@@ -597,26 +622,26 @@ export default function AdminPage() {
           <motion.section initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
             <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
               <div>
-                <h2 className="text-[28px] font-bold tracking-tight">User Management</h2>
-                <p className="text-[14px] text-[#737A87] mt-1">Create and manage portal users and their roles.</p>
+                <h2 className="text-[28px] font-bold tracking-tight">Admin Management</h2>
+                <p className="text-[14px] text-[#737A87] mt-1">Create and manage portal administrator accounts with login access.</p>
               </div>
               <button onClick={() => setShowUserModal(true)}
                 className="btn-dark flex items-center gap-2 px-5 py-2.5 rounded-[12px] text-[14px] cursor-pointer">
-                <UserPlus className="w-4 h-4" /> Add User
+                <UserPlus className="w-4 h-4" /> Add Admin User
               </button>
             </div>
 
-            {users.length === 0 ? (
+            {adminUsers.length === 0 ? (
               <div className="glass rounded-[24px] p-16 text-center">
                 <div className="w-16 h-16 rounded-full bg-[#3279F9]/10 flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-[#3279F9]" />
                 </div>
-                <h3 className="text-[18px] font-semibold mb-2">No users yet</h3>
-                <p className="text-[14px] text-[#737A87]">Click &quot;Add User&quot; to create your first user.</p>
+                <h3 className="text-[18px] font-semibold mb-2">No admin users found</h3>
+                <p className="text-[14px] text-[#737A87]">Click &quot;Add Admin User&quot; to create your first administrator.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                {users.map((u, i) => (
+                {adminUsers.map((u, i) => (
                   <motion.div key={u.id}
                     initial={{ opacity: 0, y: 18, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -627,31 +652,30 @@ export default function AdminPage() {
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#3279F9] to-[#1a3bbd] flex items-center justify-center text-white font-bold text-[18px] shrink-0 shadow-md">
                         {(u.name ?? u.email ?? "?")[0].toUpperCase()}
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-[16px] font-semibold truncate">{u.name ?? <span className="text-[#B2BBC5] italic">Unnamed</span>}</p>
-                        {u.username && <p className="text-[12px] text-[#3279F9] font-medium">@{u.username}</p>}
-                        <p className="text-[12px] text-[#737A87] truncate">{u.email ?? <span className="italic">No email</span>}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[16px] font-semibold truncate">{u.name ?? <span className="text-[#B2BBC5] italic">Unnamed Admin</span>}</p>
+                        <p className="text-[12px] text-[#737A87] truncate">{u.email}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      {u.role === "admin" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#3279F9]/10 text-[#1a3bbd] border border-[#3279F9]/20">
-                          <ShieldCheck className="w-3.5 h-3.5" /> Admin
+                    <div className="flex flex-col gap-1.5 text-[12px] text-[#737A87] border-t border-[#EFF2F7] pt-3">
+                      <div className="flex justify-between">
+                        <span>Created:</span>
+                        <span className="font-medium text-[#121317]">
+                          {new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#E1E6EC] text-[#45474D]">
-                          <User className="w-3.5 h-3.5" /> {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Last Sign-in:</span>
+                        <span className="font-medium text-[#121317]">
+                          {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
                         </span>
-                      )}
-                      <span className="ml-auto text-[11px] text-[#B2BBC5]">
-                        {new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
+                      </div>
                     </div>
 
-                    <button onClick={() => handleDeleteUser(u.id)}
+                    <button onClick={() => handleDeleteAdminUser(u.id)}
                       className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-[8px] text-[#B2BBC5] hover:text-red-500 hover:bg-red-50 cursor-pointer"
-                      title="Delete user">
+                      title="Delete admin user">
                       <X className="w-4 h-4" />
                     </button>
                   </motion.div>
@@ -814,80 +838,113 @@ export default function AdminPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-[rgba(18,19,23,0.4)] backdrop-blur-[6px]"
-              onClick={() => { setShowUserModal(false); resetUserForm(); setUserCreatedName(""); }} />
+              onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }} />
             <motion.div
               initial={{ opacity: 0, scale: 0.93, y: 30, filter: "blur(8px)" }}
               animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, scale: 0.93, y: 20, filter: "blur(4px)" }}
               transition={{ type: "spring", stiffness: 300, damping: 28 }}
               className="relative w-full max-w-md rounded-[28px] bg-white border border-[#E1E6EC] p-8 shadow-2xl">
-              <div className="flex items-start justify-between mb-6 gap-4">
-                <div>
-                  <h2 className="text-[22px] font-semibold tracking-tight">Add New User</h2>
-                  <p className="text-[13px] text-[#737A87] mt-1">Create a user and assign them a role. You can add multiple without closing.</p>
-                </div>
-                <button onClick={() => { setShowUserModal(false); resetUserForm(); setUserCreatedName(""); }}
-                  className="p-2 rounded-[10px] text-[#737A87] hover:bg-[#F5F7FA] hover:text-[#121317] transition-colors cursor-pointer mt-0.5">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              
+              {createdUser ? (
+                // Success Credentials Screen
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <h2 className="text-[22px] font-bold text-[#121317] tracking-tight">Admin Created Successfully!</h2>
+                  <p className="text-[13px] text-[#737A87] mt-1 mb-6">The administrator account is now active and can be used to log in.</p>
+                  
+                  <div className="bg-[#F8F9FC] border border-[#E1E6EC] rounded-[18px] p-5 text-left space-y-3 mb-6">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#737A87]">Full Name</span>
+                      <p className="text-[14px] font-semibold text-[#121317] mt-0.5">{createdUser.name || "N/A"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#737A87]">Email Address</span>
+                      <p className="text-[14px] font-semibold text-[#121317] mt-0.5">{createdUser.email}</p>
+                    </div>
+                  </div>
 
-              {/* Bulk-add success flash */}
-              <AnimatePresence>
-                {userCreatedName && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-[12px] px-4 py-2.5 mb-5 text-[13px] font-medium"
-                  >
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span><strong>{userCreatedName}</strong> was added! Fill in the form to add another.</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="form-label">Full Name <span className="text-red-500">*</span></label>
-                  <input value={userName} onChange={e => setUserName(e.target.value)}
-                    placeholder="e.g. Jane Doe" className="form-input" autoFocus
-                    onKeyDown={e => e.key === "Enter" && handleCreateUser()} />
-                </div>
-                <div>
-                  <label className="form-label">Username</label>
-                  <div className="flex rounded-[12px] border border-[#CDD4DC] overflow-hidden bg-white transition-all focus-within:border-[#3279F9] focus-within:ring-[3px] focus-within:ring-[#3279F9]/12">
-                    <span className="flex items-center px-3 text-[#737A87] text-[15px] font-medium select-none border-r border-[#E1E6EC] bg-[#F8F9FC]">@</span>
-                    <input value={userUsername}
-                      onChange={e => setUserUsername(e.target.value.replace(/\s/g, "").toLowerCase())}
-                      placeholder="jdoe"
-                      className="flex-1 px-4 py-3 text-[15px] text-[#121317] outline-none bg-white placeholder:text-[#737A87]" />
+                  <div className="flex flex-col gap-2.5">
+                    <button
+                      onClick={() => copyToClipboard(createdUser.email, "email")}
+                      className="w-full py-2.5 rounded-[12px] bg-white border border-[#E1E6EC] text-[#45474D] font-medium text-[13px] hover:border-[#3279F9] hover:text-[#3279F9] transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {copiedField === "email" ? "Copied!" : "Copy Email"}
+                    </button>
+                    <div className="flex gap-3 mt-1.5">
+                      <button
+                        onClick={() => setCreatedUser(null)}
+                        className="flex-1 py-3 bg-[#121317] hover:bg-[#1a1b21] text-white font-semibold text-[13px] rounded-[12px] transition-colors"
+                      >
+                        Create Another
+                      </button>
+                      <button
+                        onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }}
+                        className="flex-1 py-3 bg-[#EFF2F7] hover:bg-[#E1E6EC] text-[#45474D] font-semibold text-[13px] rounded-[12px] transition-colors"
+                      >
+                        Close
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="form-label">Email Address</label>
-                  <input value={userEmail} onChange={e => setUserEmail(e.target.value)}
-                    placeholder="jane@example.com" type="email" className="form-input" />
-                </div>
-                <div>
-                  <label className="form-label">Role</label>
-                  <select value={userRole} onChange={e => setUserRole(e.target.value)} className="form-input cursor-pointer">
-                    <option value="candidate">Candidate</option>
-                    <option value="recruiter">Recruiter</option>
-                    <option value="admin">Admin</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
-                </div>
-              </div>
+              ) : (
+                // Creation Form
+                <>
+                  <div className="flex items-start justify-between mb-6 gap-4">
+                    <div>
+                      <h2 className="text-[22px] font-semibold tracking-tight">Add New Admin</h2>
+                      <p className="text-[13px] text-[#737A87] mt-1">Create an administrator account with access to the portal.</p>
+                    </div>
+                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }}
+                      className="p-2 rounded-[10px] text-[#737A87] hover:bg-[#F5F7FA] hover:text-[#121317] transition-colors cursor-pointer mt-0.5">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
 
-              <div className="mt-7 pt-6 border-t border-[#E1E6EC] flex gap-3">
-                <button onClick={() => { setShowUserModal(false); resetUserForm(); setUserCreatedName(""); }}
-                  className="btn-secondary flex-1">Done</button>
-                <button disabled={savingUser || !userName.trim()} onClick={handleCreateUser}
-                  className="btn-dark flex-1 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                  {savingUser ? "Adding..." : <><UserPlus className="w-4 h-4" /> Add User</>}
-                </button>
-              </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="form-label">Full Name</label>
+                      <input value={newUserName} onChange={e => setNewUserName(e.target.value)}
+                        placeholder="e.g. Jane Doe" className="form-input" autoFocus />
+                    </div>
+                    <div>
+                      <label className="form-label">Email Address <span className="text-red-500">*</span></label>
+                      <input value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)}
+                        placeholder="admin@example.com" type="email" className="form-input" />
+                    </div>
+                    <div>
+                      <label className="form-label">Password <span className="text-red-500">*</span></label>
+                      <div className="relative">
+                        <input value={newUserPass} onChange={e => setNewUserPass(e.target.value)}
+                          placeholder="••••••••" type={showPass ? "text" : "password"} className="form-input pr-10" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPass(!showPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737A87] hover:text-[#121317] text-[12px] font-medium"
+                        >
+                          {showPass ? "Hide" : "Show"}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="form-label">Confirm Password <span className="text-red-500">*</span></label>
+                      <input value={newUserConfirm} onChange={e => setNewUserConfirm(e.target.value)}
+                        placeholder="••••••••" type={showPass ? "text" : "password"} className="form-input" />
+                    </div>
+                  </div>
+
+                  <div className="mt-7 pt-6 border-t border-[#E1E6EC] flex gap-3">
+                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }}
+                      className="btn-secondary flex-1">Cancel</button>
+                    <button disabled={savingUser || !newUserEmail.trim() || !newUserPass.trim()} onClick={handleCreateAdminUser}
+                      className="btn-dark flex-1 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                      {savingUser ? "Creating..." : <><UserPlus className="w-4 h-4" /> Create Admin</>}
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         )}
