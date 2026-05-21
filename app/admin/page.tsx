@@ -113,6 +113,7 @@ export default function AdminPage() {
   const [cvPhone, setCvPhone]           = useState("");
   const [cvFile, setCvFile]             = useState<File | null>(null);
   const [cvCommentValues, setCvCommentValues] = useState<Record<string, string>>({});
+  const [expandedCvComments, setExpandedCvComments] = useState<Record<string, boolean>>({});
 
   /* CV Viewer */
   const [selectedCV, setSelectedCV]   = useState("");
@@ -545,69 +546,89 @@ export default function AdminPage() {
 
                       {/* Comments section */}
                       <div className="px-6 pb-5 border-t border-[#E1E6EC] pt-4">
-                        <div className="flex items-center gap-1.5 mb-3 text-[#737A87]">
-                          <MessageSquare className="w-4 h-4 text-[#3279F9]" />
-                          <span className="text-[13px] font-semibold">Comments</span>
-                          {cvComments.length > 0 && (
-                            <span className="text-[11px] font-medium bg-[#EFF2F7] text-[#737A87] px-2 py-0.5 rounded-full">{cvComments.length}</span>
-                          )}
+                        <div
+                          onClick={() => setExpandedCvComments(v => ({ ...v, [cv.id]: !v[cv.id] }))}
+                          className="flex items-center justify-between cursor-pointer hover:text-[#121317] transition-colors text-[#737A87]"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <MessageSquare className="w-4 h-4 text-[#3279F9]" />
+                            <span className="text-[13px] font-semibold">Comments</span>
+                            {cvComments.length > 0 && (
+                              <span className="text-[11px] font-medium bg-[#EFF2F7] text-[#737A87] px-2 py-0.5 rounded-full">{cvComments.length}</span>
+                            )}
+                          </div>
+                          <span className="text-[12px] font-medium text-[#3279F9] hover:underline select-none">
+                            {expandedCvComments[cv.id] ? "Hide Comments" : "Show Comments"}
+                          </span>
                         </div>
 
-                        {cvComments.length > 0 && (
-                          <div className="max-h-[160px] overflow-y-auto mb-3 space-y-2 pr-1.5">
-                            {cvComments.map(comment => (
-                              <div key={comment.id} className="group relative bg-white/60 border border-[#E1E6EC] rounded-[10px] p-2.5 text-[12px] transition-all hover:bg-white hover:border-[#3279F9]/30">
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                  <span className="font-semibold text-[#1a3bbd] truncate max-w-[170px]">{comment.author.split("@")[0]}</span>
-                                  <span className="text-[10px] text-[#B2BBC5]">
-                                    {new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                                  </span>
+                        <AnimatePresence>
+                          {expandedCvComments[cv.id] && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.25 }}
+                              className="mt-3 overflow-hidden"
+                            >
+                              {cvComments.length > 0 && (
+                                <div className="max-h-[160px] overflow-y-auto mb-3 space-y-2 pr-1.5">
+                                  {cvComments.map(comment => (
+                                    <div key={comment.id} className="group relative bg-white/60 border border-[#E1E6EC] rounded-[10px] p-2.5 text-[12px] transition-all hover:bg-white hover:border-[#3279F9]/30">
+                                      <div className="flex items-center justify-between gap-2 mb-1">
+                                        <span className="font-semibold text-[#1a3bbd] truncate max-w-[170px]">{comment.author.split("@")[0]}</span>
+                                        <span className="text-[10px] text-[#B2BBC5]">
+                                          {new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                        </span>
+                                      </div>
+                                      <p className="text-[#45474D] whitespace-pre-wrap break-words leading-relaxed">{comment.text}</p>
+                                      <button
+                                        onClick={async () => {
+                                          if (confirm("Delete this comment?")) {
+                                            const updated = cvComments.filter(c => c.id !== comment.id);
+                                            await handleUpdateCvComments(cv.id, JSON.stringify(updated));
+                                          }
+                                        }}
+                                        className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 text-[#B2BBC5] hover:text-red-500 transition-all cursor-pointer"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  ))}
                                 </div>
-                                <p className="text-[#45474D] whitespace-pre-wrap break-words leading-relaxed">{comment.text}</p>
+                              )}
+
+                              <div className="flex gap-2">
+                                <textarea
+                                  placeholder="Post a comment…"
+                                  value={cvCommentValues[cv.id] ?? ""}
+                                  onChange={e => setCvCommentValues(v => ({ ...v, [cv.id]: e.target.value }))}
+                                  rows={2}
+                                  className="flex-1 rounded-[12px] border border-[#E1E6EC] bg-white/60 px-3 py-2 text-[13px] text-[#45474D] outline-none transition-all focus:border-[#3279F9] focus:bg-white resize-none"
+                                />
                                 <button
+                                  disabled={!(cvCommentValues[cv.id] ?? "").trim()}
                                   onClick={async () => {
-                                    if (confirm("Delete this comment?")) {
-                                      const updated = cvComments.filter(c => c.id !== comment.id);
-                                      await handleUpdateCvComments(cv.id, JSON.stringify(updated));
-                                    }
+                                    const text = (cvCommentValues[cv.id] ?? "").trim();
+                                    if (!text) return;
+                                    const newComment: Comment = {
+                                      id: Math.random().toString(36).substring(2, 9),
+                                      text,
+                                      created_at: new Date().toISOString(),
+                                      author: session?.user?.email ?? "Admin",
+                                    };
+                                    const updated = [...cvComments, newComment];
+                                    await handleUpdateCvComments(cv.id, JSON.stringify(updated));
+                                    setCvCommentValues(v => ({ ...v, [cv.id]: "" }));
                                   }}
-                                  className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 text-[#B2BBC5] hover:text-red-500 transition-all cursor-pointer"
+                                  className="btn-dark py-2 px-3 self-end rounded-[10px] text-[12px] flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  <X className="w-3.5 h-3.5" />
+                                  <Send className="w-3 h-3" /> Post
                                 </button>
                               </div>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="flex gap-2">
-                          <textarea
-                            placeholder="Post a comment…"
-                            value={cvCommentValues[cv.id] ?? ""}
-                            onChange={e => setCvCommentValues(v => ({ ...v, [cv.id]: e.target.value }))}
-                            rows={2}
-                            className="flex-1 rounded-[12px] border border-[#E1E6EC] bg-white/60 px-3 py-2 text-[13px] text-[#45474D] outline-none transition-all focus:border-[#3279F9] focus:bg-white resize-none"
-                          />
-                          <button
-                            disabled={!(cvCommentValues[cv.id] ?? "").trim()}
-                            onClick={async () => {
-                              const text = (cvCommentValues[cv.id] ?? "").trim();
-                              if (!text) return;
-                              const newComment: Comment = {
-                                id: Math.random().toString(36).substring(2, 9),
-                                text,
-                                created_at: new Date().toISOString(),
-                                author: session?.user?.email ?? "Admin",
-                              };
-                              const updated = [...cvComments, newComment];
-                              await handleUpdateCvComments(cv.id, JSON.stringify(updated));
-                              setCvCommentValues(v => ({ ...v, [cv.id]: "" }));
-                            }}
-                            className="btn-dark py-2 px-3 self-end rounded-[10px] text-[12px] flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Send className="w-3 h-3" /> Post
-                          </button>
-                        </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </motion.div>
                   );

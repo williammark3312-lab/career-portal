@@ -80,6 +80,7 @@ function ApplicantCard({
   const [commentInput, setCommentInput] = useState("");
   const [comments, setComments] = useState<Comment[]>(() => parseComments(app.notes));
   const [posting, setPosting] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   async function postComment() {
     const text = commentInput.trim();
@@ -163,59 +164,80 @@ function ApplicantCard({
 
       {/* Comments */}
       <div className="px-6 py-5">
-        <div className="flex items-center gap-1.5 mb-3 text-[#737A87]">
-          <MessageSquare className="w-4 h-4 text-[#3279F9]" />
-          <span className="text-[13px] font-semibold">Recruiter Comments</span>
-          {comments.length > 0 && (
-            <span className="ml-1 text-[11px] font-medium bg-[#EFF2F7] text-[#737A87] px-2 py-0.5 rounded-full">{comments.length}</span>
-          )}
+        <div
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center justify-between cursor-pointer hover:text-[#121317] transition-colors text-[#737A87]"
+        >
+          <div className="flex items-center gap-1.5">
+            <MessageSquare className="w-4 h-4 text-[#3279F9]" />
+            <span className="text-[13px] font-semibold">Recruiter Comments</span>
+            {comments.length > 0 && (
+              <span className="ml-1 text-[11px] font-medium bg-[#EFF2F7] text-[#737A87] px-2 py-0.5 rounded-full">{comments.length}</span>
+            )}
+          </div>
+          <span className="text-[12px] font-medium text-[#3279F9] hover:underline">
+            {showComments ? "Hide Comments" : "Show Comments"}
+          </span>
         </div>
 
-        {/* Comment list */}
-        {comments.length > 0 && (
-          <div className="max-h-[240px] overflow-y-auto mb-4 space-y-2 pr-1">
-            {comments.map(c => (
-              <div key={c.id} className="group relative bg-white/70 border border-[#E1E6EC] rounded-[12px] p-3 hover:bg-white hover:border-[#3279F9]/30 transition-all">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="text-[12px] font-semibold text-[#1a3bbd] truncate max-w-[200px]" title={c.author}>
-                    {c.author.split("@")[0]}
-                  </span>
-                  <span className="text-[10px] text-[#B2BBC5] shrink-0">
-                    {new Date(c.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                  </span>
+        {/* Collapsible comment section */}
+        <AnimatePresence>
+          {showComments && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="mt-4 overflow-hidden"
+            >
+              {/* Comment list */}
+              {comments.length > 0 && (
+                <div className="max-h-[240px] overflow-y-auto mb-4 space-y-2 pr-1">
+                  {comments.map(c => (
+                    <div key={c.id} className="group relative bg-white/70 border border-[#E1E6EC] rounded-[12px] p-3 hover:bg-white hover:border-[#3279F9]/30 transition-all">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="text-[12px] font-semibold text-[#1a3bbd] truncate max-w-[200px]" title={c.author}>
+                          {c.author.split("@")[0]}
+                        </span>
+                        <span className="text-[10px] text-[#B2BBC5] shrink-0">
+                          {new Date(c.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <p className="text-[13px] text-[#45474D] whitespace-pre-wrap break-words leading-relaxed">{c.text}</p>
+                      <button
+                        onClick={() => deleteComment(c.id)}
+                        className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 text-[#B2BBC5] hover:text-red-500 transition-all cursor-pointer"
+                        title="Delete comment"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-[13px] text-[#45474D] whitespace-pre-wrap break-words leading-relaxed">{c.text}</p>
+              )}
+
+              {/* New comment input */}
+              <div className="flex gap-2">
+                <textarea
+                  placeholder="Add a comment…"
+                  value={commentInput}
+                  onChange={e => setCommentInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) postComment(); }}
+                  rows={2}
+                  className="flex-1 rounded-[12px] border border-[#E1E6EC] bg-white/60 px-4 py-2.5 text-[13px] text-[#45474D] outline-none transition-all focus:border-[#3279F9] focus:bg-white resize-none"
+                />
                 <button
-                  onClick={() => deleteComment(c.id)}
-                  className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 text-[#B2BBC5] hover:text-red-500 transition-all cursor-pointer"
-                  title="Delete comment"
+                  disabled={!commentInput.trim() || posting}
+                  onClick={postComment}
+                  className="btn-dark rounded-[12px] px-4 py-2 self-end flex items-center gap-1.5 text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  {posting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  Post
                 </button>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* New comment input */}
-        <div className="flex gap-2">
-          <textarea
-            placeholder="Add a comment…"
-            value={commentInput}
-            onChange={e => setCommentInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) postComment(); }}
-            rows={2}
-            className="flex-1 rounded-[12px] border border-[#E1E6EC] bg-white/60 px-4 py-2.5 text-[13px] text-[#45474D] outline-none transition-all focus:border-[#3279F9] focus:bg-white resize-none"
-          />
-          <button
-            disabled={!commentInput.trim() || posting}
-            onClick={postComment}
-            className="btn-dark rounded-[12px] px-4 py-2 self-end flex items-center gap-1.5 text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {posting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            Post
-          </button>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
