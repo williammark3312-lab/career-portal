@@ -28,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${mono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans text-[#f3f4f6]">
+    <html lang="en" className={`${jakarta.variable} ${mono.variable} h-full antialiased light`}>
+      <body className="min-h-full flex flex-col font-sans">
         {children}
       </body>
     </html>

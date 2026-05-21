@@ -18,17 +18,16 @@ export default function Header({ session, handleLogout }: HeaderProps) {
   const isAdminPage = pathname?.startsWith("/admin");
   const isJobDetails = pathname?.startsWith("/jobs/") && pathname !== "/jobs";
 
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "dark" | "light";
-    if (saved) {
-      setTheme(saved);
-      if (saved === "light") {
-        document.documentElement.classList.add("light");
-      } else {
-        document.documentElement.classList.remove("light");
-      }
+    const active = saved || "light";
+    setTheme(active);
+    if (active === "light") {
+      document.documentElement.classList.add("light");
+    } else {
+      document.documentElement.classList.remove("light");
     }
   }, []);
 

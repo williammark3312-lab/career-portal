@@ -108,7 +108,7 @@ export default function JobsPage() {
   });
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
+    <main className="relative flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       {/* 3D Background */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
@@ -135,11 +135,11 @@ export default function JobsPage() {
           className="max-w-2xl"
         >
           <span className="dept-tag mb-5 inline-block">Join Our Team</span>
-          <h1 className="text-[48px] md:text-[64px] font-bold tracking-[-0.03em] leading-[1.05] text-white">
+          <h1 className="text-[48px] md:text-[64px] font-bold tracking-[-0.03em] leading-[1.05] text-[var(--fg)]">
             Build Your Career<br />
             <span className="text-[#3279F9]">With Us</span>
           </h1>
-          <p className="mt-5 text-[17px] leading-[1.7] text-white/70 max-w-xl">
+          <p className="mt-5 text-[17px] leading-[1.7] text-[var(--fg)]/70 max-w-xl">
             Explore premium career opportunities, collaborate with ambitious teams.
           </p>
         </motion.div>
@@ -152,34 +152,34 @@ export default function JobsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex flex-col md:flex-row gap-4 glass bg-white/[0.02] border-white/[0.08] p-3 rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
+            className="flex flex-col md:flex-row gap-4 glass bg-[var(--glass-bg)] border-[var(--border)] p-3 rounded-[20px] shadow-[var(--shadow)]"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]" />
               <input 
                 type="text" 
                 placeholder="Search jobs by title or keyword..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-[#0E0F15] border border-white/[0.08] focus:border-blue-500 rounded-[14px] text-[14px] text-white outline-none transition-all placeholder-white/20"
+                className="w-full pl-11 pr-4 py-3 bg-[var(--grey-100)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[14px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60"
               />
             </div>
             <div className="flex gap-4">
               <select 
                 value={selectedDept} 
                 onChange={e => setSelectedDept(e.target.value)}
-                className="flex-1 md:w-[180px] px-4 py-3 bg-[#0E0F15] border border-white/[0.08] focus:border-blue-500 rounded-[14px] text-[14px] text-white/80 outline-none cursor-pointer transition-all"
+                className="flex-1 md:w-[180px] px-4 py-3 bg-[var(--grey-100)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[14px] text-[var(--fg)] outline-none cursor-pointer transition-all"
               >
-                <option value="">All Departments</option>
-                {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                <option value="" className="bg-[var(--grey-100)] text-[var(--fg)]">All Departments</option>
+                {departments.map(d => <option key={d} value={d} className="bg-[var(--grey-100)] text-[var(--fg)]">{d}</option>)}
               </select>
               <select 
                 value={selectedLoc} 
                 onChange={e => setSelectedLoc(e.target.value)}
-                className="flex-1 md:w-[180px] px-4 py-3 bg-[#0E0F15] border border-white/[0.08] focus:border-blue-500 rounded-[14px] text-[14px] text-white/80 outline-none cursor-pointer transition-all"
+                className="flex-1 md:w-[180px] px-4 py-3 bg-[var(--grey-100)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[14px] text-[var(--fg)] outline-none cursor-pointer transition-all"
               >
-                <option value="">All Locations</option>
-                {locations.map(l => <option key={l} value={l}>{l}</option>)}
+                <option value="" className="bg-[var(--grey-100)] text-[var(--fg)]">All Locations</option>
+                {locations.map(l => <option key={l} value={l} className="bg-[var(--grey-100)] text-[var(--fg)]">{l}</option>)}
               </select>
             </div>
           </motion.div>
@@ -190,15 +190,15 @@ export default function JobsPage() {
       <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-24">
         {loading ? (
           <div className="flex items-center justify-center py-32">
-            <div className="w-8 h-8 border-2 border-white/20 border-t-[#3279F9] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[var(--border)] border-t-[#3279F9] rounded-full animate-spin" />
           </div>
         ) : jobs.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center border border-white/[0.06]">
-            <p className="text-[17px] text-white/40">No open positions right now. Check back soon!</p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center border border-[var(--border)]">
+            <p className="text-[17px] text-[var(--muted)]">No open positions right now. Check back soon!</p>
           </motion.div>
         ) : filteredJobs.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center border border-white/[0.06] border-dashed">
-            <p className="text-[17px] text-white/40">No jobs match your search criteria. Try adjusting your filters.</p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center border border-[var(--border)] border-dashed">
+            <p className="text-[17px] text-[var(--muted)]">No jobs match your search criteria. Try adjusting your filters.</p>
             <button onClick={() => { setSearchQuery(""); setSelectedDept(""); setSelectedLoc(""); }} className="mt-4 text-[14px] font-bold text-[#3279F9] hover:underline cursor-pointer">Clear all filters</button>
           </motion.div>
         ) : (
@@ -210,21 +210,21 @@ export default function JobsPage() {
                 <div className="flex flex-col h-full">
                   <div className="flex items-start justify-between gap-4 mb-6">
                     <span className="dept-tag">{job.department}</span>
-                    <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1">
+                    <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-[var(--border)] bg-[var(--grey-50)] px-3 py-1">
                       <MapPin className="w-3.5 h-3.5 text-blue-400" />
-                      <span className="text-[12px] font-semibold text-slate-300">{job.location}</span>
+                      <span className="text-[12px] font-semibold text-[var(--fg)]/80">{job.location}</span>
                     </div>
                   </div>
-                  <h2 className="text-[24px] font-bold tracking-[-0.02em] text-white transition-colors duration-300 mb-3 group-hover:text-blue-400">
+                  <h2 className="text-[24px] font-bold tracking-[-0.02em] text-[var(--fg)] transition-colors duration-300 mb-3 group-hover:text-blue-400">
                     {job.title}
                   </h2>
-                  <p className="text-[14px] leading-[1.65] text-slate-300 line-clamp-3 flex-1">
+                  <p className="text-[14px] leading-[1.65] text-[var(--fg)]/70 line-clamp-3 flex-1">
                     {job.description.replace(/#{1,3} |[*_~`]/g, "")}
                   </p>
-                  <div className="mt-6 pt-5 border-t border-white/[0.06] flex items-center justify-between">
+                  <div className="mt-6 pt-5 border-t border-[var(--border)] flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Briefcase className="w-3.5 h-3.5 text-purple-400" />
-                      <span className="text-[13px] font-semibold text-slate-300">Full Time</span>
+                      <span className="text-[13px] font-semibold text-[var(--fg)]/80">Full Time</span>
                     </div>
                     <span className="flex items-center gap-1.5 text-[13px] font-bold text-[#3279F9]">
                       Apply Now

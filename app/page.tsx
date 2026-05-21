@@ -34,7 +34,7 @@ export default function Home() {
   const router = useRouter();
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
+    <main className="relative flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       {/* 3D Background */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
@@ -79,7 +79,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.7 }}
-            className="text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-white mb-10"
+            className="text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-[var(--fg)] mb-10"
           >
             Build the Future<br />
             <span className="text-[#3279F9]">With Us</span>

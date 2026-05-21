@@ -398,20 +398,20 @@ export default function AdminPage() {
   /* ── Auth screens ── */
   if (authLoading && !loginSuccess) {
     return (
-      <main className="min-h-screen bg-[#07080b] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-[#3279F9] animate-spin" />
+      <main className="min-h-screen bg-[var(--bg)] flex items-center justify-center text-[var(--fg)]">
+        <div className="w-10 h-10 rounded-full border-2 border-[var(--border)] border-t-[#3279F9] animate-spin" />
       </main>
     );
   }
 
   if (loginSuccess) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[#07080b] items-center justify-center text-white select-none">
+      <main className="relative flex flex-col min-h-screen bg-[var(--bg)] items-center justify-center text-[var(--fg)] select-none">
         <BgCanvas />
         <motion.div 
           initial={{ opacity: 0, scale: 0.92 }} 
           animate={{ opacity: 1, scale: 1 }} 
-          className="glass relative z-10 flex flex-col items-center justify-center rounded-[32px] border border-white/[0.06] p-10 w-full max-w-xs shadow-2xl bg-white/[0.01]"
+          className="glass relative z-10 flex flex-col items-center justify-center rounded-[32px] border border-[var(--border)] p-10 w-full max-w-xs shadow-2xl bg-[var(--grey-100)]/10"
         >
           <motion.div 
             initial={{ scale: 0 }} 
@@ -425,7 +425,7 @@ export default function AdminPage() {
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.2 }}
-            className="text-[20px] font-bold text-white tracking-tight"
+            className="text-[20px] font-bold text-[var(--fg)] tracking-tight"
           >
             Authorized
           </motion.h2>
@@ -436,7 +436,7 @@ export default function AdminPage() {
 
   if (!session) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[#07080b] items-center justify-center text-white select-none overflow-hidden">
+      <main className="relative flex flex-col min-h-screen bg-[var(--bg)] items-center justify-center text-[var(--fg)] select-none overflow-hidden">
         <BgCanvas />
         <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none" />
@@ -444,38 +444,38 @@ export default function AdminPage() {
         <motion.div 
           initial={{ opacity: 0, y: 24, scale: 0.96 }} 
           animate={{ opacity: 1, y: 0, scale: 1 }} 
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="glass relative z-10 w-full max-w-[400px] rounded-[32px] border border-white/[0.06] p-8 sm:p-10 shadow-[0_30px_80px_rgba(0,0,0,0.5)] overflow-hidden bg-white/[0.01]"
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="glass relative z-10 w-full max-w-md p-8 sm:p-10 rounded-[32px] border border-[var(--border)] shadow-[var(--shadow)]"
         >
           <div className="text-center mb-8">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/20">
               <Lock className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-[24px] font-bold text-white tracking-tight">Admin Console</h1>
-            <p className="text-[14px] text-white/50 mt-1">Sign in to manage recruitment portal</p>
+            <h1 className="text-[24px] font-bold text-[var(--fg)] tracking-tight">Admin Console</h1>
+            <p className="text-[14px] text-[var(--muted)] mt-1">Sign in to manage recruitment portal</p>
           </div>
           
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/60 mb-2">Email Address</label>
+              <label className="form-label block text-[11px] font-bold uppercase tracking-[0.06em] mb-2">Email Address</label>
               <input 
                 type="email" 
                 value={authEmail} 
                 onChange={e => setAuthEmail(e.target.value)} 
                 required 
-                className="w-full px-4 py-3 bg-[#0E0F15] border border-white/[0.08] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" 
+                className="form-input w-full px-4 py-3 rounded-[14px] text-[15px] outline-none transition-all" 
                 placeholder="admin@example.com" 
               />
             </div>
             
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/60 mb-2">Password</label>
+              <label className="form-label block text-[11px] font-bold uppercase tracking-[0.06em] mb-2">Password</label>
               <input 
                 type="password" 
                 value={authPassword} 
                 onChange={e => setAuthPassword(e.target.value)} 
                 required 
-                className="w-full px-4 py-3 bg-[#0E0F15] border border-white/[0.08] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" 
+                className="form-input w-full px-4 py-3 rounded-[14px] text-[15px] outline-none transition-all" 
                 placeholder="••••••••" 
               />
             </div>
@@ -509,7 +509,7 @@ export default function AdminPage() {
 
   /* ── Main Admin UI ── */
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6] font-sans antialiased selection:bg-blue-500/20 selection:text-blue-300">
+    <main className="relative flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)] font-sans antialiased selection:bg-blue-500/20 selection:text-blue-300">
       <BgCanvas />
       
       {/* Dynamic ambient background glow circles */}
@@ -695,13 +695,13 @@ export default function AdminPage() {
                 <select 
                   value={cvFilter} 
                   onChange={e => setCvFilter(e.target.value)}
-                  className="rounded-[12px] border border-white/[0.08] bg-[#0E0F15] px-4 py-2.5 text-[14px] font-semibold text-white/80 outline-none cursor-pointer hover:border-blue-500 focus:border-blue-500 transition-all"
+                  className="rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)] px-4 py-2.5 text-[14px] font-semibold text-[var(--fg)]/80 outline-none cursor-pointer hover:border-blue-500 focus:border-blue-500 transition-all"
                 >
-                  <option value="All">All CVs</option>
-                  <option value="Not Called">Not Called</option>
-                  <option value="Called">Called</option>
-                  <option value="Interviewing">Interviewing</option>
-                  <option value="Rejected">Rejected</option>
+                  <option value="All" className="bg-[var(--grey-100)] text-[var(--fg)]">All CVs</option>
+                  <option value="Not Called" className="bg-[var(--grey-100)] text-[var(--fg)]">Not Called</option>
+                  <option value="Called" className="bg-[var(--grey-100)] text-[var(--fg)]">Called</option>
+                  <option value="Interviewing" className="bg-[var(--grey-100)] text-[var(--fg)]">Interviewing</option>
+                  <option value="Rejected" className="bg-[var(--grey-100)] text-[var(--fg)]">Rejected</option>
                 </select>
                 <button onClick={() => setShowCvModal(true)} className="px-5 py-3 rounded-[16px] text-[13px] font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_6px_20px_-4px_rgba(50,121,249,0.4)] hover:from-blue-600 hover:to-indigo-700 shrink-0">
                   <Upload className="w-4 h-4" /> Upload CV
@@ -762,12 +762,12 @@ export default function AdminPage() {
                           <select 
                             value={cv.status} 
                             onChange={e => handleCvStatus(cv.id, e.target.value)}
-                            className="rounded-[12px] border border-white/[0.08] bg-[#0E0F15] px-3.5 py-2 text-[13px] font-semibold text-white/80 outline-none cursor-pointer hover:border-blue-500 focus:border-blue-500 transition-all"
+                            className="rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)] px-3.5 py-2 text-[13px] font-semibold text-[var(--fg)]/80 outline-none cursor-pointer hover:border-blue-500 focus:border-blue-500 transition-all"
                           >
-                            <option value="Not Called">Not Called</option>
-                            <option value="Called">Called</option>
-                            <option value="Interviewing">Interviewing</option>
-                            <option value="Rejected">Rejected</option>
+                            <option value="Not Called" className="bg-[var(--grey-100)] text-[var(--fg)]">Not Called</option>
+                            <option value="Called" className="bg-[var(--grey-100)] text-[var(--fg)]">Called</option>
+                            <option value="Interviewing" className="bg-[var(--grey-100)] text-[var(--fg)]">Interviewing</option>
+                            <option value="Rejected" className="bg-[var(--grey-100)] text-[var(--fg)]">Rejected</option>
                           </select>
                           <button 
                             onClick={() => { setSelectedCV(cv.cv_url); setCvOpen(true); }}
@@ -814,14 +814,14 @@ export default function AdminPage() {
                               {cvComments.length > 0 && (
                                 <div className="max-h-[180px] overflow-y-auto mb-4 space-y-2.5 pr-2">
                                   {cvComments.map(comment => (
-                                    <div key={comment.id} className="group relative bg-[#090A0E] border border-white/[0.05] rounded-[16px] p-3.5 text-[12px] transition-all hover:border-blue-500/20">
+                                    <div key={comment.id} className="group relative bg-[var(--grey-100)]/45 border border-[var(--border)] rounded-[16px] p-3.5 text-[12px] transition-all hover:border-blue-500/20">
                                       <div className="flex items-center justify-between gap-2 mb-1.5">
                                         <span className="font-bold text-blue-400 truncate max-w-[170px]">{comment.author.split("@")[0]}</span>
-                                        <span className="text-[10px] text-white/30">
+                                        <span className="text-[10px] text-[var(--muted)]">
                                           {new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                                         </span>
                                       </div>
-                                      <p className="text-white/70 whitespace-pre-wrap break-words leading-relaxed">{comment.text}</p>
+                                      <p className="text-[var(--fg)]/70 whitespace-pre-wrap break-words leading-relaxed">{comment.text}</p>
                                       <button
                                         onClick={async () => {
                                           if (confirm("Delete this comment?")) {
@@ -829,7 +829,7 @@ export default function AdminPage() {
                                             await handleUpdateCvComments(cv.id, JSON.stringify(updated));
                                           }
                                         }}
-                                        className="absolute top-3.5 right-3.5 opacity-0 group-hover:opacity-100 text-white/30 hover:text-red-400 transition-all cursor-pointer"
+                                        className="absolute top-3.5 right-3.5 opacity-0 group-hover:opacity-100 text-[var(--muted)] hover:text-red-400 transition-all cursor-pointer"
                                       >
                                         <X className="w-4 h-4" />
                                       </button>
@@ -844,7 +844,7 @@ export default function AdminPage() {
                                   value={cvCommentValues[cv.id] ?? ""}
                                   onChange={e => setCvCommentValues(v => ({ ...v, [cv.id]: e.target.value }))}
                                   rows={2}
-                                  className="flex-1 rounded-[16px] border border-white/[0.06] bg-[#0E0F15] px-4 py-3 text-[13px] text-white placeholder-white/20 outline-none transition-all focus:border-blue-500/50 resize-none"
+                                  className="flex-1 rounded-[16px] border border-[var(--border)] bg-[var(--grey-100)] px-4 py-3 text-[13px] text-[var(--fg)] placeholder-[var(--grey-500)]/50 outline-none transition-all focus:border-blue-500/50 resize-none"
                                 />
                                 <button
                                   disabled={!(cvCommentValues[cv.id] ?? "").trim()}
@@ -969,11 +969,11 @@ export default function AdminPage() {
               className="absolute inset-0 bg-[rgba(5,6,10,0.5)] backdrop-blur-[12px]" onClick={closeModal} />
             <motion.div initial={{ opacity: 0, scale: 0.94, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 24 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-2xl rounded-[32px] bg-[#0E0F15] border border-white/[0.08] p-8 sm:p-10 max-h-[90vh] overflow-y-auto shadow-2xl">
+              className="relative w-full max-w-2xl rounded-[32px] bg-[var(--grey-100)] border border-[var(--border)] p-8 sm:p-10 max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="flex items-start justify-between mb-8 gap-4">
                 <div>
-                  <h2 className="text-[24px] font-bold text-white tracking-tight">{editingJob ? "Modify Listing" : "Create Position"}</h2>
-                  <p className="text-[13px] text-white/40 mt-1">{editingJob ? "Update active operational metrics." : "Add a new open position to start screening applicants."}</p>
+                  <h2 className="text-[24px] font-bold text-[var(--fg)] tracking-tight">{editingJob ? "Modify Listing" : "Create Position"}</h2>
+                  <p className="text-[13px] text-[var(--muted)] mt-1">{editingJob ? "Update active operational metrics." : "Add a new open position to start screening applicants."}</p>
                 </div>
                 <button onClick={closeModal} className="rounded-full p-2 hover:bg-white/5 text-white/60 hover:text-white transition-colors shrink-0">
                   <X className="w-5 h-5" />
@@ -1031,21 +1031,21 @@ export default function AdminPage() {
               className="absolute inset-0 bg-[rgba(5,6,10,0.5)] backdrop-blur-[12px]" onClick={() => setCvOpen(false)} />
             <motion.div initial={{ opacity: 0, scale: 0.94, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 24 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="relative w-full max-w-4xl h-[85vh] rounded-[32px] bg-[#0E0F15] border border-white/[0.08] overflow-hidden flex flex-col shadow-2xl">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-white/[0.02] shrink-0">
-                <h3 className="text-[15px] font-bold text-white">Resume Viewer</h3>
+              className="relative w-full max-w-4xl h-[85vh] rounded-[32px] bg-[var(--grey-100)] border border-[var(--border)] overflow-hidden flex flex-col shadow-2xl">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--grey-100)]/80 shrink-0">
+                <h3 className="text-[15px] font-bold text-[var(--fg)]">Resume Viewer</h3>
                 <div className="flex items-center gap-3">
                   <a href={selectedCV} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-[12px] border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white/80 hover:text-white px-4 py-2 text-[13px] font-bold transition-all">
+                    className="flex items-center gap-1.5 rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)] hover:bg-[var(--grey-200)] text-[var(--fg)]/80 hover:text-[var(--fg)] px-4 py-2 text-[13px] font-bold transition-all">
                     Open in Tab <ExternalLink className="w-3.5 h-3.5" />
                   </a>
-                  <button onClick={() => setCvOpen(false)} className="rounded-full p-2 hover:bg-white/5 text-white/60 hover:text-white transition-colors">
+                  <button onClick={() => setCvOpen(false)} className="rounded-full p-2 hover:bg-[var(--grey-200)] text-[var(--muted)] hover:text-[var(--fg)] transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
-              <div className="flex-1 min-h-0 p-4 bg-[#121317]">
-                <iframe src={selectedCV} className="w-full h-full rounded-[20px] bg-white border border-white/[0.06]" title="Resume" />
+              <div className="flex-1 min-h-0 p-4 bg-[var(--bg)]">
+                <iframe src={selectedCV} className="w-full h-full rounded-[20px] bg-white border border-[var(--border)]" title="Resume" />
               </div>
             </motion.div>
           </div>
@@ -1060,11 +1060,11 @@ export default function AdminPage() {
               className="absolute inset-0 bg-[rgba(5,6,10,0.5)] backdrop-blur-[12px]" onClick={closeCvModal} />
             <motion.div initial={{ opacity: 0, scale: 0.94, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 24 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-lg rounded-[32px] bg-[#0E0F15] border border-white/[0.08] p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+              className="relative w-full max-w-lg rounded-[32px] bg-[var(--grey-100)] border border-[var(--border)] p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="flex items-start justify-between mb-8 gap-4">
                 <div>
-                  <h2 className="text-[24px] font-bold text-white tracking-tight">Upload Candidate CV</h2>
-                  <p className="text-[13px] text-white/40 mt-1">Directly add a new resume to your primary talent database.</p>
+                  <h2 className="text-[24px] font-bold text-[var(--fg)] tracking-tight">Upload Candidate CV</h2>
+                  <p className="text-[13px] text-[var(--muted)] mt-1">Directly add a new resume to your primary talent database.</p>
                 </div>
                 <button onClick={closeCvModal} className="rounded-full p-2 hover:bg-white/5 text-white/60 hover:text-white transition-colors shrink-0">
                   <X className="w-5 h-5" />
@@ -1120,7 +1120,7 @@ export default function AdminPage() {
               animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, scale: 0.93, y: 20, filter: "blur(4px)" }}
               transition={{ type: "spring", stiffness: 300, damping: 28 }}
-              className="relative w-full max-w-md rounded-[32px] bg-[#0E0F15] border border-white/[0.08] p-8 shadow-2xl">
+              className="relative w-full max-w-md rounded-[32px] bg-[var(--grey-100)] border border-[var(--border)] p-8 shadow-2xl">
               
               {createdUser ? (
                 // Success Credentials Screen
@@ -1128,24 +1128,24 @@ export default function AdminPage() {
                   <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-500/5">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
-                  <h2 className="text-[22px] font-bold text-white tracking-tight">Admin Provisioned!</h2>
-                  <p className="text-[13px] text-white/40 mt-1 mb-6">The administrator account is now active and can sign in.</p>
+                  <h2 className="text-[22px] font-bold text-[var(--fg)] tracking-tight">Admin Provisioned!</h2>
+                  <p className="text-[13px] text-[var(--muted)] mt-1 mb-6">The administrator account is now active and can sign in.</p>
                   
-                  <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] p-5 text-left space-y-4 mb-6">
+                  <div className="bg-[var(--grey-50)] border border-[var(--border)] rounded-[20px] p-5 text-left space-y-4 mb-6">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-white/40">Full Name</span>
-                      <p className="text-[15px] font-semibold text-white mt-1">{createdUser.name || "N/A"}</p>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-[var(--muted)]">Full Name</span>
+                      <p className="text-[15px] font-semibold text-[var(--fg)] mt-1">{createdUser.name || "N/A"}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-white/40">Email Address</span>
-                      <p className="text-[15px] font-semibold text-white mt-1">{createdUser.email}</p>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-[var(--muted)]">Email Address</span>
+                      <p className="text-[15px] font-semibold text-[var(--fg)] mt-1">{createdUser.email}</p>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2.5">
                     <button
                       onClick={() => copyToClipboard(createdUser.email, "email")}
-                      className="w-full py-3 rounded-[12px] bg-white/[0.02] border border-white/[0.08] text-white/80 hover:text-white font-bold text-[13px] hover:border-blue-500 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full py-3 rounded-[12px] bg-[var(--grey-50)] border border-[var(--border)] text-[var(--fg)]/80 hover:text-[var(--fg)] font-bold text-[13px] hover:border-blue-500 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       {copiedField === "email" ? "Copied!" : <><Copy className="w-4 h-4" /> Copy Email</>}
                     </button>
@@ -1158,7 +1158,7 @@ export default function AdminPage() {
                       </button>
                       <button
                         onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }}
-                        className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-white font-bold text-[13px] rounded-[12px] transition-colors cursor-pointer"
+                        className="flex-1 py-3.5 bg-[var(--grey-200)] hover:bg-[var(--grey-300)] text-[var(--fg)] font-bold text-[13px] rounded-[12px] transition-colors cursor-pointer"
                       >
                         Close Portal
                       </button>
@@ -1170,50 +1170,50 @@ export default function AdminPage() {
                 <>
                   <div className="flex items-start justify-between mb-6 gap-4">
                     <div>
-                      <h2 className="text-[22px] font-bold text-white tracking-tight">Provision Admin</h2>
-                      <p className="text-[13px] text-white/40 mt-1">Configure administrator email and workspace keys.</p>
+                      <h2 className="text-[22px] font-bold text-[var(--fg)] tracking-tight">Provision Admin</h2>
+                      <p className="text-[13px] text-[var(--muted)] mt-1">Configure administrator email and workspace keys.</p>
                     </div>
                     <button onClick={() => { setShowUserModal(false); resetUserForm(); }}
-                      className="p-2 rounded-[10px] text-white/60 hover:bg-white/5 hover:text-white transition-colors cursor-pointer mt-0.5 shrink-0">
+                      className="p-2 rounded-[10px] text-[var(--muted)] hover:bg-[var(--grey-200)] hover:text-[var(--fg)] transition-colors cursor-pointer mt-0.5 shrink-0">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Full Name</label>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Full Name</label>
                       <input value={newUserName} onChange={e => setNewUserName(e.target.value)}
-                        placeholder="e.g. Jane Doe" className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" autoFocus />
+                        placeholder="e.g. Jane Doe" className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 focus:bg-[var(--grey-100)] rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" autoFocus />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Email Address <span className="text-red-500">*</span></label>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Email Address <span className="text-red-500">*</span></label>
                       <input value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)}
-                        placeholder="admin@example.com" type="email" className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" />
+                        placeholder="admin@example.com" type="email" className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 focus:bg-[var(--grey-100)] rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Password <span className="text-red-500">*</span></label>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Password <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <input value={newUserPass} onChange={e => setNewUserPass(e.target.value)}
-                          placeholder="••••••••" type={showPass ? "text" : "password"} className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20 pr-12" />
+                          placeholder="••••••••" type={showPass ? "text" : "password"} className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 focus:bg-[var(--grey-100)] rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60 pr-12" />
                         <button
                           type="button"
                           onClick={() => setShowPass(!showPass)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white text-[12px] font-bold transition-colors cursor-pointer"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--fg)] text-[12px] font-bold transition-colors cursor-pointer"
                         >
                           {showPass ? "Hide" : "Show"}
                         </button>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Confirm Password <span className="text-red-500">*</span></label>
+                      <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Confirm Password <span className="text-red-500">*</span></label>
                       <input value={newUserConfirm} onChange={e => setNewUserConfirm(e.target.value)}
-                        placeholder="••••••••" type={showPass ? "text" : "password"} className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" />
+                        placeholder="••••••••" type={showPass ? "text" : "password"} className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 focus:bg-[var(--grey-100)] rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" />
                     </div>
                   </div>
 
-                  <div className="mt-7 pt-6 border-t border-white/[0.06] flex gap-3">
+                  <div className="mt-7 pt-6 border-t border-[var(--border)] flex gap-3">
                     <button onClick={() => { setShowUserModal(false); resetUserForm(); }}
-                      className="flex-1 rounded-[14px] border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white/80 hover:text-white px-4 py-3 text-[14px] font-bold transition-all cursor-pointer">Cancel</button>
+                      className="flex-1 rounded-[14px] border border-[var(--border)] bg-[var(--grey-50)] hover:bg-[var(--grey-200)] text-[var(--fg)]/80 hover:text-[var(--fg)] px-4 py-3 text-[14px] font-bold transition-all cursor-pointer">Cancel</button>
                     <button disabled={savingUser || !newUserEmail.trim() || !newUserPass.trim()} onClick={handleCreateAdminUser}
                       className="flex-1 rounded-[14px] bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-3 text-[14px] font-bold shadow-[0_4px_15px_-3px_rgba(50,121,249,0.3)] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                       {savingUser ? "Creating..." : <><UserPlus className="w-4 h-4" /> Create Admin</>}
@@ -1226,7 +1226,7 @@ export default function AdminPage() {
         )}
       </AnimatePresence>
 
-      <footer className="site-footer border-t border-white/[0.04]">
+      <footer className="site-footer border-t border-[var(--border)]">
         <div className="site-footer-inner">
           <p>© {new Date().getFullYear()} Careers Portal</p>
           <div className="site-footer-links"><a href="/jobs">Careers</a></div>

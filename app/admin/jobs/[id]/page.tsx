@@ -167,16 +167,16 @@ function ApplicantCard({
           <select
             value={app.status}
             onChange={e => onStatusChange(app.id, e.target.value)}
-            className="rounded-[10px] border border-white/10 bg-[#0e0f14]/80 px-3 py-2 text-[13px] font-medium text-white/80 outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
+            className="rounded-[10px] border border-[var(--border)] bg-[var(--grey-100)] px-3 py-2 text-[13px] font-medium text-[var(--fg)]/80 outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
           >
-            <option>Pending</option>
-            <option>Reviewed</option>
-            <option>Shortlisted</option>
-            <option>Rejected</option>
+            <option className="bg-[var(--grey-100)] text-[var(--fg)]">Pending</option>
+            <option className="bg-[var(--grey-100)] text-[var(--fg)]">Reviewed</option>
+            <option className="bg-[var(--grey-100)] text-[var(--fg)]">Shortlisted</option>
+            <option className="bg-[var(--grey-100)] text-[var(--fg)]">Rejected</option>
           </select>
           <button
             onClick={() => onOpenCV(app.resume_url)}
-            className="flex items-center gap-1.5 rounded-[10px] border border-white/10 bg-[#0e0f14]/80 px-4 py-2 text-[13px] font-medium text-white/80 hover:border-[#3279F9] hover:text-[#3279F9] transition-colors"
+            className="flex items-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-[var(--grey-100)]/80 px-4 py-2 text-[13px] font-medium text-[var(--fg)]/80 hover:border-[#3279F9] hover:text-[#3279F9] transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" /> View CV
           </button>
@@ -186,7 +186,7 @@ function ApplicantCard({
             className={`flex items-center gap-1.5 rounded-[10px] border px-3.5 py-2 text-[13px] font-medium transition-all ${
               moved
                 ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400 cursor-default"
-                : "bg-[#0e0f14]/80 border-white/10 text-white/80 hover:border-[#3279F9] hover:text-[#3279F9] active:scale-95 disabled:opacity-50"
+                : "bg-[var(--grey-100)]/80 border-[var(--border)] text-[var(--fg)]/80 hover:border-[#3279F9] hover:text-[#3279F9] active:scale-95 disabled:opacity-50"
             }`}
             title={moved ? "Moved to CV Database" : "Move CV to Database"}
           >
@@ -201,7 +201,7 @@ function ApplicantCard({
           </button>
           <button
             onClick={() => onDelete(app.id)}
-            className="rounded-[10px] border border-white/10 bg-[#0e0f14]/80 p-2 text-red-400 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+            className="rounded-[10px] border border-[var(--border)] bg-[var(--grey-100)]/80 p-2 text-red-400 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 transition-colors"
             title="Delete application"
           >
             <Trash2 className="w-4 h-4" />
@@ -241,7 +241,7 @@ function ApplicantCard({
               {comments.length > 0 && (
                 <div className="max-h-[240px] overflow-y-auto mb-4 space-y-2 pr-1">
                   {comments.map(c => (
-                    <div key={c.id} className="group relative bg-[#0e0f14]/40 border border-white/[0.06] rounded-[12px] p-3 hover:bg-[#0e0f14]/70 hover:border-[#3279F9]/30 transition-all">
+                    <div key={c.id} className="group relative bg-[var(--grey-100)]/40 border border-[var(--border)] rounded-[12px] p-3 hover:bg-[var(--grey-100)]/70 hover:border-[#3279F9]/30 transition-all">
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <span className="text-[12px] font-semibold text-[#5B9BFF] truncate max-w-[200px]" title={c.author}>
                           {c.author.split("@")[0]}
@@ -271,7 +271,7 @@ function ApplicantCard({
                   onChange={e => setCommentInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) postComment(); }}
                   rows={2}
-                  className="flex-1 rounded-[12px] border border-white/10 bg-[#0e0f14]/60 px-4 py-2.5 text-[13px] text-white outline-none transition-all focus:border-[#3279F9] focus:bg-[#0e0f14] resize-none"
+                  className="flex-1 rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)]/60 px-4 py-2.5 text-[13px] text-[var(--fg)] outline-none transition-all focus:border-[#3279F9] focus:bg-[var(--grey-100)] resize-none"
                 />
                 <button
                   disabled={!commentInput.trim() || posting}
@@ -456,25 +456,25 @@ export default function JobScreeningPage() {
             className="flex flex-col sm:flex-row gap-3 mb-8"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]" />
               <input
                 type="text"
                 placeholder="Search by name or email…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-11 pr-4 py-2.5 rounded-[12px] border border-white/10 bg-[#0e0f14]/60 text-[14px] text-white outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[#3279F9]/10 transition-all"
+                className="w-full pl-11 pr-4 py-2.5 rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)]/60 text-[14px] text-[var(--fg)] outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[#3279F9]/10 transition-all"
               />
             </div>
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="rounded-[12px] border border-white/10 bg-[#0e0f14]/60 px-4 py-2.5 text-[14px] font-medium text-white/80 outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
+              className="rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)]/60 px-4 py-2.5 text-[14px] font-medium text-[var(--fg)]/80 outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
             >
-              <option value="All">All Statuses ({applications.length})</option>
-              <option value="Pending">Pending ({counts.Pending ?? 0})</option>
-              <option value="Reviewed">Reviewed ({counts.Reviewed ?? 0})</option>
-              <option value="Shortlisted">Shortlisted ({counts.Shortlisted ?? 0})</option>
-              <option value="Rejected">Rejected ({counts.Rejected ?? 0})</option>
+              <option value="All" className="bg-[var(--grey-100)] text-[var(--fg)]">All Statuses ({applications.length})</option>
+              <option value="Pending" className="bg-[var(--grey-100)] text-[var(--fg)]">Pending ({counts.Pending ?? 0})</option>
+              <option value="Reviewed" className="bg-[var(--grey-100)] text-[var(--fg)]">Reviewed ({counts.Reviewed ?? 0})</option>
+              <option value="Shortlisted" className="bg-[var(--grey-100)] text-[var(--fg)]">Shortlisted ({counts.Shortlisted ?? 0})</option>
+              <option value="Rejected" className="bg-[var(--grey-100)] text-[var(--fg)]">Rejected ({counts.Rejected ?? 0})</option>
             </select>
           </motion.div>
         )}
@@ -534,20 +534,20 @@ export default function JobScreeningPage() {
               onClick={() => setCvOpen(false)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 24 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: 24 }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="relative w-full max-w-5xl h-[92vh] rounded-[28px] bg-[#0e0f14] border border-white/10 overflow-hidden flex flex-col shadow-2xl"
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="relative w-full max-w-5xl h-[92vh] rounded-[28px] bg-[var(--grey-100)] border border-[var(--border)] overflow-hidden flex flex-col shadow-2xl"
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#0e0f14] shrink-0">
-                <h3 className="text-[16px] font-semibold text-white">Resume Viewer</h3>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--grey-100)] shrink-0">
+                <h3 className="text-[15px] font-bold text-[var(--fg)]">Resume Viewer</h3>
                 <div className="flex items-center gap-3">
                   <a
                     href={selectedCV}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-[10px] border border-white/10 bg-[#0e0f14]/80 px-4 py-2 text-[13px] font-medium text-white/80 hover:text-[#3279F9] hover:border-[#3279F9] transition-colors"
+                    className="flex items-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-[var(--grey-100)]/80 px-4 py-2 text-[13px] font-medium text-[var(--fg)]/80 hover:text-[#3279F9] hover:border-[#3279F9] transition-colors"
                   >
                     Open in New Tab <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -559,7 +559,7 @@ export default function JobScreeningPage() {
                   </button>
                 </div>
               </div>
-              <div className="flex-1 min-h-0 p-4 bg-[#07080b]">
+              <div className="flex-1 min-h-0 p-4 bg-[var(--bg)]">
                 <iframe
                   src={selectedCV}
                   className="w-full h-full rounded-[16px] bg-white border border-white/10"

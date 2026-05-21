@@ -208,10 +208,10 @@ export default function JobDetailsPage() {
   /* Loading */
   if (!job) {
     return (
-      <main className="min-h-screen bg-[#07080b] flex items-center justify-center">
+      <main className="min-h-screen bg-[var(--bg)] flex items-center justify-center text-[var(--fg)]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-[#3279F9] animate-spin" />
-          <p className="text-[14px] text-white/50">Loading…</p>
+          <div className="w-10 h-10 rounded-full border-2 border-[var(--border)] border-t-[#3279F9] animate-spin" />
+          <p className="text-[14px] text-[var(--muted)]">Loading…</p>
         </div>
       </main>
     );
@@ -220,7 +220,7 @@ export default function JobDetailsPage() {
   /* Success */
   if (submitted) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
+      <main className="relative flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)]">
         <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
           <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
             <ambientLight intensity={1.4} />
@@ -325,7 +325,7 @@ export default function JobDetailsPage() {
 
   /* Main */
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
+    <main className="relative flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
           <ambientLight intensity={1.4} />
@@ -349,15 +349,15 @@ export default function JobDetailsPage() {
           className="glass rounded-[32px] overflow-hidden"
         >
           {/* Job Header */}
-          <div className="px-10 py-10 border-b border-white/[0.06]">
+          <div className="px-10 py-10 border-b border-[var(--border)]">
             <span className="dept-tag mb-5 inline-block">{job.department}</span>
-            <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-white">{job.title}</h1>
+            <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-[var(--fg)]">{job.title}</h1>
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-[13px] font-semibold text-slate-300">
+              <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--grey-50)] px-4 py-2 text-[13px] font-semibold text-[var(--fg)]/80">
                 <MapPin className="w-3.5 h-3.5 text-blue-400" />
                 {job.location}
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-[13px] font-semibold text-slate-300">
+              <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--grey-50)] px-4 py-2 text-[13px] font-semibold text-[var(--fg)]/80">
                 <Briefcase className="w-3.5 h-3.5 text-purple-400" />
                 Full Time
               </div>
@@ -366,11 +366,11 @@ export default function JobDetailsPage() {
 
           {/* Job Body */}
           <div className="px-10 py-10">
-            <h2 className="text-[22px] font-bold mb-6 text-white">About the role</h2>
-            <div className="text-[15px]" dangerouslySetInnerHTML={{ __html: renderMd(job.description) }} />
+            <h2 className="text-[22px] font-bold mb-6 text-[var(--fg)]">About the role</h2>
+            <div className="text-[15px] text-[var(--fg)]/90" dangerouslySetInnerHTML={{ __html: renderMd(job.description) }} />
 
             {!showApply ? (
-              <div className="mt-10 pt-8 border-t border-white/[0.06]">
+              <div className="mt-10 pt-8 border-t border-[var(--border)]">
                 <button onClick={() => setShowApply(true)} className="btn-primary">Apply for this position</button>
               </div>
             ) : (
@@ -378,11 +378,11 @@ export default function JobDetailsPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-10 pt-10 border-t border-white/[0.06]"
+                className="mt-10 pt-10 border-t border-[var(--border)]"
               >
                 <div className="mb-8">
                   <h2 className="text-[26px] font-bold text-blue-400">Submit your application</h2>
-                  <p className="text-[14px] text-white/60 mt-2">
+                  <p className="text-[14px] text-[var(--muted)] mt-2">
                     Fill out the form below to apply for <strong className="text-[#3279F9]">{job.title}</strong>
                   </p>
                 </div>
@@ -402,7 +402,7 @@ export default function JobDetailsPage() {
                     <div>
                       <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
                       <div className="flex animate-fade-in">
-                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-white/[0.08] bg-[#0E0F15] text-[15px] font-bold text-slate-300 select-none whitespace-nowrap">
+                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[var(--border)] bg-[var(--grey-100)] text-[15px] font-bold text-[var(--fg)]/80 select-none whitespace-nowrap">
                           +91
                         </span>
                         <input
@@ -423,14 +423,14 @@ export default function JobDetailsPage() {
                   </div>
                   <div>
                     <label className="form-label">Resume / CV <span className="text-red-500">*</span></label>
-                    <div className="relative rounded-[14px] border-2 border-dashed border-white/[0.08] bg-[#0E0F15]/30 px-6 py-9 text-center hover:bg-[#0E0F15] hover:border-blue-500/40 transition-colors cursor-pointer">
+                    <div className="relative rounded-[14px] border-2 border-dashed border-[var(--border)] bg-[var(--grey-100)]/30 px-6 py-9 text-center hover:bg-[var(--grey-100)] hover:border-blue-500/40 transition-colors cursor-pointer">
                       <input type="file" accept=".pdf,.doc,.docx"
                         onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
-                      <Upload className="mx-auto h-7 w-7 text-white/40 mb-2" />
-                      <p className="text-[14px] font-bold text-white">{resume ? resume.name : "Click to upload or drag & drop"}</p>
-                      <p className="text-[12px] text-white/30 mt-1">PDF, DOC up to 5 MB</p>
+                      <Upload className="mx-auto h-7 w-7 text-[var(--muted)] mb-2" />
+                      <p className="text-[14px] font-bold text-[var(--fg)]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
+                      <p className="text-[12px] text-[var(--muted)]/60 mt-1">PDF, DOC up to 5 MB</p>
                     </div>
                     {errors.resume && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.resume}</p>}
                   </div>

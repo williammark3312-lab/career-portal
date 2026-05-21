@@ -34,7 +34,7 @@ function AuthSuccessContent() {
   const app = searchParams.get("app") || "Antigravity";
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[#F8F9FC] font-sans selection:bg-[#3279F9]/30">
+    <div className="relative flex min-h-screen items-center justify-center bg-[var(--bg)] text-[var(--fg)] font-sans selection:bg-[#3279F9]/30">
       {/* 3D Background */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
@@ -57,7 +57,7 @@ function AuthSuccessContent() {
           duration: 0.8,
           ease: [0.16, 1, 0.3, 1],
         }}
-        className="relative z-10 mx-4 flex w-full max-w-[480px] flex-col items-center overflow-hidden rounded-[24px] border border-white/40 bg-white/70 p-10 text-center shadow-[0_24px_48px_-12px_rgba(18,19,23,0.1)] backdrop-blur-xl"
+        className="relative z-10 mx-4 flex w-full max-w-[480px] flex-col items-center overflow-hidden rounded-[24px] border border-[var(--glass-border)] bg-[var(--glass-bg)] p-10 text-center shadow-[var(--shadow)] backdrop-blur-xl"
       >
         <motion.div
           initial={{ scale: 0 }}
@@ -77,7 +77,7 @@ function AuthSuccessContent() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="mb-3 text-[32px] font-medium leading-[1.1] tracking-[-0.02em] text-[#121317]"
+          className="mb-3 text-[32px] font-medium leading-[1.1] tracking-[-0.02em] text-[var(--fg)]"
         >
           Authentication Successful
         </motion.h1>
@@ -86,10 +86,10 @@ function AuthSuccessContent() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="mb-10 text-[17.5px] leading-[1.45] tracking-[0.01em] text-[#45474D]"
+          className="mb-10 text-[17.5px] leading-[1.45] tracking-[0.01em] text-[var(--muted)]"
         >
           You have successfully signed in to{" "}
-          <strong className="font-medium text-[#121317]">{app}</strong>. You may
+          <strong className="font-medium text-[var(--fg)]">{app}</strong>. You may
           now close this window or continue to the application.
         </motion.p>
 
@@ -99,7 +99,7 @@ function AuthSuccessContent() {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="w-full"
         >
-          <Link href="/" className="group flex w-full items-center justify-center gap-2 rounded-[12px] bg-[#121317] px-6 py-4 text-[16px] font-medium text-white transition-all duration-300 hover:bg-[#212226] hover:shadow-[0_8px_16px_-4px_rgba(18,19,23,0.2)] active:scale-[0.98]">
+          <Link href="/" className="group flex w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--blue-500)] px-6 py-4 text-[16px] font-medium text-white transition-all duration-300 hover:bg-[var(--blue-600)] hover:shadow-[0_8px_16px_-4px_rgba(50,121,249,0.3)] active:scale-[0.98]">
             Continue to {app}
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
@@ -111,7 +111,7 @@ function AuthSuccessContent() {
 
 export default function AuthSuccessPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FC]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
       <AuthSuccessContent />
     </Suspense>
   );
