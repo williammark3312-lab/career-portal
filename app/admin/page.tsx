@@ -856,11 +856,12 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <label className="form-label">Username</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#737A87] text-[15px] font-medium select-none">@</span>
+                  <div className="flex rounded-[12px] border border-[#CDD4DC] overflow-hidden bg-white transition-all focus-within:border-[#3279F9] focus-within:ring-[3px] focus-within:ring-[#3279F9]/12">
+                    <span className="flex items-center px-3 text-[#737A87] text-[15px] font-medium select-none border-r border-[#E1E6EC] bg-[#F8F9FC]">@</span>
                     <input value={userUsername}
                       onChange={e => setUserUsername(e.target.value.replace(/\s/g, "").toLowerCase())}
-                      placeholder="jdoe" className="form-input pl-8" />
+                      placeholder="jdoe"
+                      className="flex-1 px-4 py-3 text-[15px] text-[#121317] outline-none bg-white placeholder:text-[#737A87]" />
                   </div>
                 </div>
                 <div>
