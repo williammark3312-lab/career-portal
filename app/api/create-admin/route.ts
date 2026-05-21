@@ -3,8 +3,14 @@ import { createClient } from "@supabase/supabase-js";
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
+  if (!url && !key) {
+    throw new Error("Both NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are missing from your Vercel Environment Variables.");
+  }
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is missing from your Vercel Environment Variables.");
+  }
+  if (!key) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing from your Vercel Environment Variables.");
   }
   return createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false }
