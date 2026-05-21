@@ -9,7 +9,7 @@ import { Float, Environment } from "@react-three/drei";
 import {
   ArrowLeft, FileText, MapPin, Briefcase, ExternalLink, X,
   MessageSquare, Send, Users, ChevronRight, Loader2, Trash2,
-  CheckCircle2, Clock, Eye, UserX, Search,
+  CheckCircle2, Clock, Eye, UserX, Search, Database,
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
@@ -81,6 +81,34 @@ function ApplicantCard({
   const [comments, setComments] = useState<Comment[]>(() => parseComments(app.notes));
   const [posting, setPosting] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [moved, setMoved] = useState(false);
+
+  async function handleMoveToDatabase() {
+    if (moved) return;
+    setMoving(true);
+    try {
+      const { error } = await supabase.from("cv_database").insert([
+        {
+          name: app.name,
+          email: app.email || null,
+          phone: app.phone || null,
+          cv_url: app.resume_url,
+          comments: app.notes || null,
+          status: "Not Called"
+        }
+      ]);
+      if (error) {
+        alert("Failed to move to CV Database: " + error.message);
+      } else {
+        setMoved(true);
+      }
+    } catch (e: any) {
+      alert("Error moving to database: " + e.message);
+    } finally {
+      setMoving(false);
+    }
+  }
 
   async function postComment() {
     const text = commentInput.trim();
@@ -151,6 +179,25 @@ function ApplicantCard({
             className="flex items-center gap-1.5 rounded-[10px] border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D] hover:border-[#3279F9] hover:text-[#3279F9] transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" /> View CV
+          </button>
+          <button
+            disabled={moving || moved}
+            onClick={handleMoveToDatabase}
+            className={`flex items-center gap-1.5 rounded-[10px] border px-3.5 py-2 text-[13px] font-medium transition-all ${
+              moved
+                ? "bg-emerald-50 border-emerald-200 text-emerald-600 cursor-default"
+                : "bg-white border-[#E1E6EC] text-[#45474D] hover:border-[#3279F9] hover:text-[#3279F9] active:scale-95 disabled:opacity-50"
+            }`}
+            title={moved ? "Moved to CV Database" : "Move CV to Database"}
+          >
+            {moving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : moved ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Database className="w-3.5 h-3.5 text-[#3279F9]" />
+            )}
+            {moved ? "In CV Database" : "Move to DB"}
           </button>
           <button
             onClick={() => onDelete(app.id)}
