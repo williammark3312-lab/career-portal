@@ -110,15 +110,15 @@ export default function JobsPage() {
   return (
     <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
       {/* 3D Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-30">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
           <ambientLight intensity={1.4} />
           <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-          <directionalLight position={[-10, -8, -5]} intensity={1} color="#3279F9" />
+          <directionalLight position={[-8, -8, -4]} intensity={1.2} color="#3279F9" />
           <Suspense fallback={null}>
             <FloatingRing />
             <Environment preset="city" />
-            <ContactShadows position={[0, -3, 0]} opacity={0.25} scale={20} blur={3} color="#737A87" />
+            <ContactShadows position={[0, -2.5, 0]} opacity={0.2} scale={16} blur={3} color="#737A87" />
           </Suspense>
         </Canvas>
       </div>

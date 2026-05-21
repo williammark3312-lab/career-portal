@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../../../src/lib/supabase";
 import { Canvas } from "@react-three/fiber";
-import { Float, Environment } from "@react-three/drei";
+import { Float, Environment, ContactShadows } from "@react-three/drei";
 import {
   ArrowLeft, FileText, MapPin, Briefcase, ExternalLink, X,
   MessageSquare, Send, Users, ChevronRight, Loader2, Trash2,
@@ -378,7 +378,7 @@ export default function JobScreeningPage() {
   return (
     <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
       {/* 3D Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas
           camera={{ position: [0, 0, 8], fov: 45 }}
           dpr={[1, 1.5]}
@@ -387,7 +387,12 @@ export default function JobScreeningPage() {
         >
           <ambientLight intensity={1.4} />
           <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-          <Suspense fallback={null}><FloatingRing /><Environment preset="city" /></Suspense>
+          <directionalLight position={[-8, -8, -4]} intensity={1.2} color="#3279F9" />
+          <Suspense fallback={null}>
+            <FloatingRing />
+            <Environment preset="city" />
+            <ContactShadows position={[0, -2.5, 0]} opacity={0.2} scale={16} blur={3} color="#737A87" />
+          </Suspense>
         </Canvas>
       </div>
 

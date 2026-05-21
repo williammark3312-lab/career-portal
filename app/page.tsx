@@ -36,7 +36,7 @@ export default function Home() {
   return (
     <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
       {/* 3D Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-55">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
           <ambientLight intensity={1.4} />
           <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
