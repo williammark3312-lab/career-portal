@@ -108,7 +108,7 @@ export default function JobsPage() {
   });
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
+    <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
       {/* 3D Background */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
@@ -135,11 +135,11 @@ export default function JobsPage() {
           className="max-w-2xl"
         >
           <span className="dept-tag mb-5 inline-block">Join Our Team</span>
-          <h1 className="text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-[1.05] text-[#121317]">
+          <h1 className="text-[48px] md:text-[64px] font-bold tracking-[-0.03em] leading-[1.05] text-white">
             Build Your Career<br />
             <span className="text-[#3279F9]">With Us</span>
           </h1>
-          <p className="mt-5 text-[17px] leading-[1.7] text-[#737A87] max-w-xl">
+          <p className="mt-5 text-[17px] leading-[1.7] text-white/70 max-w-xl">
             Explore premium career opportunities, collaborate with ambitious teams.
           </p>
         </motion.div>
@@ -152,23 +152,23 @@ export default function JobsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex flex-col md:flex-row gap-4 bg-white/60 backdrop-blur-md border border-white/40 p-3 rounded-[20px] shadow-[0_8px_32px_-12px_rgba(18,19,23,0.05)]"
+            className="flex flex-col md:flex-row gap-4 glass bg-white/[0.02] border-white/[0.08] p-3 rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737A87]" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input 
                 type="text" 
                 placeholder="Search jobs by title or keyword..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-white/80 rounded-[14px] border border-[#E1E6EC] text-[14px] outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[#3279F9]/10 transition-all"
+                className="w-full pl-11 pr-4 py-3 bg-[#0E0F15] border border-white/[0.08] focus:border-blue-500 rounded-[14px] text-[14px] text-white outline-none transition-all placeholder-white/20"
               />
             </div>
             <div className="flex gap-4">
               <select 
                 value={selectedDept} 
                 onChange={e => setSelectedDept(e.target.value)}
-                className="flex-1 md:w-[180px] px-4 py-3 bg-white/80 rounded-[14px] border border-[#E1E6EC] text-[14px] text-[#45474D] outline-none focus:border-[#3279F9] cursor-pointer appearance-none transition-all"
+                className="flex-1 md:w-[180px] px-4 py-3 bg-[#0E0F15] border border-white/[0.08] focus:border-blue-500 rounded-[14px] text-[14px] text-white/80 outline-none cursor-pointer transition-all"
               >
                 <option value="">All Departments</option>
                 {departments.map(d => <option key={d} value={d}>{d}</option>)}
@@ -176,7 +176,7 @@ export default function JobsPage() {
               <select 
                 value={selectedLoc} 
                 onChange={e => setSelectedLoc(e.target.value)}
-                className="flex-1 md:w-[180px] px-4 py-3 bg-white/80 rounded-[14px] border border-[#E1E6EC] text-[14px] text-[#45474D] outline-none focus:border-[#3279F9] cursor-pointer appearance-none transition-all"
+                className="flex-1 md:w-[180px] px-4 py-3 bg-[#0E0F15] border border-white/[0.08] focus:border-blue-500 rounded-[14px] text-[14px] text-white/80 outline-none cursor-pointer transition-all"
               >
                 <option value="">All Locations</option>
                 {locations.map(l => <option key={l} value={l}>{l}</option>)}
@@ -190,43 +190,43 @@ export default function JobsPage() {
       <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-24">
         {loading ? (
           <div className="flex items-center justify-center py-32">
-            <div className="w-8 h-8 border-2 border-[#3279F9]/30 border-t-[#3279F9] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-white/20 border-t-[#3279F9] rounded-full animate-spin" />
           </div>
         ) : jobs.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center">
-            <p className="text-[17px] text-[#737A87]">No open positions right now. Check back soon!</p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center border border-white/[0.06]">
+            <p className="text-[17px] text-white/40">No open positions right now. Check back soon!</p>
           </motion.div>
         ) : filteredJobs.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center border-dashed">
-            <p className="text-[17px] text-[#737A87]">No jobs match your search criteria. Try adjusting your filters.</p>
-            <button onClick={() => { setSearchQuery(""); setSelectedDept(""); setSelectedLoc(""); }} className="mt-4 text-[14px] font-medium text-[#3279F9] hover:underline">Clear all filters</button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center border border-white/[0.06] border-dashed">
+            <p className="text-[17px] text-white/40">No jobs match your search criteria. Try adjusting your filters.</p>
+            <button onClick={() => { setSearchQuery(""); setSelectedDept(""); setSelectedLoc(""); }} className="mt-4 text-[14px] font-bold text-[#3279F9] hover:underline cursor-pointer">Clear all filters</button>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredJobs.map((job, i) => (
               <Card3D key={job.id} delay={i * 0.08} onClick={() => router.push(`/jobs/${job.id}`)}
-                className="rounded-[24px] p-8 cursor-pointer"
+                className="rounded-[24px] p-8 cursor-pointer bg-white/[0.01]"
               >
                 <div className="flex flex-col h-full">
                   <div className="flex items-start justify-between gap-4 mb-6">
                     <span className="dept-tag">{job.department}</span>
-                    <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-[#E1E6EC] bg-white px-3 py-1">
-                      <MapPin className="w-3.5 h-3.5 text-[#737A87]" />
-                      <span className="text-[12px] font-medium text-[#45474D]">{job.location}</span>
+                    <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1">
+                      <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                      <span className="text-[12px] font-semibold text-slate-300">{job.location}</span>
                     </div>
                   </div>
-                  <h2 className="text-[24px] font-bold tracking-[-0.02em] text-[#1a3bbd] transition-colors duration-300 mb-3 group-hover:text-[#3279F9]">
+                  <h2 className="text-[24px] font-bold tracking-[-0.02em] text-white transition-colors duration-300 mb-3 group-hover:text-blue-400">
                     {job.title}
                   </h2>
-                  <p className="text-[14px] leading-[1.65] text-[#737A87] line-clamp-3 flex-1">
+                  <p className="text-[14px] leading-[1.65] text-slate-300 line-clamp-3 flex-1">
                     {job.description.replace(/#{1,3} |[*_~`]/g, "")}
                   </p>
-                  <div className="mt-6 pt-5 border-t border-[#E1E6EC] flex items-center justify-between">
+                  <div className="mt-6 pt-5 border-t border-white/[0.06] flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Briefcase className="w-3.5 h-3.5 text-[#737A87]" />
-                      <span className="text-[13px] font-medium text-[#45474D]">Full Time</span>
+                      <Briefcase className="w-3.5 h-3.5 text-purple-400" />
+                      <span className="text-[13px] font-semibold text-slate-300">Full Time</span>
                     </div>
-                    <span className="flex items-center gap-1.5 text-[13px] font-semibold text-[#3279F9]">
+                    <span className="flex items-center gap-1.5 text-[13px] font-bold text-[#3279F9]">
                       Apply Now
                       <ArrowRight className="w-3.5 h-3.5" />
                     </span>

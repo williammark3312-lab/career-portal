@@ -37,14 +37,14 @@ function parseComments(raw: string | null | undefined): Comment[] {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
-  Pending:     { label: "Pending",     cls: "bg-amber-50 text-amber-700 border-amber-200",   icon: <Clock className="w-3 h-3" /> },
-  Reviewed:    { label: "Reviewed",    cls: "bg-blue-50 text-blue-700 border-blue-200",       icon: <Eye className="w-3 h-3" /> },
-  Shortlisted: { label: "Shortlisted", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <CheckCircle2 className="w-3 h-3" /> },
-  Rejected:    { label: "Rejected",    cls: "bg-red-50 text-red-700 border-red-200",          icon: <UserX className="w-3 h-3" /> },
+  Pending:     { label: "Pending",     cls: "bg-amber-500/10 text-amber-400 border-amber-500/20",   icon: <Clock className="w-3 h-3" /> },
+  Reviewed:    { label: "Reviewed",    cls: "bg-blue-500/10 text-blue-400 border-blue-500/20",       icon: <Eye className="w-3 h-3" /> },
+  Shortlisted: { label: "Shortlisted", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", icon: <CheckCircle2 className="w-3 h-3" /> },
+  Rejected:    { label: "Rejected",    cls: "bg-red-500/10 text-red-400 border-red-500/20",          icon: <UserX className="w-3 h-3" /> },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, cls: "bg-gray-100 text-gray-600 border-gray-200", icon: null };
+  const cfg = STATUS_CONFIG[status] ?? { label: status, cls: "bg-white/5 text-white/50 border-white/10", icon: null };
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.cls}`}>
       {cfg.icon}{cfg.label}
@@ -146,18 +146,18 @@ function ApplicantCard({
       className="glass rounded-[22px] overflow-hidden"
     >
       {/* Top bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 border-b border-[#E1E6EC]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 border-b border-white/[0.08]">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap mb-1">
-            <h3 className="text-[18px] font-semibold tracking-tight">{app.name}</h3>
+            <h3 className="text-[18px] font-semibold tracking-tight text-white">{app.name}</h3>
             <StatusBadge status={app.status} />
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-[#737A87]">
-            <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" />{app.email}</span>
-            {app.phone && <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5" />{app.phone}</span>}
-            {app.location && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" />{app.location}</span>}
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-white/60">
+            <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-white/40" />{app.email}</span>
+            {app.phone && <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-white/40" />{app.phone}</span>}
+            {app.location && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-white/40" />{app.location}</span>}
           </div>
-          <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#B2BBC5]">
+          <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/40">
             Applied {new Date(app.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
           </p>
         </div>
@@ -167,7 +167,7 @@ function ApplicantCard({
           <select
             value={app.status}
             onChange={e => onStatusChange(app.id, e.target.value)}
-            className="rounded-[10px] border border-[#E1E6EC] bg-white px-3 py-2 text-[13px] font-medium text-[#45474D] outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
+            className="rounded-[10px] border border-white/10 bg-[#0e0f14]/80 px-3 py-2 text-[13px] font-medium text-white/80 outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
           >
             <option>Pending</option>
             <option>Reviewed</option>
@@ -176,7 +176,7 @@ function ApplicantCard({
           </select>
           <button
             onClick={() => onOpenCV(app.resume_url)}
-            className="flex items-center gap-1.5 rounded-[10px] border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D] hover:border-[#3279F9] hover:text-[#3279F9] transition-colors"
+            className="flex items-center gap-1.5 rounded-[10px] border border-white/10 bg-[#0e0f14]/80 px-4 py-2 text-[13px] font-medium text-white/80 hover:border-[#3279F9] hover:text-[#3279F9] transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" /> View CV
           </button>
@@ -185,8 +185,8 @@ function ApplicantCard({
             onClick={handleMoveToDatabase}
             className={`flex items-center gap-1.5 rounded-[10px] border px-3.5 py-2 text-[13px] font-medium transition-all ${
               moved
-                ? "bg-emerald-50 border-emerald-200 text-emerald-600 cursor-default"
-                : "bg-white border-[#E1E6EC] text-[#45474D] hover:border-[#3279F9] hover:text-[#3279F9] active:scale-95 disabled:opacity-50"
+                ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400 cursor-default"
+                : "bg-[#0e0f14]/80 border-white/10 text-white/80 hover:border-[#3279F9] hover:text-[#3279F9] active:scale-95 disabled:opacity-50"
             }`}
             title={moved ? "Moved to CV Database" : "Move CV to Database"}
           >
@@ -201,7 +201,7 @@ function ApplicantCard({
           </button>
           <button
             onClick={() => onDelete(app.id)}
-            className="rounded-[10px] border border-[#E1E6EC] bg-white p-2 text-red-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors"
+            className="rounded-[10px] border border-white/10 bg-[#0e0f14]/80 p-2 text-red-400 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 transition-colors"
             title="Delete application"
           >
             <Trash2 className="w-4 h-4" />
@@ -213,13 +213,13 @@ function ApplicantCard({
       <div className="px-6 py-5">
         <div
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center justify-between cursor-pointer hover:text-[#121317] transition-colors text-[#737A87]"
+          className="flex items-center justify-between cursor-pointer hover:text-white transition-colors text-white/60"
         >
           <div className="flex items-center gap-1.5">
             <MessageSquare className="w-4 h-4 text-[#3279F9]" />
-            <span className="text-[13px] font-semibold">Recruiter Comments</span>
+            <span className="text-[13px] font-semibold text-white/80">Recruiter Comments</span>
             {comments.length > 0 && (
-              <span className="ml-1 text-[11px] font-medium bg-[#EFF2F7] text-[#737A87] px-2 py-0.5 rounded-full">{comments.length}</span>
+              <span className="ml-1 text-[11px] font-medium bg-white/5 text-white/60 px-2 py-0.5 rounded-full">{comments.length}</span>
             )}
           </div>
           <span className="text-[12px] font-medium text-[#3279F9] hover:underline">
@@ -241,19 +241,19 @@ function ApplicantCard({
               {comments.length > 0 && (
                 <div className="max-h-[240px] overflow-y-auto mb-4 space-y-2 pr-1">
                   {comments.map(c => (
-                    <div key={c.id} className="group relative bg-white/70 border border-[#E1E6EC] rounded-[12px] p-3 hover:bg-white hover:border-[#3279F9]/30 transition-all">
+                    <div key={c.id} className="group relative bg-[#0e0f14]/40 border border-white/[0.06] rounded-[12px] p-3 hover:bg-[#0e0f14]/70 hover:border-[#3279F9]/30 transition-all">
                       <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="text-[12px] font-semibold text-[#1a3bbd] truncate max-w-[200px]" title={c.author}>
+                        <span className="text-[12px] font-semibold text-[#5B9BFF] truncate max-w-[200px]" title={c.author}>
                           {c.author.split("@")[0]}
                         </span>
-                        <span className="text-[10px] text-[#B2BBC5] shrink-0">
+                        <span className="text-[10px] text-white/40 shrink-0">
                           {new Date(c.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                         </span>
                       </div>
-                      <p className="text-[13px] text-[#45474D] whitespace-pre-wrap break-words leading-relaxed">{c.text}</p>
+                      <p className="text-[13px] text-white/80 whitespace-pre-wrap break-words leading-relaxed">{c.text}</p>
                       <button
                         onClick={() => deleteComment(c.id)}
-                        className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 text-[#B2BBC5] hover:text-red-500 transition-all cursor-pointer"
+                        className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 text-white/40 hover:text-red-400 transition-all cursor-pointer"
                         title="Delete comment"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -271,12 +271,12 @@ function ApplicantCard({
                   onChange={e => setCommentInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) postComment(); }}
                   rows={2}
-                  className="flex-1 rounded-[12px] border border-[#E1E6EC] bg-white/60 px-4 py-2.5 text-[13px] text-[#45474D] outline-none transition-all focus:border-[#3279F9] focus:bg-white resize-none"
+                  className="flex-1 rounded-[12px] border border-white/10 bg-[#0e0f14]/60 px-4 py-2.5 text-[13px] text-white outline-none transition-all focus:border-[#3279F9] focus:bg-[#0e0f14] resize-none"
                 />
                 <button
                   disabled={!commentInput.trim() || posting}
                   onClick={postComment}
-                  className="btn-dark rounded-[12px] px-4 py-2 self-end flex items-center gap-1.5 text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary rounded-[12px] px-4 py-2 self-end flex items-center gap-1.5 text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {posting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   Post
@@ -369,14 +369,14 @@ export default function JobScreeningPage() {
   /* Loading / auth states */
   if (authLoading) {
     return (
-      <main className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
+      <main className="min-h-screen bg-[#07080b] flex items-center justify-center">
         <div className="w-10 h-10 rounded-full border-2 border-[rgba(50,121,249,0.25)] border-t-[#3279F9] animate-spin" />
       </main>
     );
   }
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
+    <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
       {/* 3D Background */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas
@@ -401,15 +401,15 @@ export default function JobScreeningPage() {
       <div className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-10 py-10 pb-24">
 
         {/* Breadcrumb / back */}
-        <div className="flex items-center gap-2 mb-8 text-[14px] text-[#737A87]">
+        <div className="flex items-center gap-2 mb-8 text-[14px] text-white/40">
           <button
             onClick={() => router.push("/admin")}
-            className="flex items-center gap-1.5 hover:text-[#3279F9] transition-colors font-medium"
+            className="flex items-center gap-1.5 hover:text-[#3279F9] transition-colors font-medium text-white/60"
           >
             <ArrowLeft className="w-4 h-4" /> Admin
           </button>
           <ChevronRight className="w-4 h-4 opacity-50" />
-          <span className="text-[#121317] font-semibold truncate max-w-[240px]">
+          <span className="text-white font-semibold truncate max-w-[240px]">
             {job?.title ?? "Job"}
           </span>
           <ChevronRight className="w-4 h-4 opacity-50" />
@@ -426,11 +426,11 @@ export default function JobScreeningPage() {
             <div className="flex flex-col sm:flex-row sm:items-end gap-4 justify-between">
               <div>
                 <span className="dept-tag mb-3 inline-block">{job.department}</span>
-                <h1 className="text-[32px] font-bold tracking-[-0.025em] leading-tight">
+                <h1 className="text-[32px] font-bold tracking-[-0.025em] leading-tight text-white">
                   {job.title}
                 </h1>
-                <div className="flex items-center gap-1.5 mt-1.5 text-[14px] text-[#737A87]">
-                  <MapPin className="w-3.5 h-3.5" /> {job.location}
+                <div className="flex items-center gap-1.5 mt-1.5 text-[14px] text-white/60">
+                  <MapPin className="w-3.5 h-3.5 text-white/40" /> {job.location}
                 </div>
               </div>
 
@@ -456,19 +456,19 @@ export default function JobScreeningPage() {
             className="flex flex-col sm:flex-row gap-3 mb-8"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737A87]" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="text"
                 placeholder="Search by name or email…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-11 pr-4 py-2.5 rounded-[12px] border border-[#E1E6EC] bg-white text-[14px] outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[#3279F9]/10 transition-all"
+                className="w-full pl-11 pr-4 py-2.5 rounded-[12px] border border-white/10 bg-[#0e0f14]/60 text-[14px] text-white outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[#3279F9]/10 transition-all"
               />
             </div>
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="rounded-[12px] border border-[#E1E6EC] bg-white px-4 py-2.5 text-[14px] font-medium text-[#45474D] outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
+              className="rounded-[12px] border border-white/10 bg-[#0e0f14]/60 px-4 py-2.5 text-[14px] font-medium text-white/80 outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
             >
               <option value="All">All Statuses ({applications.length})</option>
               <option value="Pending">Pending ({counts.Pending ?? 0})</option>
@@ -489,20 +489,20 @@ export default function JobScreeningPage() {
             <div className="w-16 h-16 rounded-full bg-[#3279F9]/10 flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-[#3279F9]" />
             </div>
-            <h3 className="text-[18px] font-semibold mb-2">No applications yet</h3>
-            <p className="text-[14px] text-[#737A87]">Candidates who apply for this role will appear here.</p>
+            <h3 className="text-[18px] font-semibold mb-2 text-white">No applications yet</h3>
+            <p className="text-[14px] text-white/40">Candidates who apply for this role will appear here.</p>
           </motion.div>
         ) : filtered.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-16 text-center">
-            <p className="text-[16px] text-[#737A87]">No applicants match your search or filter.</p>
+            <p className="text-[16px] text-white/40">No applicants match your search or filter.</p>
             <button onClick={() => { setSearch(""); setStatusFilter("All"); }} className="mt-3 text-[14px] font-medium text-[#3279F9] hover:underline">
               Clear filters
             </button>
           </motion.div>
         ) : (
           <div className="space-y-5">
-            <p className="text-[13px] text-[#737A87] font-medium">
-              Showing <span className="text-[#121317] font-semibold">{filtered.length}</span> of {applications.length} applicants
+            <p className="text-[13px] text-white/40 font-medium">
+              Showing <span className="text-white font-semibold">{filtered.length}</span> of {applications.length} applicants
             </p>
             {filtered.map((app, i) => (
               <motion.div
@@ -530,7 +530,7 @@ export default function JobScreeningPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[rgba(18,19,23,0.45)] backdrop-blur-[6px]"
+              className="absolute inset-0 bg-black/60 backdrop-blur-[6px]"
               onClick={() => setCvOpen(false)}
             />
             <motion.div
@@ -538,31 +538,31 @@ export default function JobScreeningPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 24 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="relative w-full max-w-5xl h-[92vh] rounded-[28px] bg-white border border-[#E1E6EC] overflow-hidden flex flex-col shadow-2xl"
+              className="relative w-full max-w-5xl h-[92vh] rounded-[28px] bg-[#0e0f14] border border-white/10 overflow-hidden flex flex-col shadow-2xl"
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-[#E1E6EC] bg-[#F8F9FC] shrink-0">
-                <h3 className="text-[16px] font-semibold">Resume Viewer</h3>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#0e0f14] shrink-0">
+                <h3 className="text-[16px] font-semibold text-white">Resume Viewer</h3>
                 <div className="flex items-center gap-3">
                   <a
                     href={selectedCV}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-[10px] border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D] hover:text-[#3279F9] hover:border-[#3279F9] transition-colors"
+                    className="flex items-center gap-1.5 rounded-[10px] border border-white/10 bg-[#0e0f14]/80 px-4 py-2 text-[13px] font-medium text-white/80 hover:text-[#3279F9] hover:border-[#3279F9] transition-colors"
                   >
                     Open in New Tab <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                   <button
                     onClick={() => setCvOpen(false)}
-                    className="rounded-full p-2 hover:bg-[#EFF2F7] text-[#737A87] hover:text-[#121317] transition-colors"
+                    className="rounded-full p-2 hover:bg-white/5 text-white/40 hover:text-white transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
-              <div className="flex-1 min-h-0 p-4 bg-[#E1E6EC]">
+              <div className="flex-1 min-h-0 p-4 bg-[#07080b]">
                 <iframe
                   src={selectedCV}
-                  className="w-full h-full rounded-[16px] bg-white border border-[#CDD4DC]"
+                  className="w-full h-full rounded-[16px] bg-white border border-white/10"
                   title="Resume"
                 />
               </div>

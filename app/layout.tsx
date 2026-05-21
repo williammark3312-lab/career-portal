@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${jakarta.variable} ${mono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans text-[#121317]">
+      <body className="min-h-full flex flex-col font-sans text-[#f3f4f6]">
         {children}
       </body>
     </html>

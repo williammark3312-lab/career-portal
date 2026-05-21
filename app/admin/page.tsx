@@ -534,8 +534,8 @@ export default function AdminPage() {
             <h1 className="text-[36px] font-bold text-white tracking-tight leading-tight">
               Control Panel
             </h1>
-            <p className="text-[14px] text-white/40 mt-1">
-              Welcome back, <span className="text-[#5B9BFF] font-semibold">{session?.user?.email?.split("@")[0]}</span>. Manage listings and screen active candidates.
+            <p className="text-[14px] text-white/70 mt-1">
+              Welcome back, <span className="text-blue-400 font-semibold">{session?.user?.email?.split("@")[0]}</span>. Manage listings and screen active candidates.
             </p>
           </div>
           
@@ -585,19 +585,19 @@ export default function AdminPage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: idx * 0.05 }}
-                  className={`glass hover:bg-white/[0.04] border ${s.border} rounded-[24px] p-6 transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.2)] flex flex-col justify-between relative overflow-hidden group`}
+                  className={`glass hover:bg-white/[0.04] border ${s.border} rounded-[24px] p-6 transition-all duration-300 shadow-[0_8px_35px_rgba(0,0,0,0.4)] flex flex-col justify-between relative overflow-hidden group`}
                 >
-                  <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-gradient-to-br ${s.color} opacity-40 blur-xl group-hover:scale-125 transition-transform duration-500`} />
+                  <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-gradient-to-br ${s.color} opacity-35 blur-xl group-hover:scale-125 transition-transform duration-500`} />
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[14px] font-semibold text-white/50">{s.label}</span>
-                    <div className="p-2.5 rounded-[12px] bg-white/[0.03] border border-white/[0.06] shadow-sm">
+                    <span className="text-[14px] font-semibold text-slate-300">{s.label}</span>
+                    <div className="p-2.5 rounded-[12px] bg-white/[0.02] border border-white/[0.06] shadow-sm">
                       {s.icon}
                     </div>
                   </div>
                   <div>
                     <h3 className="text-[32px] font-bold text-white tracking-tight leading-none mb-1.5">{s.value}</h3>
                     <div className="flex items-center gap-1.5 text-[12px]">
-                      <span className="text-[#3279F9] font-medium">{s.desc}</span>
+                      <span className="text-blue-400 font-semibold">{s.desc}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -608,7 +608,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between mb-8 gap-4">
               <div>
                 <h2 className="text-[22px] font-bold tracking-tight text-white">Active Postings</h2>
-                <p className="text-white/40 mt-1 text-[13px]">Select a position below to initiate recruiter screening.</p>
+                <p className="text-slate-300 mt-1 text-[13px]">Select a position below to initiate recruiter screening.</p>
               </div>
               <button onClick={openCreate} className="px-5 py-3 rounded-[16px] text-[13px] font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_6px_20px_-4px_rgba(50,121,249,0.4)] hover:from-blue-600 hover:to-indigo-700 shrink-0">
                 <Plus className="w-4 h-4" /> New Job Listing
@@ -633,7 +633,7 @@ export default function AdminPage() {
                       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       
                       <div className="flex items-start justify-between mb-4">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B9BFF] bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
+                        <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#60a5fa] bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
                           {job.department}
                         </span>
                         <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -658,12 +658,12 @@ export default function AdminPage() {
                         {job.title}
                       </h2>
                       
-                      <div className="flex items-center gap-1.5 text-[13px] text-white/50 mb-4">
+                      <div className="flex items-center gap-1.5 text-[13px] text-slate-300 mb-4">
                         <MapPin className="w-3.5 h-3.5 text-blue-400" />
                         {job.location}
                       </div>
                       
-                      <p className="text-[13px] text-white/40 line-clamp-3 leading-[1.6] mb-6 flex-1">
+                      <p className="text-[13px] text-slate-300 line-clamp-3 leading-[1.6] mb-6 flex-1">
                         {job.description.replace(/#{1,3} |[*_~`•]/g, "")}
                       </p>
                       

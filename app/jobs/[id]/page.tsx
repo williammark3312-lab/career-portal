@@ -46,18 +46,18 @@ function renderMd(md: string): string {
     if (/^#{1,3} /.test(line)) {
       if (inUl) { out.push("</ul>"); inUl = false; }
       const text = line.replace(/^#{1,3} /, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      out.push(`<h3 class="text-[18px] font-semibold text-[#121317] mt-7 mb-3">${text}</h3>`);
+      out.push(`<h3 class="text-[18px] font-semibold text-white mt-7 mb-3">${text}</h3>`);
       continue;
     }
     if (/^[•\-] /.test(line)) {
-      if (!inUl) { out.push('<ul class="space-y-1.5 my-4 ml-5 list-disc text-[#737A87]">'); inUl = true; }
-      const text = line.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-medium text-[#121317]'>$1</strong>");
+      if (!inUl) { out.push('<ul class="space-y-1.5 my-4 ml-5 list-disc text-slate-300">'); inUl = true; }
+      const text = line.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-medium text-white'>$1</strong>");
       out.push(`<li class="pl-1 marker:text-[#3279F9]">${text}</li>`);
       continue;
     }
     if (inUl) { out.push("</ul>"); inUl = false; }
-    const text = line.replace(/\*\*(.*?)\*\*/g, "<strong class='font-medium text-[#121317]'>$1</strong>");
-    out.push(`<p class="my-2 text-[15px] leading-[1.7] text-[#737A87]">${text}</p>`);
+    const text = line.replace(/\*\*(.*?)\*\*/g, "<strong class='font-medium text-white'>$1</strong>");
+    out.push(`<p class="my-2 text-[15px] leading-[1.7] text-slate-300">${text}</p>`);
   }
   if (inUl) out.push("</ul>");
   return out.join("\n");
@@ -208,10 +208,10 @@ export default function JobDetailsPage() {
   /* Loading */
   if (!job) {
     return (
-      <main className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
+      <main className="min-h-screen bg-[#07080b] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-[rgba(50,121,249,0.25)] border-t-[#3279F9] animate-spin" />
-          <p className="text-[14px] text-[#737A87]">Loading…</p>
+          <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-[#3279F9] animate-spin" />
+          <p className="text-[14px] text-white/50">Loading…</p>
         </div>
       </main>
     );
@@ -220,7 +220,7 @@ export default function JobDetailsPage() {
   /* Success */
   if (submitted) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[#F8F9FC]">
+      <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
         <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
           <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
             <ambientLight intensity={1.4} />
@@ -235,7 +235,7 @@ export default function JobDetailsPage() {
         </div>
         <header className="site-header">
           <div className="site-header-inner">
-            <span className="site-logo" onClick={() => router.push("/jobs")}>
+            <span className="site-logo cursor-pointer text-white font-bold" onClick={() => router.push("/jobs")}>
               Careers Portal
             </span>
           </div>
@@ -250,7 +250,7 @@ export default function JobDetailsPage() {
             {/* The Receipt Card */}
             <div 
               ref={receiptRef}
-              className="bg-white rounded-[24px] shadow-[0_20px_40px_-12px_rgba(18,19,23,0.1)] overflow-hidden border border-[#E1E6EC]"
+              className="bg-white rounded-[24px] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.55)] overflow-hidden border border-[#E1E6EC]"
             >
               <div className="bg-[#3B54C4] px-8 py-8 text-center relative overflow-hidden">
                 <div data-html2canvas-ignore="true" className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent)]" />
@@ -309,7 +309,7 @@ export default function JobDetailsPage() {
                  <><Download className="w-4 h-4" /> Download PDF Receipt</>
                )}
              </button>
-             <button onClick={() => router.push("/jobs")} className="flex-1 btn-secondary bg-white">
+             <button onClick={() => router.push("/jobs")} className="flex-1 btn-secondary cursor-pointer">
                Back to Careers
              </button>
           </motion.div>
@@ -325,7 +325,7 @@ export default function JobDetailsPage() {
 
   /* Main */
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
+    <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
           <ambientLight intensity={1.4} />
@@ -349,16 +349,16 @@ export default function JobDetailsPage() {
           className="glass rounded-[32px] overflow-hidden"
         >
           {/* Job Header */}
-          <div className="px-10 py-10 border-b border-[#E1E6EC]">
+          <div className="px-10 py-10 border-b border-white/[0.06]">
             <span className="dept-tag mb-5 inline-block">{job.department}</span>
-            <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-[#1a3bbd]">{job.title}</h1>
+            <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-white">{job.title}</h1>
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D]">
-                <MapPin className="w-3.5 h-3.5 text-[#737A87]" />
+              <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-[13px] font-semibold text-slate-300">
+                <MapPin className="w-3.5 h-3.5 text-blue-400" />
                 {job.location}
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D]">
-                <Briefcase className="w-3.5 h-3.5 text-[#737A87]" />
+              <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-[13px] font-semibold text-slate-300">
+                <Briefcase className="w-3.5 h-3.5 text-purple-400" />
                 Full Time
               </div>
             </div>
@@ -366,11 +366,11 @@ export default function JobDetailsPage() {
 
           {/* Job Body */}
           <div className="px-10 py-10">
-            <h2 className="text-[22px] font-semibold mb-6 text-[#121317]">About the role</h2>
+            <h2 className="text-[22px] font-bold mb-6 text-white">About the role</h2>
             <div className="text-[15px]" dangerouslySetInnerHTML={{ __html: renderMd(job.description) }} />
 
             {!showApply ? (
-              <div className="mt-10 pt-8 border-t border-[#E1E6EC]">
+              <div className="mt-10 pt-8 border-t border-white/[0.06]">
                 <button onClick={() => setShowApply(true)} className="btn-primary">Apply for this position</button>
               </div>
             ) : (
@@ -378,11 +378,11 @@ export default function JobDetailsPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-10 pt-10 border-t border-[#E1E6EC]"
+                className="mt-10 pt-10 border-t border-white/[0.06]"
               >
                 <div className="mb-8">
-                  <h2 className="text-[26px] font-semibold text-[#1a3bbd]">Submit your application</h2>
-                  <p className="text-[14px] text-[#737A87] mt-2">
+                  <h2 className="text-[26px] font-bold text-blue-400">Submit your application</h2>
+                  <p className="text-[14px] text-white/60 mt-2">
                     Fill out the form below to apply for <strong className="text-[#3279F9]">{job.title}</strong>
                   </p>
                 </div>
@@ -391,18 +391,18 @@ export default function JobDetailsPage() {
                   <div>
                     <label className="form-label">Full Name <span className="text-red-500">*</span></label>
                     <input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" className="form-input" />
-                    {errors.name && <p className="mt-1.5 text-[12px] text-red-500">{errors.name}</p>}
+                    {errors.name && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.name}</p>}
                   </div>
                   <div>
                     <label className="form-label">Email Address <span className="text-red-500">*</span></label>
                     <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="jane@example.com" className="form-input" />
-                    {errors.email && <p className="mt-1.5 text-[12px] text-red-500">{errors.email}</p>}
+                    {errors.email && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.email}</p>}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
-                      <div className="flex">
-                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[#CDD4DC] bg-[#F8F9FC] text-[15px] font-medium text-[#45474D] select-none whitespace-nowrap">
+                      <div className="flex animate-fade-in">
+                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-white/[0.08] bg-[#0E0F15] text-[15px] font-bold text-slate-300 select-none whitespace-nowrap">
                           +91
                         </span>
                         <input
@@ -413,26 +413,26 @@ export default function JobDetailsPage() {
                           className="form-input rounded-l-none border-l-0"
                         />
                       </div>
-                      {errors.phone && <p className="mt-1.5 text-[12px] text-red-500">{errors.phone}</p>}
+                      {errors.phone && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.phone}</p>}
                     </div>
                     <div>
                       <label className="form-label">City <span className="text-red-500">*</span></label>
                       <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Mumbai" className="form-input" />
-                      {errors.location && <p className="mt-1.5 text-[12px] text-red-500">{errors.location}</p>}
+                      {errors.location && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.location}</p>}
                     </div>
                   </div>
                   <div>
                     <label className="form-label">Resume / CV <span className="text-red-500">*</span></label>
-                    <div className="relative rounded-[14px] border-2 border-dashed border-[#CDD4DC] bg-white/60 px-6 py-9 text-center hover:bg-white transition-colors cursor-pointer">
+                    <div className="relative rounded-[14px] border-2 border-dashed border-white/[0.08] bg-[#0E0F15]/30 px-6 py-9 text-center hover:bg-[#0E0F15] hover:border-blue-500/40 transition-colors cursor-pointer">
                       <input type="file" accept=".pdf,.doc,.docx"
                         onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
-                      <Upload className="mx-auto h-7 w-7 text-[#737A87] mb-2" />
-                      <p className="text-[14px] font-medium text-[#121317]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
-                      <p className="text-[12px] text-[#737A87] mt-1">PDF, DOC up to 5 MB</p>
+                      <Upload className="mx-auto h-7 w-7 text-white/40 mb-2" />
+                      <p className="text-[14px] font-bold text-white">{resume ? resume.name : "Click to upload or drag & drop"}</p>
+                      <p className="text-[12px] text-white/30 mt-1">PDF, DOC up to 5 MB</p>
                     </div>
-                    {errors.resume && <p className="mt-1.5 text-[12px] text-red-500">{errors.resume}</p>}
+                    {errors.resume && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.resume}</p>}
                   </div>
                   <div className="pt-2">
                     <button disabled={loading} onClick={handleSubmit} className="btn-dark w-full disabled:opacity-60 disabled:cursor-not-allowed">
