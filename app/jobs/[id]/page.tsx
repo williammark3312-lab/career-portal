@@ -45,19 +45,19 @@ function renderMd(md: string): string {
     if (!line) { if (inUl) { out.push("</ul>"); inUl = false; } continue; }
     if (/^#{1,3} /.test(line)) {
       if (inUl) { out.push("</ul>"); inUl = false; }
-      const text = line.replace(/^#{1,3} /, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      out.push(`<h3 class="text-[18px] font-semibold text-white mt-7 mb-3">${text}</h3>`);
+      const text = line.replace(/^#{1,3} /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='md-bold'>$1</strong>");
+      out.push(`<h3 class="md-heading">${text}</h3>`);
       continue;
     }
     if (/^[•\-] /.test(line)) {
-      if (!inUl) { out.push('<ul class="space-y-1.5 my-4 ml-5 list-disc text-slate-300">'); inUl = true; }
-      const text = line.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-medium text-white'>$1</strong>");
-      out.push(`<li class="pl-1 marker:text-[#3279F9]">${text}</li>`);
+      if (!inUl) { out.push('<ul class="md-list">'); inUl = true; }
+      const text = line.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='md-bold'>$1</strong>");
+      out.push(`<li>${text}</li>`);
       continue;
     }
     if (inUl) { out.push("</ul>"); inUl = false; }
-    const text = line.replace(/\*\*(.*?)\*\*/g, "<strong class='font-medium text-white'>$1</strong>");
-    out.push(`<p class="my-2 text-[15px] leading-[1.7] text-slate-300">${text}</p>`);
+    const text = line.replace(/\*\*(.*?)\*\*/g, "<strong class='md-bold'>$1</strong>");
+    out.push(`<p class="md-body">${text}</p>`);
   }
   if (inUl) out.push("</ul>");
   return out.join("\n");
@@ -435,7 +435,7 @@ export default function JobDetailsPage() {
                     {errors.resume && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.resume}</p>}
                   </div>
                   <div className="pt-2">
-                    <button disabled={loading} onClick={handleSubmit} className="btn-dark w-full disabled:opacity-60 disabled:cursor-not-allowed">
+                    <button disabled={loading} onClick={handleSubmit} className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed">
                       {loading ? "Submitting…" : "Submit Application"}
                     </button>
                   </div>

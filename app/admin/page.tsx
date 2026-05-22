@@ -86,10 +86,10 @@ function BgCanvas() {
 /* ─── Status badge (CV database) ─── */
 function CvStatusBadge({ status }: { status: string }) {
   const cls =
-    status === "Called"      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+    status === "Called"      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200" :
     status === "Interviewing"? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
     status === "Rejected"    ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                               "bg-white/5 text-white/50 border-white/10";
+                               "bg-[var(--grey-200)] text-[var(--muted)] border-[var(--border)]";
   return <span className={`badge border ${cls}`}>{status}</span>;
 }
 
@@ -529,27 +529,27 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <Sparkles className="w-4 h-4 text-blue-400" />
-              <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/50">Recruiter Console</span>
+              <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--muted)]">Recruiter Console</span>
             </div>
-            <h1 className="text-[36px] font-bold text-white tracking-tight leading-tight">
+            <h1 className="text-[36px] font-bold text-[var(--fg)] tracking-tight leading-tight">
               Control Panel
             </h1>
-            <p className="text-[14px] text-white/70 mt-1">
+            <p className="text-[14px] text-[var(--fg)]/70 mt-1">
               Welcome back, <span className="text-blue-400 font-semibold">{session?.user?.email?.split("@")[0]}</span>. Manage listings and screen active candidates.
             </p>
           </div>
           
           {/* Quick Date Display */}
-          <div className="hidden md:flex items-center gap-3 px-4 py-2.5 rounded-[16px] bg-white/[0.02] border border-white/[0.06] backdrop-blur-md">
-            <span className="text-[13px] font-semibold text-white/60">
+          <div className="hidden md:flex items-center gap-3 px-4 py-2.5 rounded-[16px] bg-[var(--grey-200)] border border-[var(--border)] backdrop-blur-md">
+            <span className="text-[13px] font-semibold text-[var(--muted)]">
               {new Date().toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })}
             </span>
           </div>
         </motion.div>
 
         {/* Tab Navigation & Search/Filter Panel */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-10 border-b border-white/[0.06] pb-6">
-          <div className="flex gap-1.5 p-1 bg-white/[0.02] border border-white/[0.05] rounded-[20px] inline-flex flex-wrap shadow-inner backdrop-blur-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-10 border-b border-[var(--border)] pb-6">
+          <div className="flex gap-1.5 p-1 bg-[var(--grey-200)] border border-[var(--border)] rounded-[20px] inline-flex flex-wrap shadow-inner backdrop-blur-md">
             {([
               { key: "jobs", label: "Jobs & Applications", icon: <Briefcase className="w-4 h-4" /> },
               { key: "cvs",  label: "CV Database",          icon: <FileText className="w-4 h-4" /> },
@@ -559,7 +559,7 @@ export default function AdminPage() {
                 className={`px-5 py-3 rounded-[16px] text-[13px] font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer ${
                   activeTab === t.key 
                     ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_6px_20px_-4px_rgba(50,121,249,0.4)] scale-102" 
-                    : "text-white/60 hover:text-white hover:bg-white/[0.04]"
+                    : "text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--grey-300)]"
                 }`}
               >
                 {t.icon} {t.label}
@@ -585,17 +585,17 @@ export default function AdminPage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: idx * 0.05 }}
-                  className={`glass hover:bg-white/[0.04] border ${s.border} rounded-[24px] p-6 transition-all duration-300 shadow-[0_8px_35px_rgba(0,0,0,0.4)] flex flex-col justify-between relative overflow-hidden group`}
+                  className={`glass hover:bg-[var(--card-hover)] border ${s.border} rounded-[24px] p-6 transition-all duration-300 shadow-[var(--shadow)] flex flex-col justify-between relative overflow-hidden group`}
                 >
                   <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-gradient-to-br ${s.color} opacity-35 blur-xl group-hover:scale-125 transition-transform duration-500`} />
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[14px] font-semibold text-slate-300">{s.label}</span>
-                    <div className="p-2.5 rounded-[12px] bg-white/[0.02] border border-white/[0.06] shadow-sm">
+                    <span className="text-[14px] font-semibold text-[var(--fg)]/70">{s.label}</span>
+                    <div className="p-2.5 rounded-[12px] bg-[var(--grey-200)] border border-[var(--border)] shadow-sm">
                       {s.icon}
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-[32px] font-bold text-white tracking-tight leading-none mb-1.5">{s.value}</h3>
+                    <h3 className="text-[32px] font-bold text-[var(--fg)] tracking-tight leading-none mb-1.5">{s.value}</h3>
                     <div className="flex items-center gap-1.5 text-[12px]">
                       <span className="text-blue-400 font-semibold">{s.desc}</span>
                     </div>
@@ -607,8 +607,8 @@ export default function AdminPage() {
             {/* List Header */}
             <div className="flex items-center justify-between mb-8 gap-4">
               <div>
-                <h2 className="text-[22px] font-bold tracking-tight text-white">Active Postings</h2>
-                <p className="text-slate-300 mt-1 text-[13px]">Select a position below to initiate recruiter screening.</p>
+                <h2 className="text-[22px] font-bold tracking-tight text-[var(--fg)]">Active Postings</h2>
+                <p className="text-[var(--muted)] mt-1 text-[13px]">Select a position below to initiate recruiter screening.</p>
               </div>
               <button onClick={openCreate} className="px-5 py-3 rounded-[16px] text-[13px] font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_6px_20px_-4px_rgba(50,121,249,0.4)] hover:from-blue-600 hover:to-indigo-700 shrink-0">
                 <Plus className="w-4 h-4" /> New Job Listing
@@ -616,8 +616,8 @@ export default function AdminPage() {
             </div>
 
             {jobs.length === 0 ? (
-              <div className="glass rounded-[28px] p-16 text-center border border-white/[0.06]">
-                <p className="text-[16px] text-white/40">No jobs posted yet. Click &quot;New Job Listing&quot; to create one.</p>
+              <div className="glass rounded-[28px] p-16 text-center border border-[var(--border)]">
+                <p className="text-[16px] text-[var(--muted)]">No jobs posted yet. Click &quot;New Job Listing&quot; to create one.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -628,7 +628,7 @@ export default function AdminPage() {
                     animate={{ opacity: 1, y: 0 }} 
                     transition={{ duration: 0.45, delay: i * 0.06 }}
                   >
-                    <div className="glass rounded-[24px] border border-white/[0.06] hover:border-white/[0.12] p-6 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative group overflow-hidden bg-white/[0.01]">
+                    <div className="glass rounded-[24px] border border-[var(--border)] hover:border-[var(--blue-400)]/30 p-6 hover:shadow-[var(--shadow-hover)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative group overflow-hidden bg-[var(--card-bg)]">
                       {/* Decorative gradient overlay */}
                       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/5 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       
@@ -639,7 +639,7 @@ export default function AdminPage() {
                         <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <button 
                             onClick={() => openEdit(job)}
-                            className="p-2 rounded-[10px] bg-white/[0.04] hover:bg-white/[0.1] border border-white/[0.06] text-white/70 hover:text-white transition-colors cursor-pointer"
+                            className="p-2 rounded-[10px] bg-[var(--grey-200)] hover:bg-[var(--grey-300)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--fg)] transition-colors cursor-pointer"
                             title="Edit Job"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -654,20 +654,20 @@ export default function AdminPage() {
                         </div>
                       </div>
                       
-                      <h2 className="text-[20px] font-bold tracking-tight text-white mb-2 leading-tight group-hover:text-blue-400 transition-colors">
+                      <h2 className="text-[20px] font-bold tracking-tight text-[var(--fg)] mb-2 leading-tight group-hover:text-blue-400 transition-colors">
                         {job.title}
                       </h2>
                       
-                      <div className="flex items-center gap-1.5 text-[13px] text-slate-300 mb-4">
+                      <div className="flex items-center gap-1.5 text-[13px] text-[var(--muted)] mb-4">
                         <MapPin className="w-3.5 h-3.5 text-blue-400" />
                         {job.location}
                       </div>
                       
-                      <p className="text-[13px] text-slate-300 line-clamp-3 leading-[1.6] mb-6 flex-1">
+                      <p className="text-[13px] text-[var(--fg)]/65 line-clamp-3 leading-[1.6] mb-6 flex-1">
                         {job.description.replace(/#{1,3} |[*_~`•]/g, "")}
                       </p>
                       
-                      <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between">
+                      <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between">
                         <button
                           onClick={() => router.push(`/admin/jobs/${job.id}`)}
                           className="w-full flex items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-3 text-[13px] font-bold shadow-[0_4px_15px_-3px_rgba(50,121,249,0.3)] hover:shadow-[0_8px_20px_-3px_rgba(50,121,249,0.4)] transition-all duration-300"
@@ -688,8 +688,8 @@ export default function AdminPage() {
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
               <div>
-                <h2 className="text-[22px] font-bold tracking-tight text-white">CV Repository</h2>
-                <p className="text-white/40 mt-1 text-[13px]">Manage stored resumes, update status states, and append comments.</p>
+                <h2 className="text-[22px] font-bold tracking-tight text-[var(--fg)]">CV Repository</h2>
+                <p className="text-[var(--muted)] mt-1 text-[13px]">Manage stored resumes, update status states, and append comments.</p>
               </div>
               <div className="flex items-center gap-3">
                 <select 
@@ -710,8 +710,8 @@ export default function AdminPage() {
             </div>
 
             {cvs.length === 0 ? (
-              <div className="glass rounded-[28px] p-16 text-center border border-white/[0.06]">
-                <p className="text-[16px] text-white/40">No CVs uploaded yet. Click &quot;Upload CV&quot; to add one.</p>
+              <div className="glass rounded-[28px] p-16 text-center border border-[var(--border)]">
+                <p className="text-[16px] text-[var(--muted)]">No CVs uploaded yet. Click &quot;Upload CV&quot; to add one.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -735,7 +735,7 @@ export default function AdminPage() {
                       initial={{ opacity: 0, y: 18 }} 
                       animate={{ opacity: 1, y: 0 }} 
                       transition={{ delay: i * 0.05 }}
-                      className="glass rounded-[24px] border border-white/[0.06] hover:border-white/[0.1] bg-white/[0.01] overflow-hidden hover:shadow-[0_12px_30px_rgba(0,0,0,0.15)] transition-all duration-300"
+                      className="glass rounded-[24px] border border-[var(--border)] hover:border-[var(--blue-400)]/30 bg-[var(--card-bg)] overflow-hidden hover:shadow-[var(--shadow-hover)] transition-all duration-300"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6">
                         <div className="flex items-center gap-4 min-w-0">
@@ -745,14 +745,14 @@ export default function AdminPage() {
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-3 mb-1.5 flex-wrap">
-                              <h3 className="text-[17px] font-bold text-white">{cv.name}</h3>
+                              <h3 className="text-[17px] font-bold text-[var(--fg)]">{cv.name}</h3>
                               <CvStatusBadge status={cv.status} />
                             </div>
-                            <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-white/50">
+                            <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-[var(--muted)]">
                               {cv.email && <span className="flex items-center gap-1.5"><FileText className="w-4 h-4 text-blue-400" />{cv.email}</span>}
                               {cv.phone && <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4 text-purple-400" />{cv.phone}</span>}
                             </div>
-                            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-white/30">
+                            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--muted)]/60">
                               Uploaded {new Date(cv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                             </p>
                           </div>
@@ -771,7 +771,7 @@ export default function AdminPage() {
                           </select>
                           <button 
                             onClick={() => { setSelectedCV(cv.cv_url); setCvOpen(true); }}
-                            className="flex items-center gap-1.5 rounded-[12px] border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] hover:border-blue-500/30 text-white/80 hover:text-white px-4 py-2.5 text-[13px] font-semibold transition-all cursor-pointer"
+                            className="flex items-center gap-1.5 rounded-[12px] border border-[var(--border)] bg-[var(--grey-200)] hover:bg-[var(--grey-300)] hover:border-blue-500/30 text-[var(--fg)]/80 hover:text-[var(--fg)] px-4 py-2.5 text-[13px] font-semibold transition-all cursor-pointer"
                           >
                             <Eye className="w-4 h-4" /> View Resume
                           </button>
@@ -785,10 +785,10 @@ export default function AdminPage() {
                       </div>
 
                       {/* Collapsible Recruiter Comments section */}
-                      <div className="px-6 pb-5 border-t border-white/[0.06] pt-4">
+                      <div className="px-6 pb-5 border-t border-[var(--border)] pt-4">
                         <div
                           onClick={() => setExpandedCvComments(v => ({ ...v, [cv.id]: !v[cv.id] }))}
-                          className="flex items-center justify-between cursor-pointer hover:text-white transition-colors text-white/50"
+                          className="flex items-center justify-between cursor-pointer hover:text-[var(--fg)] transition-colors text-[var(--muted)]"
                         >
                           <div className="flex items-center gap-2">
                             <MessageSquare className="w-4 h-4 text-blue-400" />
@@ -814,7 +814,7 @@ export default function AdminPage() {
                               {cvComments.length > 0 && (
                                 <div className="max-h-[180px] overflow-y-auto mb-4 space-y-2.5 pr-2">
                                   {cvComments.map(comment => (
-                                    <div key={comment.id} className="group relative bg-[var(--grey-100)]/45 border border-[var(--border)] rounded-[16px] p-3.5 text-[12px] transition-all hover:border-blue-500/20">
+                                    <div key={comment.id} className="group relative bg-[var(--grey-200)] border border-[var(--border)] rounded-[16px] p-3.5 text-[12px] transition-all hover:border-blue-500/20">
                                       <div className="flex items-center justify-between gap-2 mb-1.5">
                                         <span className="font-bold text-blue-400 truncate max-w-[170px]">{comment.author.split("@")[0]}</span>
                                         <span className="text-[10px] text-[var(--muted)]">
@@ -883,8 +883,8 @@ export default function AdminPage() {
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
               <div>
-                <h2 className="text-[22px] font-bold tracking-tight text-white">System Administrators</h2>
-                <p className="text-white/40 mt-1 text-[13px]">Provision credential keys and revoke administrator access permissions.</p>
+                <h2 className="text-[22px] font-bold tracking-tight text-[var(--fg)]">System Administrators</h2>
+                <p className="text-[var(--muted)] mt-1 text-[13px]">Provision credential keys and revoke administrator access permissions.</p>
               </div>
               <button onClick={() => setShowUserModal(true)}
                 className="px-5 py-3 rounded-[16px] text-[13px] font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_6px_20px_-4px_rgba(50,121,249,0.4)] hover:from-blue-600 hover:to-indigo-700">
@@ -893,12 +893,12 @@ export default function AdminPage() {
             </div>
 
             {adminUsers.length === 0 ? (
-              <div className="glass rounded-[28px] p-16 text-center border border-white/[0.06]">
+              <div className="glass rounded-[28px] p-16 text-center border border-[var(--border)]">
                 <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-blue-400" />
                 </div>
-                <h3 className="text-[18px] font-bold mb-2">No admin users found</h3>
-                <p className="text-[14px] text-white/40">Click &quot;Add Admin User&quot; to provision the first workspace supervisor account.</p>
+                <h3 className="text-[18px] font-bold mb-2 text-[var(--fg)]">No admin users found</h3>
+                <p className="text-[14px] text-[var(--muted)]">Click &quot;Add Admin User&quot; to provision the first workspace supervisor account.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -918,28 +918,28 @@ export default function AdminPage() {
                       initial={{ opacity: 0, y: 18, scale: 0.97 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ delay: i * 0.06, duration: 0.4 }}
-                      className="glass hover:bg-white/[0.03] rounded-[24px] p-6 flex flex-col gap-5 border border-white/[0.06] hover:border-white/[0.12] hover:shadow-[0_12px_30px_rgba(0,0,0,0.15)] relative group transition-all duration-300"
+                      className="glass hover:bg-[var(--card-hover)] rounded-[24px] p-6 flex flex-col gap-5 border border-[var(--border)] hover:border-[var(--blue-400)]/30 hover:shadow-[var(--shadow-hover)] relative group transition-all duration-300"
                     >
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-[18px] shrink-0 shadow-md`}>
                           {initials}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[16px] font-bold text-white truncate">{u.name ?? <span className="text-white/30 italic">Unnamed Admin</span>}</p>
-                          <p className="text-[12px] text-white/50 truncate">{u.email}</p>
+                          <p className="text-[16px] font-bold text-[var(--fg)] truncate">{u.name ?? <span className="text-[var(--muted)] italic">Unnamed Admin</span>}</p>
+                          <p className="text-[12px] text-[var(--muted)] truncate">{u.email}</p>
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-2 text-[12px] text-white/55 border-t border-white/[0.06] pt-4">
+                      <div className="flex flex-col gap-2 text-[12px] text-[var(--muted)] border-t border-[var(--border)] pt-4">
                         <div className="flex justify-between">
                           <span>Created:</span>
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-[var(--fg)]">
                             {new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Last Sign-in:</span>
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-[var(--fg)]">
                             {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
                           </span>
                         </div>
@@ -966,7 +966,7 @@ export default function AdminPage() {
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[rgba(5,6,10,0.5)] backdrop-blur-[12px]" onClick={closeModal} />
+              className="absolute inset-0 bg-[rgba(5,6,10,0.55)] backdrop-blur-[12px]" onClick={closeModal} />
             <motion.div initial={{ opacity: 0, scale: 0.94, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94, y: 24 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="relative w-full max-w-2xl rounded-[32px] bg-[var(--grey-100)] border border-[var(--border)] p-8 sm:p-10 max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -975,47 +975,47 @@ export default function AdminPage() {
                   <h2 className="text-[24px] font-bold text-[var(--fg)] tracking-tight">{editingJob ? "Modify Listing" : "Create Position"}</h2>
                   <p className="text-[13px] text-[var(--muted)] mt-1">{editingJob ? "Update active operational metrics." : "Add a new open position to start screening applicants."}</p>
                 </div>
-                <button onClick={closeModal} className="rounded-full p-2 hover:bg-white/5 text-white/60 hover:text-white transition-colors shrink-0">
+                <button onClick={closeModal} className="rounded-full p-2 hover:bg-[var(--grey-200)] text-[var(--muted)] hover:text-[var(--fg)] transition-colors shrink-0">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Job Title</label>
-                  <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Senior Product Designer" className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" />
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Job Title</label>
+                  <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Senior Product Designer" className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Department</label>
-                    <input value={department} onChange={e => setDepartment(e.target.value)} placeholder="e.g. Product" className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" />
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Department</label>
+                    <input value={department} onChange={e => setDepartment(e.target.value)} placeholder="e.g. Product" className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Location</label>
-                    <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Remote / Bangalore" className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" />
+                    <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Location</label>
+                    <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Remote / Bangalore" className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Description Markdown</label>
-                  <div className="flex items-center gap-2 mb-3 p-1.5 bg-white/[0.02] border border-white/[0.06] rounded-[14px]">
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Description Markdown</label>
+                  <div className="flex items-center gap-2 mb-3 p-1.5 bg-[var(--grey-200)] border border-[var(--border)] rounded-[14px]">
                     {[
                       { label: "B", title: "Bold",    fn: insertBold,    cls: "font-bold" },
                       { label: "H", title: "Heading", fn: insertHeading, cls: "font-semibold" },
                       { label: "• List", title: "Bullet", fn: insertBullet, cls: "" },
                     ].map(b => (
                       <button key={b.title} type="button" title={b.title} onClick={b.fn}
-                        className={`rounded-[10px] bg-white/[0.03] border border-white/[0.06] px-3.5 py-1.5 text-[13px] ${b.cls} text-white/80 hover:border-blue-500 hover:text-white transition-all cursor-pointer`}>
+                        className={`rounded-[10px] bg-[var(--grey-100)] border border-[var(--border)] px-3.5 py-1.5 text-[13px] ${b.cls} text-[var(--fg)]/80 hover:border-blue-500 hover:text-[var(--fg)] transition-all cursor-pointer`}>
                         {b.label}
                       </button>
                     ))}
                   </div>
                   <textarea ref={descRef} value={description} onChange={e => setDescription(e.target.value)}
-                    placeholder="Provide full description and requirements using Markdown…" rows={8} className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20 resize-none leading-relaxed" />
+                    placeholder="Provide full description and requirements using Markdown…" rows={8} className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60 resize-none leading-relaxed" />
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-white/[0.06] flex flex-col-reverse sm:flex-row gap-3">
-                <button onClick={closeModal} className="flex-1 rounded-[14px] border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white/80 hover:text-white px-4 py-3 text-[14px] font-bold transition-all cursor-pointer">Cancel</button>
+              <div className="mt-8 pt-6 border-t border-[var(--border)] flex flex-col-reverse sm:flex-row gap-3">
+                <button onClick={closeModal} className="flex-1 rounded-[14px] border border-[var(--border)] bg-[var(--grey-200)] hover:bg-[var(--grey-300)] text-[var(--fg)]/80 hover:text-[var(--fg)] px-4 py-3 text-[14px] font-bold transition-all cursor-pointer">Cancel</button>
                 <button onClick={handleSave} className="flex-1 rounded-[14px] bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-3 text-[14px] font-bold shadow-[0_4px_15px_-3px_rgba(50,121,249,0.3)] transition-all cursor-pointer">{editingJob ? "Save Changes" : "Publish Job"}</button>
               </div>
             </motion.div>
@@ -1066,39 +1066,39 @@ export default function AdminPage() {
                   <h2 className="text-[24px] font-bold text-[var(--fg)] tracking-tight">Upload Candidate CV</h2>
                   <p className="text-[13px] text-[var(--muted)] mt-1">Directly add a new resume to your primary talent database.</p>
                 </div>
-                <button onClick={closeCvModal} className="rounded-full p-2 hover:bg-white/5 text-white/60 hover:text-white transition-colors shrink-0">
+                <button onClick={closeCvModal} className="rounded-full p-2 hover:bg-[var(--grey-200)] text-[var(--muted)] hover:text-[var(--fg)] transition-colors shrink-0">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Candidate Name <span className="text-red-500">*</span></label>
-                  <input value={cvName} onChange={e => setCvName(e.target.value)} placeholder="Jane Doe" className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" />
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Candidate Name <span className="text-red-500">*</span></label>
+                  <input value={cvName} onChange={e => setCvName(e.target.value)} placeholder="Jane Doe" className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Email Address</label>
-                  <input value={cvEmail} onChange={e => setCvEmail(e.target.value)} placeholder="jane@example.com" type="email" className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" />
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Email Address</label>
+                  <input value={cvEmail} onChange={e => setCvEmail(e.target.value)} placeholder="jane@example.com" type="email" className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Phone Number</label>
-                  <input value={cvPhone} onChange={e => setCvPhone(e.target.value)} placeholder="+91 98765 43210" className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] focus:border-blue-500 rounded-[14px] text-[15px] text-white outline-none transition-all placeholder-white/20" />
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Phone Number</label>
+                  <input value={cvPhone} onChange={e => setCvPhone(e.target.value)} placeholder="+91 98765 43210" className="w-full px-4 py-3 bg-[var(--grey-50)] border border-[var(--border)] focus:border-blue-500 rounded-[14px] text-[15px] text-[var(--fg)] outline-none transition-all placeholder-[var(--grey-500)]/60" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-white/50 mb-2">Resume / CV (PDF, DOC) <span className="text-red-500">*</span></label>
-                  <div className="relative rounded-[20px] border-2 border-dashed border-white/[0.08] hover:border-blue-500/40 bg-white/[0.01] px-6 py-10 text-center hover:bg-white/[0.02] transition-all cursor-pointer">
+                  <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--muted)] mb-2">Resume / CV (PDF, DOC) <span className="text-red-500">*</span></label>
+                  <div className="relative rounded-[20px] border-2 border-dashed border-[var(--border)] hover:border-blue-500/40 bg-[var(--grey-200)] px-6 py-10 text-center hover:bg-[var(--grey-300)] transition-all cursor-pointer">
                     <input type="file" accept=".pdf,.doc,.docx"
                       onChange={e => { const f = e.target.files?.[0]; if (f) setCvFile(f); }}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <Upload className="mx-auto h-8 w-8 text-white/40 mb-3" />
-                    <p className="text-[14px] font-bold text-white">{cvFile ? cvFile.name : "Select candidate file or drag & drop"}</p>
-                    <p className="text-[11px] text-white/30 mt-1">Accepts PDF, DOC, DOCX up to 5 MB</p>
+                    <Upload className="mx-auto h-8 w-8 text-[var(--muted)] mb-3" />
+                    <p className="text-[14px] font-bold text-[var(--fg)]">{cvFile ? cvFile.name : "Select candidate file or drag & drop"}</p>
+                    <p className="text-[11px] text-[var(--muted)]/60 mt-1">Accepts PDF, DOC, DOCX up to 5 MB</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-white/[0.06] flex gap-3">
-                <button onClick={closeCvModal} className="flex-1 rounded-[14px] border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white/80 hover:text-white px-4 py-3 text-[14px] font-bold transition-all cursor-pointer">Cancel</button>
+              <div className="mt-8 pt-6 border-t border-[var(--border)] flex gap-3">
+                <button onClick={closeCvModal} className="flex-1 rounded-[14px] border border-[var(--border)] bg-[var(--grey-200)] hover:bg-[var(--grey-300)] text-[var(--fg)]/80 hover:text-[var(--fg)] px-4 py-3 text-[14px] font-bold transition-all cursor-pointer">Cancel</button>
                 <button disabled={uploadingCv} onClick={handleUploadCv} className="flex-1 rounded-[14px] bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-3 text-[14px] font-bold shadow-[0_4px_15px_-3px_rgba(50,121,249,0.3)] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                   {uploadingCv ? "Uploading..." : "Save Candidate"}
                 </button>

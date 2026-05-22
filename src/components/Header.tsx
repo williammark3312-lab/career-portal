@@ -57,7 +57,7 @@ export default function Header({ session, handleLogout }: HeaderProps) {
           className="relative z-10 flex items-center gap-3 cursor-pointer group px-2"
           onClick={() => router.push(isAdminPage ? "/jobs" : "/")}
         >
-          <div className="w-8 h-8 rounded-full bg-[var(--grey-200)] flex items-center justify-center transition-transform group-hover:scale-105 border border-[var(--grey-300)]">
+          <div className="w-8 h-8 rounded-full bg-[var(--grey-300)] flex items-center justify-center transition-transform group-hover:scale-105 border border-[var(--grey-400)]">
             <div className="w-[12px] h-[12px] bg-[var(--grey-1000)] rounded-[2px] rotate-45" />
           </div>
           <span className="text-[16px] font-semibold text-[var(--grey-1000)] tracking-tight flex items-center gap-1.5">
@@ -123,7 +123,7 @@ export default function Header({ session, handleLogout }: HeaderProps) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--grey-200)] border border-[var(--grey-300)] text-[var(--grey-1000)] hover:bg-[var(--grey-300)] transition-all cursor-pointer ml-1.5"
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--grey-300)] border border-[var(--grey-400)] text-[var(--grey-1000)] hover:bg-[var(--grey-400)] transition-all cursor-pointer ml-1.5"
             title={`Switch to ${theme === "dark" ? "Light" : "Dark"} mode`}
           >
             <AnimatePresence mode="wait" initial={false}>
