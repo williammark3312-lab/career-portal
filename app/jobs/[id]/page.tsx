@@ -161,7 +161,7 @@ export default function JobDetailsPage() {
   /* Loading */
   if (!job) {
     return (
-      <main style={{ minHeight: "100vh", background: "var(--black)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border)", borderTopColor: "var(--white)", animation: "spin 0.8s linear infinite" }} />
       </main>
     );
@@ -170,7 +170,7 @@ export default function JobDetailsPage() {
   /* Success */
   if (submitted) {
     return (
-      <main style={{ minHeight: "100vh", background: "var(--black)", display: "flex", flexDirection: "column", color: "var(--white)" }}>
+      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", flexDirection: "column", color: "var(--white)" }}>
         <Header />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px", gap: 24 }}>
           <motion.div
@@ -247,7 +247,7 @@ export default function JobDetailsPage() {
 
   /* Main */
   return (
-    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--black)", color: "var(--white)" }}>
+    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--white)" }}>
       <Header />
 
       <div style={{ flex: 1, maxWidth: 860, margin: "0 auto", width: "100%", padding: "60px 40px 80px" }}>

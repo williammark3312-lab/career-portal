@@ -14,7 +14,7 @@ function AuthSuccessContent() {
     <div
       style={{
         minHeight: "100vh",
-        background: "var(--black)",
+        background: "transparent",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -108,7 +108,7 @@ function AuthSuccessContent() {
 
 export default function AuthSuccessPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--black)" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "transparent" }} />}>
       <AuthSuccessContent />
     </Suspense>
   );

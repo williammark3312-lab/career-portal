@@ -63,7 +63,7 @@ export default function JobsPage() {
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
-        background: "var(--black)",
+        background: "transparent",
         color: "var(--white)",
       }}
     >
