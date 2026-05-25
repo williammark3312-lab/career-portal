@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import AnimatedBackground from "../src/components/AnimatedBackground";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,9 +23,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col" style={{ fontFamily: '"Geist", ui-sans-serif, system-ui, sans-serif' }}>
+      <body className="min-h-full flex flex-col" style={{ fontFamily: '"Geist", ui-sans-serif, system-ui, sans-serif', position: "relative" }}>
+        <AnimatedBackground />
         {children}
       </body>
     </html>
   );
 }
+
