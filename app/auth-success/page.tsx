@@ -1,83 +1,72 @@
 "use client";
 
 import React, { Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows } from "@react-three/drei";
 import { motion } from "framer-motion";
 import { CheckCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-
-function AbstractShape() {
-  return (
-    <Float speed={2} rotationIntensity={1} floatIntensity={2}>
-      <mesh rotation={[-0.5, 0.5, 0]}>
-        <torusKnotGeometry args={[1, 0.3, 128, 32]} />
-        <meshPhysicalMaterial 
-          transmission={0.95} 
-          opacity={1} 
-          transparent 
-          roughness={0.1} 
-          thickness={1} 
-          ior={1.5}
-          color="#ffffff" 
-          clearcoat={1} 
-          clearcoatRoughness={0.1}
-        />
-      </mesh>
-    </Float>
-  );
-}
 
 function AuthSuccessContent() {
   const searchParams = useSearchParams();
   const app = searchParams.get("app") || "Antigravity";
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[var(--bg)] text-[var(--fg)] font-sans selection:bg-[#3279F9]/30">
-      {/* 3D Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
-          <ambientLight intensity={1} />
-          <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-          <directionalLight position={[-10, -10, -5]} intensity={1} color="#3279F9" />
-          <Suspense fallback={null}>
-            <AbstractShape />
-            <Environment preset="city" />
-            <ContactShadows position={[0, -2, 0]} opacity={0.5} scale={10} blur={2} far={4} color="#B2BBC5" />
-          </Suspense>
-        </Canvas>
-      </div>
-
-      {/* Glassmorphism Card */}
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "var(--black)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "24px",
+        color: "var(--white)",
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{
-          duration: 0.8,
-          ease: [0.16, 1, 0.3, 1],
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          width: "100%",
+          maxWidth: 440,
+          border: "1px solid var(--border)",
+          borderRadius: 20,
+          padding: "56px 48px",
+          background: "var(--black-100)",
+          textAlign: "center",
         }}
-        className="relative z-10 mx-4 flex w-full max-w-[480px] flex-col items-center overflow-hidden rounded-[24px] border border-[var(--glass-border)] bg-[var(--glass-bg)] p-10 text-center shadow-[var(--shadow)] backdrop-blur-xl"
       >
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{
-            delay: 0.2,
-            type: "spring",
-            stiffness: 200,
-            damping: 20,
+          transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: "50%",
+            background: "var(--white)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 28px",
           }}
-          className="mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-[#3279F9]/10 text-[#3279F9]"
         >
-          <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
+          <CheckCircle style={{ width: 28, height: 28, color: "var(--black)" }} strokeWidth={2.5} />
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="mb-3 text-[32px] font-medium leading-[1.1] tracking-[-0.02em] text-[var(--fg)]"
+          style={{
+            fontSize: "clamp(24px, 3vw, 32px)",
+            fontWeight: 700,
+            letterSpacing: "-0.035em",
+            lineHeight: 1.1,
+            color: "var(--white)",
+            marginBottom: 12,
+            fontFamily: '"Geist", ui-sans-serif, system-ui, sans-serif',
+          }}
         >
           Authentication Successful
         </motion.h1>
@@ -86,22 +75,30 @@ function AuthSuccessContent() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="mb-10 text-[17.5px] leading-[1.45] tracking-[0.01em] text-[var(--muted)]"
+          style={{
+            fontSize: 15,
+            lineHeight: 1.6,
+            color: "var(--fg-muted)",
+            marginBottom: 40,
+          }}
         >
-          You have successfully signed in to{" "}
-          <strong className="font-medium text-[var(--fg)]">{app}</strong>. You may
-          now close this window or continue to the application.
+          You&apos;ve signed in to{" "}
+          <strong style={{ color: "var(--white)", fontWeight: 600 }}>{app}</strong>.{" "}
+          You may now close this window or continue.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
-          className="w-full"
         >
-          <Link href="/" className="group flex w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--blue-500)] px-6 py-4 text-[16px] font-medium text-white transition-all duration-300 hover:bg-[var(--blue-600)] hover:shadow-[0_8px_16px_-4px_rgba(50,121,249,0.3)] active:scale-[0.98]">
+          <Link
+            href="/"
+            className="btn-primary btn-primary-lg"
+            style={{ width: "100%", justifyContent: "center", display: "flex", gap: 8 }}
+          >
             Continue to {app}
-            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            <ArrowRight style={{ width: 16, height: 16 }} />
           </Link>
         </motion.div>
       </motion.div>
@@ -111,7 +108,7 @@ function AuthSuccessContent() {
 
 export default function AuthSuccessPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--black)" }} />}>
       <AuthSuccessContent />
     </Suspense>
   );

@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState, Suspense, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { supabase } from "../../../src/lib/supabase";
-import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows } from "@react-three/drei";
 import { ArrowLeft, CheckCircle2, Upload, Briefcase, MapPin, Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -14,27 +12,6 @@ import Header from "../../../src/components/Header";
 type Job = {
   id: string; title: string; department: string; location: string; description: string;
 };
-
-function FloatingRing() {
-  return (
-    <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
-      <mesh rotation={[0.5, -0.5, 0]}>
-        <torusGeometry args={[2, 0.45, 64, 128]} />
-        <meshPhysicalMaterial 
-          transmission={0.95} 
-          opacity={1} 
-          transparent 
-          roughness={0.1} 
-          thickness={1} 
-          ior={1.5}
-          color="#1a3bbd" 
-          clearcoat={1} 
-          clearcoatRoughness={0.1}
-        />
-      </mesh>
-    </Float>
-  );
-}
 
 function renderMd(md: string): string {
   const lines = md.split("\n");
@@ -66,14 +43,12 @@ function renderMd(md: string): string {
 function playSuccessChime() {
   try {
     const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    // Rising triad: C5 (523 Hz) → E5 (659 Hz) → G5 (784 Hz)
     const notes = [
       { freq: 523.25, start: 0,    dur: 0.55 },
       { freq: 659.25, start: 0.13, dur: 0.55 },
       { freq: 783.99, start: 0.26, dur: 0.80 },
     ];
     notes.forEach(({ freq, start, dur }) => {
-      // Primary oscillator (sine — warm)
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
@@ -85,8 +60,6 @@ function playSuccessChime() {
       gain.connect(ctx.destination);
       osc.start(ctx.currentTime + start);
       osc.stop(ctx.currentTime + start + dur);
-
-      // Shimmer layer (triangle, one octave up, quieter)
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = "triangle";
@@ -99,9 +72,8 @@ function playSuccessChime() {
       osc2.start(ctx.currentTime + start);
       osc2.stop(ctx.currentTime + start + dur);
     });
-    // Auto-close context after sound finishes
     setTimeout(() => ctx.close(), 2000);
-  } catch { /* browser may block audio without user gesture — silent fail */ }
+  } catch { /* silent */ }
 }
 
 export default function JobDetailsPage() {
@@ -119,8 +91,7 @@ export default function JobDetailsPage() {
   const [location, setLocation]     = useState("");
   const [resume, setResume]         = useState<File | null>(null);
   const [errors, setErrors]         = useState<Record<string, string>>({});
-  
-  const [submittedApp, setSubmittedApp] = useState<any>(null);
+  const [submittedApp, setSubmittedApp] = useState<{ id?: string } | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -128,39 +99,25 @@ export default function JobDetailsPage() {
     if (!receiptRef.current) return;
     try {
       setIsDownloading(true);
-      // Wait a tick so the UI updates to show the loading spinner before html2canvas locks the main thread
       await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const canvas = await html2canvas(receiptRef.current, { 
-        scale: 4, // 4x scale for super high definition
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 4,
         backgroundColor: "#ffffff",
         useCORS: true,
         allowTaint: true
       });
-      
-      // Use lossless PNG for crisp text
       const imgData = canvas.toDataURL("image/png");
-      
-      // Scale down by 4 to get original physical size, keeping 4x pixel density
       const pdfWidth = canvas.width / 4;
       const pdfHeight = canvas.height / 4;
-      
-      // Create a PDF with the exact dimensions of the receipt card
-      const pdf = new jsPDF({ 
-        orientation: pdfWidth > pdfHeight ? "landscape" : "portrait", 
-        unit: "px", 
-        format: [pdfWidth, pdfHeight] 
+      const pdf = new jsPDF({
+        orientation: pdfWidth > pdfHeight ? "landscape" : "portrait",
+        unit: "px",
+        format: [pdfWidth, pdfHeight]
       });
-      
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Application_Receipt_${submittedApp?.id?.slice(0, 8).toUpperCase() || 'Token'}.pdf`);
-    } catch (err: any) {
-      console.error("Error generating PDF:", err);
-      // Fallback to native print dialog
-      window.print();
-    } finally {
-      setIsDownloading(false);
-    }
+    } catch { window.print(); }
+    finally { setIsDownloading(false); }
   }
 
   useEffect(() => { fetchJob(); }, []);
@@ -196,11 +153,7 @@ export default function JobDetailsPage() {
         { name, email, phone: `+91 ${phone}`, location, resume_url: publicUrl, job_id: id, status: "Pending" },
       ]).select().single();
       if (error) alert(error.message);
-      else { 
-        setSubmittedApp(data);
-        playSuccessChime(); 
-        setSubmitted(true); 
-      }
+      else { setSubmittedApp(data); playSuccessChime(); setSubmitted(true); }
     } catch { alert("Something went wrong. Please try again."); }
     finally { setLoading(false); }
   }
@@ -208,11 +161,8 @@ export default function JobDetailsPage() {
   /* Loading */
   if (!job) {
     return (
-      <main className="min-h-screen bg-[var(--bg)] flex items-center justify-center text-[var(--fg)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-[var(--border)] border-t-[#3279F9] animate-spin" />
-          <p className="text-[14px] text-[var(--muted)]">Loading…</p>
-        </div>
+      <main style={{ minHeight: "100vh", background: "var(--black)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border)", borderTopColor: "var(--white)", animation: "spin 0.8s linear infinite" }} />
       </main>
     );
   }
@@ -220,98 +170,70 @@ export default function JobDetailsPage() {
   /* Success */
   if (submitted) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-        <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-          <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
-            <ambientLight intensity={1.4} />
-            <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-            <directionalLight position={[-8, -8, -4]} intensity={1.2} color="#3279F9" />
-            <Suspense fallback={null}>
-              <FloatingRing />
-              <Environment preset="city" />
-              <ContactShadows position={[0, -2.5, 0]} opacity={0.2} scale={16} blur={3} color="#737A87" />
-            </Suspense>
-          </Canvas>
-        </div>
-        <header className="site-header">
-          <div className="site-header-inner">
-            <span className="site-logo cursor-pointer text-white font-bold" onClick={() => router.push("/jobs")}>
-              Careers Portal
-            </span>
-          </div>
-        </header>
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 gap-6">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-            animate={{ opacity: 1, scale: 1, y: 0 }} 
-            transition={{ duration: 0.5, type: "spring", stiffness: 100 }} 
-            className="w-full max-w-md"
+      <main style={{ minHeight: "100vh", background: "var(--black)", display: "flex", flexDirection: "column", color: "var(--white)" }}>
+        <Header />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px", gap: 24 }}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            style={{ width: "100%", maxWidth: 440 }}
           >
-            {/* The Receipt Card */}
-            <div 
+            {/* Receipt card */}
+            <div
               ref={receiptRef}
-              className="bg-white rounded-[24px] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.55)] overflow-hidden border border-[#E1E6EC]"
+              style={{ background: "#fff", borderRadius: 20, overflow: "hidden", border: "1px solid #E1E6EC" }}
             >
-              <div className="bg-[#3B54C4] px-8 py-8 text-center relative overflow-hidden">
-                <div data-html2canvas-ignore="true" className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent)]" />
-                <motion.div 
-                  initial={{ scale: 0 }} 
-                  animate={{ scale: 1 }} 
+              <div style={{ background: "#111", padding: "40px 32px", textAlign: "center" }}>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-                  className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg relative z-10"
+                  style={{ width: 56, height: 56, background: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}
                 >
-                  <CheckCircle2 className="w-8 h-8 text-[#3B54C4]" />
+                  <CheckCircle2 style={{ width: 28, height: 28, color: "#111" }} />
                 </motion.div>
-                <h2 className="text-[24px] font-bold text-white relative z-10">Application Received</h2>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", letterSpacing: "-0.025em", fontFamily: '"Geist", ui-sans-serif' }}>
+                  Application Received
+                </h2>
               </div>
-              
-              <div className="px-8 py-8">
-                <p className="text-[15px] text-[#737A87] text-center mb-8">
+              <div style={{ padding: "32px" }}>
+                <p style={{ fontSize: 14, color: "#737A87", textAlign: "center", marginBottom: 24 }}>
                   Thank you for applying. Here is your application token for future reference.
                 </p>
-                
-                <div className="space-y-4 text-[14px]">
-                  <div className="flex justify-between items-center py-3 border-b border-[#E1E6EC]/60">
-                    <span className="text-[#737A87]">Reference No.</span>
-                    <span className="font-mono font-semibold text-[#1a3bbd] bg-[#3279F9]/10 px-2 py-0.5 rounded">
-                      #{submittedApp?.id?.slice(0, 8).toUpperCase() || "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-[#E1E6EC]/60">
-                    <span className="text-[#737A87]">Applicant</span>
-                    <span className="font-medium text-[#121317]">{name}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-[#E1E6EC]/60">
-                    <span className="text-[#737A87]">Position</span>
-                    <span className="font-medium text-[#121317] text-right max-w-[60%]">{job.title}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-[#E1E6EC]/60">
-                    <span className="text-[#737A87]">Date</span>
-                    <span className="font-medium text-[#121317]">
-                      {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
-                  </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {[
+                    { label: "Reference No.", value: `#${submittedApp?.id?.slice(0, 8).toUpperCase() || "N/A"}` },
+                    { label: "Applicant", value: name },
+                    { label: "Position", value: job.title },
+                    { label: "Date", value: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
+                  ].map((row, i, arr) => (
+                    <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i < arr.length - 1 ? "1px solid #E1E6EC" : "none" }}>
+                      <span style={{ fontSize: 13, color: "#737A87" }}>{row.label}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#121317", textAlign: "right", maxWidth: "55%" }}>{row.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </motion.div>
 
           <motion.div
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ delay: 0.6, duration: 0.4 }}
-             className="w-full max-w-md flex flex-col sm:flex-row gap-3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
+            style={{ width: "100%", maxWidth: 440, display: "flex", flexDirection: "column", gap: 12 }}
           >
-             <button disabled={isDownloading} onClick={handleDownloadPDF} className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-               {isDownloading ? (
-                 <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Generating PDF...</>
-               ) : (
-                 <><Download className="w-4 h-4" /> Download PDF Receipt</>
-               )}
-             </button>
-             <button onClick={() => router.push("/jobs")} className="flex-1 btn-secondary cursor-pointer">
-               Back to Careers
-             </button>
+            <button disabled={isDownloading} onClick={handleDownloadPDF} className="btn-primary" style={{ width: "100%", justifyContent: "center", gap: 8, padding: "12px", display: "flex", alignItems: "center" }}>
+              {isDownloading ? (
+                <><div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.3)", borderTopColor: "#000", animation: "spin 0.8s linear infinite" }} /> Generating PDF…</>
+              ) : (
+                <><Download style={{ width: 16, height: 16 }} /> Download PDF Receipt</>
+              )}
+            </button>
+            <button onClick={() => router.push("/jobs")} className="btn-secondary" style={{ width: "100%", justifyContent: "center", padding: "12px", display: "flex", alignItems: "center" }}>
+              Back to Careers
+            </button>
           </motion.div>
         </div>
         <footer className="site-footer">
@@ -325,84 +247,88 @@ export default function JobDetailsPage() {
 
   /* Main */
   return (
-    <main className="relative flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]} gl={{ antialias: false, powerPreference: "high-performance" }} style={{ pointerEvents: "none" }}>
-          <ambientLight intensity={1.4} />
-          <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-          <directionalLight position={[-8, -8, -4]} intensity={1.2} color="#3279F9" />
-          <Suspense fallback={null}>
-            <FloatingRing />
-            <Environment preset="city" />
-            <ContactShadows position={[0, -2.5, 0]} opacity={0.2} scale={16} blur={3} color="#737A87" />
-          </Suspense>
-        </Canvas>
-      </div>
-
+    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--black)", color: "var(--white)" }}>
       <Header />
 
-      <div className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-5 sm:px-8 py-12">
+      <div style={{ flex: 1, maxWidth: 860, margin: "0 auto", width: "100%", padding: "60px 40px 80px" }}>
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="glass rounded-[32px] overflow-hidden"
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           {/* Job Header */}
-          <div className="px-10 py-10 border-b border-[var(--border)]">
-            <span className="dept-tag mb-5 inline-block">{job.department}</span>
-            <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-[var(--fg)]">{job.title}</h1>
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--grey-50)] px-4 py-2 text-[13px] font-semibold text-[var(--fg)]/80">
-                <MapPin className="w-3.5 h-3.5 text-blue-400" />
+          <div style={{ paddingBottom: 40, borderBottom: "1px solid var(--border)", marginBottom: 40 }}>
+            <span className="dept-tag" style={{ display: "inline-block", marginBottom: 20 }}>{job.department}</span>
+            <h1 style={{
+              fontSize: "clamp(32px, 5vw, 56px)",
+              fontWeight: 700,
+              letterSpacing: "-0.04em",
+              lineHeight: 1.0,
+              marginBottom: 24,
+              fontFamily: '"Geist", ui-sans-serif, system-ui, sans-serif',
+              color: "var(--white)",
+            }}>
+              {job.title}
+            </h1>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid var(--border)", borderRadius: 100, padding: "8px 16px", fontSize: 13, color: "var(--fg-muted)" }}>
+                <MapPin style={{ width: 13, height: 13 }} />
                 {job.location}
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--grey-50)] px-4 py-2 text-[13px] font-semibold text-[var(--fg)]/80">
-                <Briefcase className="w-3.5 h-3.5 text-purple-400" />
+              <div style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid var(--border)", borderRadius: 100, padding: "8px 16px", fontSize: 13, color: "var(--fg-muted)" }}>
+                <Briefcase style={{ width: 13, height: 13 }} />
                 Full Time
               </div>
             </div>
           </div>
 
           {/* Job Body */}
-          <div className="px-10 py-10">
-            <h2 className="text-[22px] font-bold mb-6 text-[var(--fg)]">About the role</h2>
-            <div className="text-[15px] text-[var(--fg)]/90" dangerouslySetInnerHTML={{ __html: renderMd(job.description) }} />
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.025em", marginBottom: 24, color: "var(--white)" }}>
+              About the role
+            </h2>
+            <div style={{ fontSize: 15 }} dangerouslySetInnerHTML={{ __html: renderMd(job.description) }} />
 
             {!showApply ? (
-              <div className="mt-10 pt-8 border-t border-[var(--border)]">
-                <button onClick={() => setShowApply(true)} className="btn-primary">Apply for this position</button>
+              <div style={{ marginTop: 48, paddingTop: 40, borderTop: "1px solid var(--border)" }}>
+                <button onClick={() => setShowApply(true)} className="btn-primary btn-primary-lg">
+                  Apply for this position
+                </button>
               </div>
             ) : (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-10 pt-10 border-t border-[var(--border)]"
+                style={{ marginTop: 48, paddingTop: 48, borderTop: "1px solid var(--border)" }}
               >
-                <div className="mb-8">
-                  <h2 className="text-[26px] font-bold text-blue-400">Submit your application</h2>
-                  <p className="text-[14px] text-[var(--muted)] mt-2">
-                    Fill out the form below to apply for <strong className="text-[#3279F9]">{job.title}</strong>
+                <div style={{ marginBottom: 32 }}>
+                  <h2 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.03em", color: "var(--white)", marginBottom: 8 }}>
+                    Submit your application
+                  </h2>
+                  <p style={{ fontSize: 14, color: "var(--fg-muted)" }}>
+                    Applying for <strong style={{ color: "var(--white)", fontWeight: 600 }}>{job.title}</strong>
                   </p>
                 </div>
 
-                <div className="space-y-5">
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   <div>
-                    <label className="form-label">Full Name <span className="text-red-500">*</span></label>
+                    <label className="form-label">Full Name <span style={{ color: "#f87171" }}>*</span></label>
                     <input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" className="form-input" />
-                    {errors.name && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.name}</p>}
+                    {errors.name && <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>{errors.name}</p>}
                   </div>
+
                   <div>
-                    <label className="form-label">Email Address <span className="text-red-500">*</span></label>
+                    <label className="form-label">Email Address <span style={{ color: "#f87171" }}>*</span></label>
                     <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="jane@example.com" className="form-input" />
-                    {errors.email && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.email}</p>}
+                    {errors.email && <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>{errors.email}</p>}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                     <div>
-                      <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
-                      <div className="flex animate-fade-in">
-                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[var(--border)] bg-[var(--grey-100)] text-[15px] font-bold text-[var(--fg)]/80 select-none whitespace-nowrap">
+                      <label className="form-label">Phone Number <span style={{ color: "#f87171" }}>*</span></label>
+                      <div style={{ display: "flex" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", padding: "12px 14px", borderRadius: "10px 0 0 10px", border: "1px solid var(--border)", borderRight: "none", background: "var(--black-300)", fontSize: 14, color: "var(--fg-muted)", whiteSpace: "nowrap", userSelect: "none" }}>
                           +91
                         </span>
                         <input
@@ -410,32 +336,44 @@ export default function JobDetailsPage() {
                           onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
                           placeholder="98765 43210"
                           maxLength={10}
-                          className="form-input rounded-l-none border-l-0"
+                          className="form-input"
+                          style={{ borderRadius: "0 10px 10px 0", borderLeft: "none" }}
                         />
                       </div>
-                      {errors.phone && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.phone}</p>}
+                      {errors.phone && <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>{errors.phone}</p>}
                     </div>
                     <div>
-                      <label className="form-label">City <span className="text-red-500">*</span></label>
+                      <label className="form-label">City <span style={{ color: "#f87171" }}>*</span></label>
                       <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Mumbai" className="form-input" />
-                      {errors.location && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.location}</p>}
+                      {errors.location && <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>{errors.location}</p>}
                     </div>
                   </div>
+
                   <div>
-                    <label className="form-label">Resume / CV <span className="text-red-500">*</span></label>
-                    <div className="relative rounded-[14px] border-2 border-dashed border-[var(--border)] bg-[var(--grey-100)]/30 px-6 py-9 text-center hover:bg-[var(--grey-100)] hover:border-blue-500/40 transition-colors cursor-pointer">
-                      <input type="file" accept=".pdf,.doc,.docx"
+                    <label className="form-label">Resume / CV <span style={{ color: "#f87171" }}>*</span></label>
+                    <div style={{ position: "relative", border: "1px dashed var(--border)", borderRadius: 10, padding: "36px 24px", textAlign: "center", cursor: "pointer", background: "var(--black-100)", transition: "border-color 0.2s" }}>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
                         onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}
                       />
-                      <Upload className="mx-auto h-7 w-7 text-[var(--muted)] mb-2" />
-                      <p className="text-[14px] font-bold text-[var(--fg)]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
-                      <p className="text-[12px] text-[var(--muted)]/60 mt-1">PDF, DOC up to 5 MB</p>
+                      <Upload style={{ width: 24, height: 24, color: "var(--fg-muted)", margin: "0 auto 10px" }} />
+                      <p style={{ fontSize: 14, fontWeight: 600, color: resume ? "var(--white)" : "var(--fg-muted)" }}>
+                        {resume ? resume.name : "Click to upload or drag & drop"}
+                      </p>
+                      <p style={{ fontSize: 12, color: "var(--grey-500)", marginTop: 4 }}>PDF, DOC up to 5 MB</p>
                     </div>
-                    {errors.resume && <p className="mt-1.5 text-[12px] text-red-400 font-medium">{errors.resume}</p>}
+                    {errors.resume && <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>{errors.resume}</p>}
                   </div>
-                  <div className="pt-2">
-                    <button disabled={loading} onClick={handleSubmit} className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed">
+
+                  <div style={{ paddingTop: 8 }}>
+                    <button
+                      disabled={loading}
+                      onClick={handleSubmit}
+                      className="btn-primary btn-primary-lg"
+                      style={{ width: "100%", justifyContent: "center", display: "flex", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+                    >
                       {loading ? "Submitting…" : "Submit Application"}
                     </button>
                   </div>

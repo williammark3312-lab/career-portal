@@ -1,25 +1,10 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const mono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "Careers Portal — Build Your Future",
+  title: "Careers — Join Our Team",
   description:
-    "Explore premium career opportunities and join an ambitious team building meaningful products.",
+    "Explore career opportunities and join a team building meaningful products.",
 };
 
 export default function RootLayout({
@@ -28,8 +13,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${mono.variable} h-full antialiased light`}>
-      <body className="min-h-full flex flex-col font-sans">
+    <html lang="en" className="h-full">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-full flex flex-col" style={{ fontFamily: '"Geist", ui-sans-serif, system-ui, sans-serif' }}>
         {children}
       </body>
     </html>

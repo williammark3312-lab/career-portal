@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../src/lib/supabase";
-import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows } from "@react-three/drei";
 import {
   Plus, MapPin, Briefcase, FileText, X, ExternalLink,
   CheckCircle2, Upload, MessageSquare, Send, Users,
-  UserPlus, ShieldCheck, User, ArrowRight, LogOut,
-  Search, Filter, TrendingUp, Clock, Menu, Trash2, Edit2, Sparkles, Copy, Eye, Lock
+  UserPlus, ArrowRight,
+  Clock, Trash2, Edit2, Sparkles, Copy, Eye, Lock
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -45,42 +43,9 @@ function parseComments(raw: string | null | undefined): Comment[] {
   return [{ id: "legacy", text: raw, created_at: new Date().toISOString(), author: "Admin" }];
 }
 
-/* ─── 3D Ring ─── */
-function FloatingRing() {
-  return (
-    <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
-      <mesh rotation={[0.5, -0.5, 0]}>
-        <torusGeometry args={[2, 0.45, 64, 128]} />
-        <meshPhysicalMaterial
-          transmission={0.95} opacity={1} transparent roughness={0.1}
-          thickness={1} ior={1.5} color="#1a3bbd" clearcoat={1} clearcoatRoughness={0.1}
-        />
-      </mesh>
-    </Float>
-  );
-}
-
-/* ─── Background Canvas ─── */
+/* ─── No 3D background (flat black design) ─── */
 function BgCanvas() {
-  return (
-    <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-      <Canvas
-        camera={{ position: [0, 0, 8], fov: 45 }}
-        dpr={[1, 1.5]}
-        gl={{ antialias: false, powerPreference: "high-performance" }}
-        style={{ pointerEvents: "none" }}
-      >
-        <ambientLight intensity={1.4} />
-        <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-        <directionalLight position={[-8, -8, -4]} intensity={1.2} color="#3279F9" />
-        <Suspense fallback={null}>
-          <FloatingRing />
-          <Environment preset="city" />
-          <ContactShadows position={[0, -2.5, 0]} opacity={0.2} scale={16} blur={3} color="#737A87" />
-        </Suspense>
-      </Canvas>
-    </div>
-  );
+  return null;
 }
 
 /* ─── Status badge (CV database) ─── */
@@ -398,34 +363,33 @@ export default function AdminPage() {
   /* ── Auth screens ── */
   if (authLoading && !loginSuccess) {
     return (
-      <main className="min-h-screen bg-[var(--bg)] flex items-center justify-center text-[var(--fg)]">
-        <div className="w-10 h-10 rounded-full border-2 border-[var(--border)] border-t-[#3279F9] animate-spin" />
+      <main style={{ minHeight: "100vh", background: "var(--black)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border)", borderTopColor: "var(--white)", animation: "spin 0.8s linear infinite" }} />
       </main>
     );
   }
 
   if (loginSuccess) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[var(--bg)] items-center justify-center text-[var(--fg)] select-none">
-        <BgCanvas />
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.92 }} 
-          animate={{ opacity: 1, scale: 1 }} 
-          className="glass relative z-10 flex flex-col items-center justify-center rounded-[32px] border border-[var(--border)] p-10 w-full max-w-xs shadow-2xl bg-[var(--grey-100)]/10"
+      <main style={{ minHeight: "100vh", background: "var(--black)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", color: "var(--white)" }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, border: "1px solid var(--border)", borderRadius: 20, padding: "48px 40px", background: "var(--black-100)" }}
         >
-          <motion.div 
-            initial={{ scale: 0 }} 
-            animate={{ scale: 1 }} 
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-            className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 rounded-full flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/10"
+            style={{ width: 56, height: 56, background: "var(--white)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            <CheckCircle2 className="w-8 h-8" />
+            <CheckCircle2 style={{ width: 28, height: 28, color: "var(--black)" }} />
           </motion.div>
-          <motion.h2 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
+          <motion.h2
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-[20px] font-bold text-[var(--fg)] tracking-tight"
+            style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.025em", color: "var(--white)" }}
           >
             Authorized
           </motion.h2>
@@ -436,70 +400,65 @@ export default function AdminPage() {
 
   if (!session) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[var(--bg)] items-center justify-center text-[var(--fg)] select-none overflow-hidden">
-        <BgCanvas />
-        <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none" />
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 24, scale: 0.96 }} 
-          animate={{ opacity: 1, y: 0, scale: 1 }} 
+      <main style={{ minHeight: "100vh", background: "var(--black)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--white)", padding: "24px" }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="glass relative z-10 w-full max-w-md p-8 sm:p-10 rounded-[32px] border border-[var(--border)] shadow-[var(--shadow)]"
+          style={{ width: "100%", maxWidth: 400, border: "1px solid var(--border)", borderRadius: 20, padding: "48px 40px", background: "var(--black-100)" }}
         >
-          <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/20">
-              <Lock className="w-5 h-5 text-white" />
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--border)", background: "var(--black-200)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+              <Lock style={{ width: 18, height: 18, color: "var(--fg-muted)" }} />
             </div>
-            <h1 className="text-[24px] font-bold text-[var(--fg)] tracking-tight">Admin Console</h1>
-            <p className="text-[14px] text-[var(--muted)] mt-1">Sign in to manage recruitment portal</p>
+            <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", color: "var(--white)", marginBottom: 6 }}>Admin Console</h1>
+            <p style={{ fontSize: 13, color: "var(--fg-muted)" }}>Sign in to manage your recruitment portal</p>
           </div>
-          
-          <form onSubmit={handleLogin} className="space-y-5">
+
+          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <label className="form-label block text-[11px] font-bold uppercase tracking-[0.06em] mb-2">Email Address</label>
-              <input 
-                type="email" 
-                value={authEmail} 
-                onChange={e => setAuthEmail(e.target.value)} 
-                required 
-                className="form-input w-full px-4 py-3 rounded-[14px] text-[15px] outline-none transition-all" 
-                placeholder="admin@example.com" 
+              <label className="form-label">Email Address</label>
+              <input
+                type="email"
+                value={authEmail}
+                onChange={e => setAuthEmail(e.target.value)}
+                required
+                className="form-input"
+                placeholder="admin@example.com"
               />
             </div>
-            
+
             <div>
-              <label className="form-label block text-[11px] font-bold uppercase tracking-[0.06em] mb-2">Password</label>
-              <input 
-                type="password" 
-                value={authPassword} 
-                onChange={e => setAuthPassword(e.target.value)} 
-                required 
-                className="form-input w-full px-4 py-3 rounded-[14px] text-[15px] outline-none transition-all" 
-                placeholder="••••••••" 
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                value={authPassword}
+                onChange={e => setAuthPassword(e.target.value)}
+                required
+                className="form-input"
+                placeholder="••••••••"
               />
             </div>
-            
+
             {authError && (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-[13px] text-red-400 text-center font-medium bg-red-500/10 border border-red-500/20 p-2.5 rounded-[12px]"
+                style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}
               >
                 {authError}
               </motion.p>
             )}
-            
-            <button 
-              type="submit" 
-              disabled={authLoading} 
-              className="w-full mt-2 py-3.5 rounded-[14px] bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold text-[14px] shadow-[0_4px_15px_-3px_rgba(50,121,249,0.3)] hover:shadow-[0_8px_20px_-3px_rgba(50,121,249,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2"
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="btn-primary"
+              style={{ width: "100%", justifyContent: "center", padding: "13px", marginTop: 8, display: "flex", alignItems: "center", gap: 8, opacity: authLoading ? 0.7 : 1, cursor: authLoading ? "not-allowed" : "pointer" }}
             >
               {authLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                "Access Dashboard"
-              )}
+                <div style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.3)", borderTopColor: "#000", animation: "spin 0.8s linear infinite" }} />
+              ) : "Access Dashboard"}
             </button>
           </form>
         </motion.div>
@@ -509,63 +468,56 @@ export default function AdminPage() {
 
   /* ── Main Admin UI ── */
   return (
-    <main className="relative flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)] font-sans antialiased selection:bg-blue-500/20 selection:text-blue-300">
-      <BgCanvas />
-      
-      {/* Dynamic ambient background glow circles */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[150px] pointer-events-none" />
-
+    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "var(--black)", color: "var(--white)" }}>
       <Header session={session} handleLogout={handleLogout} />
 
-      <div className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-10 py-10 pb-24">
+      <div style={{ position: "relative", zIndex: 10, flex: 1, width: "100%", maxWidth: 1280, margin: "0 auto", padding: "40px 40px 80px" }}>
         
         {/* Dashboard Title / Greeting Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10"
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 40 }}
         >
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <Sparkles className="w-4 h-4 text-blue-400" />
-              <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--muted)]">Recruiter Console</span>
-            </div>
-            <h1 className="text-[36px] font-bold text-[var(--fg)] tracking-tight leading-tight">
-              Control Panel
-            </h1>
-            <p className="text-[14px] text-[var(--fg)]/70 mt-1">
-              Welcome back, <span className="text-blue-400 font-semibold">{session?.user?.email?.split("@")[0]}</span>. Manage listings and screen active candidates.
-            </p>
-          </div>
-          
-          {/* Quick Date Display */}
-          <div className="hidden md:flex items-center gap-3 px-4 py-2.5 rounded-[16px] bg-[var(--grey-200)] border border-[var(--border)] backdrop-blur-md">
-            <span className="text-[13px] font-semibold text-[var(--muted)]">
-              {new Date().toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })}
-            </span>
-          </div>
+          <p style={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--fg-muted)" }}>
+            Recruiter Console
+          </p>
+          <h1 style={{ fontSize: "clamp(28px, 3vw, 40px)", fontWeight: 700, letterSpacing: "-0.035em", color: "var(--white)", lineHeight: 1.05 }}>
+            Control Panel
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--fg-muted)" }}>
+            Welcome back, <strong style={{ color: "var(--white)", fontWeight: 600 }}>{session?.user?.email?.split("@")[0]}</strong>.
+          </p>
         </motion.div>
 
-        {/* Tab Navigation & Search/Filter Panel */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-10 border-b border-[var(--border)] pb-6">
-          <div className="flex gap-1.5 p-1 bg-[var(--grey-200)] border border-[var(--border)] rounded-[20px] inline-flex flex-wrap shadow-inner backdrop-blur-md">
-            {([
-              { key: "jobs", label: "Jobs & Applications", icon: <Briefcase className="w-4 h-4" /> },
-              { key: "cvs",  label: "CV Database",          icon: <FileText className="w-4 h-4" /> },
-              { key: "users",label: "User Management",      icon: <Users className="w-4 h-4" /> },
-            ] as const).map(t => (
-              <button key={t.key} onClick={() => setActiveTab(t.key)}
-                className={`px-5 py-3 rounded-[16px] text-[13px] font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer ${
-                  activeTab === t.key 
-                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_6px_20px_-4px_rgba(50,121,249,0.4)] scale-102" 
-                    : "text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--grey-300)]"
-                }`}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
-          </div>
+        {/* Tab Navigation */}
+        <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 40, display: "flex", gap: 0 }}>
+          {([
+            { key: "jobs", label: "Jobs & Applications", icon: <Briefcase style={{ width: 14, height: 14 }} /> },
+            { key: "cvs",  label: "CV Database",          icon: <FileText style={{ width: 14, height: 14 }} /> },
+            { key: "users",label: "User Management",      icon: <Users style={{ width: 14, height: 14 }} /> },
+          ] as const).map(t => (
+            <button key={t.key} onClick={() => setActiveTab(t.key)}
+              style={{
+                padding: "12px 20px",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+                border: "none",
+                background: "none",
+                color: activeTab === t.key ? "var(--white)" : "var(--fg-muted)",
+                borderBottom: activeTab === t.key ? "2px solid var(--white)" : "2px solid transparent",
+                marginBottom: -1,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                transition: "color 0.2s",
+                fontFamily: '"Geist", ui-sans-serif, system-ui, sans-serif',
+              }}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
         </div>
 
         {/* ── Jobs Tab ── */}

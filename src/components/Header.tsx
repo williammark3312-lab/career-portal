@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
-import { Briefcase, ExternalLink, ArrowLeft, LogOut, Sun, Moon } from "lucide-react";
+import { Briefcase, ExternalLink, ArrowLeft, LogOut } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 
 interface HeaderProps {
@@ -14,76 +14,52 @@ interface HeaderProps {
 export default function Header({ session, handleLogout }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAdminPage = pathname?.startsWith("/admin");
   const isJobDetails = pathname?.startsWith("/jobs/") && pathname !== "/jobs";
 
-  const [theme, setTheme] = useState<"dark" | "light">("light");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("theme") as "dark" | "light";
-    const active = saved || "light";
-    setTheme(active);
-    if (active === "light") {
-      document.documentElement.classList.add("light");
-    } else {
-      document.documentElement.classList.remove("light");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("theme", next);
-    if (next === "light") {
-      document.documentElement.classList.add("light");
-    } else {
-      document.documentElement.classList.remove("light");
-    }
-  };
-
   return (
     <motion.header
-      initial={{ y: -100, opacity: 0 }}
+      initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-      className="sticky top-0 z-50 px-4 py-5 pointer-events-none flex justify-center w-full"
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="site-nav"
     >
-      <motion.div
-        className="pointer-events-auto relative flex items-center justify-between w-full max-w-4xl rounded-full bg-[var(--nav-bg)] border border-[var(--nav-border)] backdrop-blur-md shadow-2xl px-4 py-2.5"
-      >
-        {/* Logo Section */}
-        <div
-          className="relative z-10 flex items-center gap-3 cursor-pointer group px-2"
+      <div className="site-nav-inner">
+        {/* Logo */}
+        <button
           onClick={() => router.push(isAdminPage ? "/jobs" : "/")}
+          className="site-nav-logo"
         >
-          <div className="w-8 h-8 rounded-full bg-[var(--grey-300)] flex items-center justify-center transition-transform group-hover:scale-105 border border-[var(--grey-400)]">
-            <div className="w-[12px] h-[12px] bg-[var(--grey-1000)] rounded-[2px] rotate-45" />
-          </div>
-          <span className="text-[16px] font-semibold text-[var(--grey-1000)] tracking-tight flex items-center gap-1.5">
-            <span className="hidden sm:inline">Careers Portal</span>
-            <span className="sm:hidden">Careers</span>
-            {isAdminPage && <span className="text-[var(--grey-700)] font-normal hidden sm:inline">/ Admin</span>}
-          </span>
-        </div>
+          <span className="site-nav-logo-dot" />
+          {isAdminPage ? (
+            <span>
+              Careers <span style={{ color: "var(--fg-muted)", fontWeight: 400 }}>/ Admin</span>
+            </span>
+          ) : (
+            "Careers"
+          )}
+        </button>
 
-        {/* Navigation Links */}
-        <nav className="relative z-10 flex items-center gap-1.5 pr-1">
+        {/* Desktop Nav */}
+        <nav className="site-nav-links">
           {isAdminPage ? (
             <>
               <button
                 onClick={() => router.push("/jobs")}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-medium text-[var(--grey-900)] hover:bg-[var(--grey-200)] hover:text-[var(--grey-1000)] transition-colors"
+                className="site-nav-link"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Back to site</span>
+                <ArrowLeft style={{ width: 14, height: 14 }} />
+                Back to site
               </button>
               {session && handleLogout && (
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-medium text-white bg-red-500/20 hover:bg-red-500/30 transition-colors ml-1"
+                  className="site-nav-link"
+                  style={{ color: "#f87171" }}
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut style={{ width: 14, height: 14 }} />
                   <span className="hidden sm:inline">Sign out</span>
                 </button>
               )}
@@ -91,60 +67,35 @@ export default function Header({ session, handleLogout }: HeaderProps) {
           ) : isJobDetails ? (
             <button
               onClick={() => router.push("/jobs")}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-medium text-[var(--grey-900)] hover:bg-[var(--grey-200)] hover:text-[var(--grey-1000)] transition-colors"
+              className="site-nav-link"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">All Positions</span>
+              <ArrowLeft style={{ width: 14, height: 14 }} />
+              All Positions
             </button>
           ) : (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => router.push("/jobs")}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-[14px] font-bold shadow-[0_4px_12px_rgba(50,121,249,0.3)] hover:scale-105 transition-all cursor-pointer"
-              >
-                <Briefcase className="w-4 h-4" />
-                <span className="hidden sm:inline">View Openings</span>
-              </button>
-
+            <>
               <a
                 href="https://www.linkedin.com/in/anandugirish/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-medium text-[var(--grey-800)] hover:text-[var(--grey-1000)] hover:bg-[var(--grey-200)] transition-colors"
+                className="site-nav-link hidden sm:flex"
               >
-                <ExternalLink className="w-4 h-4" />
-                <span className="hidden sm:inline">LinkedIn</span>
+                LinkedIn
+                <ExternalLink style={{ width: 12, height: 12 }} />
               </a>
-            </div>
-          )}
 
-          {/* Premium Theme Toggle Switch */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--grey-300)] border border-[var(--grey-400)] text-[var(--grey-1000)] hover:bg-[var(--grey-400)] transition-all cursor-pointer ml-1.5"
-            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} mode`}
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={theme}
-                initial={{ y: -10, opacity: 0, rotate: -45 }}
-                animate={{ y: 0, opacity: 1, rotate: 0 }}
-                exit={{ y: 10, opacity: 0, rotate: 45 }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
-                className="flex items-center justify-center"
+              <button
+                onClick={() => router.push("/jobs")}
+                className="btn-primary"
+                style={{ padding: "8px 18px", fontSize: "13px", fontWeight: 600 }}
               >
-                {theme === "dark" ? (
-                  <Sun className="w-[17px] h-[17px] text-amber-400" />
-                ) : (
-                  <Moon className="w-[17px] h-[17px] text-indigo-500" />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </motion.button>
+                <Briefcase style={{ width: 13, height: 13 }} />
+                View Openings
+              </button>
+            </>
+          )}
         </nav>
-      </motion.div>
+      </div>
     </motion.header>
   );
 }
