@@ -85,9 +85,6 @@ export default function JobsPage() {
   const heroOpacity = useTransform(scrollY, [0, 160], [1, 0]);
   const heroScale = useTransform(scrollY, [0, 160], [1, 0.96]);
   const heroY = useTransform(scrollY, [0, 160], [0, -40]);
-  // Strictly keep hidden (opacity 0) from scroll 0 to 40px to prevent any faint text on page load, then fade in gracefully between 40px and 160px
-  const hiringOpacity = useTransform(scrollY, [40, 160], [0, 1]);
-  const hiringScale = useTransform(scrollY, [40, 160], [0.88, 1]);
 
   useEffect(() => {
     setMounted(true);
@@ -156,29 +153,6 @@ export default function JobsPage() {
 
       {/* Search & Filter Bar */}
       <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-8">
-        {/* Active Hiring tag */}
-        {mounted && (
-          <motion.div
-            style={{ opacity: hiringOpacity, scale: hiringScale }}
-            className="flex items-center gap-4 mb-6 pl-1 pointer-events-none"
-          >
-            <span className="relative flex h-4 w-4 mt-2 md:mt-3">
-              <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
-              <span className="relative h-4 w-4 rounded-full bg-[#10B981]" />
-            </span>
-            <span 
-              className="text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-none"
-              style={{
-                background: "linear-gradient(135deg, #2563EB 0%, #3279F9 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text"
-              }}
-            >
-              hiring.
-            </span>
-          </motion.div>
-        )}
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
