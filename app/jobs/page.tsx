@@ -85,6 +85,8 @@ export default function JobsPage() {
   const heroOpacity = useTransform(scrollY, [0, 160], [1, 0]);
   const heroScale = useTransform(scrollY, [0, 160], [1, 0.96]);
   const heroY = useTransform(scrollY, [0, 160], [0, -40]);
+  const hiringOpacity = useTransform(scrollY, [40, 160], [0, 1]);
+  const hiringScale = useTransform(scrollY, [40, 160], [0.95, 1]);
 
   useEffect(() => {
     setMounted(true);
@@ -153,6 +155,38 @@ export default function JobsPage() {
 
       {/* Search & Filter Bar */}
       <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-8">
+        {/* Dynamic Live Stats Bar */}
+        {mounted && (
+          <motion.div
+            style={{ opacity: hiringOpacity, scale: hiringScale }}
+            className="flex flex-wrap items-center gap-3.5 mb-4 pl-1.5 pointer-events-none"
+          >
+            {/* Live Status Badge */}
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.18)]">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
+                <span className="relative h-2 w-2 rounded-full bg-[#10B981]" />
+              </span>
+              <span className="text-[11px] font-bold text-[#10B981] uppercase tracking-[0.05em]">
+                Live database
+              </span>
+            </div>
+
+            {/* Open Roles Badge */}
+            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-[#E1E6EC] shadow-sm">
+              <span className="text-[11px] font-bold text-[#121317] uppercase tracking-[0.05em]">
+                Open Roles: <strong className="text-[#3279F9]">{jobs.length}</strong>
+              </span>
+            </div>
+
+            {/* Department Count Badge */}
+            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-[#E1E6EC] shadow-sm">
+              <span className="text-[11px] font-bold text-[#121317] uppercase tracking-[0.05em]">
+                Departments: <strong className="text-[#7C3AED]">{departments.length - 1}</strong>
+              </span>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
