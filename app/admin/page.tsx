@@ -8,7 +8,7 @@ import {
   Plus, MapPin, Briefcase, FileText, X, ExternalLink,
   CheckCircle2, Upload, MessageSquare, Send, Users,
   UserPlus, ArrowRight,
-  Clock, Trash2, Edit2, Sparkles, Copy, Eye, Lock
+  Clock, Trash2, Edit2, Sparkles, Copy, Eye, Lock, Search
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -106,6 +106,8 @@ export default function AdminPage() {
   /* CV Database */
   const [cvs, setCvs]                   = useState<CVRecord[]>([]);
   const [cvFilter, setCvFilter]         = useState("All");
+  const [cvSearch, setCvSearch]         = useState("");
+  const [editingCv, setEditingCv]       = useState<CVRecord | null>(null);
   const [showCvModal, setShowCvModal]   = useState(false);
   const [uploadingCv, setUploadingCv]   = useState(false);
   const [cvName, setCvName]             = useState("");
@@ -295,24 +297,46 @@ export default function AdminPage() {
   }
 
   /* ── CV Database ── */
-  function closeCvModal() { setShowCvModal(false); setCvName(""); setCvEmail(""); setCvPhone(""); setCvFile(null); }
+  function closeCvModal() { 
+    setShowCvModal(false); 
+    setEditingCv(null); 
+    setCvName(""); 
+    setCvEmail(""); 
+    setCvPhone(""); 
+    setCvFile(null); 
+  }
 
-  async function handleUploadCv() {
-    if (!cvName.trim() || !cvFile) { alert("Name and CV file are required."); return; }
+  async function handleSaveCv() {
+    if (!cvName.trim()) { alert("Name is required."); return; }
+    if (!editingCv && !cvFile) { alert("CV file is required."); return; }
     try {
       setUploadingCv(true);
-      const fileName = `${Date.now()}-${cvFile.name}`;
-      const { error: uploadErr } = await supabase.storage.from("resumes").upload(fileName, cvFile);
-      if (uploadErr) { alert(uploadErr.message); return; }
-      const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(fileName);
-      const { error } = await supabase.from("cv_database").insert([
-        { name: cvName, email: cvEmail, phone: cvPhone, cv_url: publicUrl, status: "Not Called" }
-      ]);
-      if (error) { alert(error.message); return; }
+      let cvUrl = editingCv ? editingCv.cv_url : "";
+      
+      if (cvFile) {
+        const fileName = `${Date.now()}-${cvFile.name}`;
+        const { error: uploadErr } = await supabase.storage.from("resumes").upload(fileName, cvFile);
+        if (uploadErr) { alert(uploadErr.message); return; }
+        const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(fileName);
+        cvUrl = publicUrl;
+      }
+      
+      if (editingCv) {
+        const { error } = await supabase
+          .from("cv_database")
+          .update({ name: cvName, email: cvEmail, phone: cvPhone, cv_url: cvUrl })
+          .eq("id", editingCv.id);
+        if (error) { alert(error.message); return; }
+      } else {
+        const { error } = await supabase.from("cv_database").insert([
+          { name: cvName, email: cvEmail, phone: cvPhone, cv_url: cvUrl, status: "Not Called" }
+        ]);
+        if (error) { alert(error.message); return; }
+      }
       closeCvModal(); 
       loadCvs();
       loadStats();
-    } catch { alert("Something went wrong uploading the CV."); }
+    } catch { alert("Something went wrong saving the profile."); }
     finally { setUploadingCv(false); }
   }
 
@@ -759,7 +783,30 @@ export default function AdminPage() {
                 <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif' }}>Talent Index</h2>
                 <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Update active candidate status pathways, delete indexes, or write remarks.</p>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ position: "relative", minWidth: 200 }}>
+                  <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, color: "var(--neutral-400)", pointerEvents: "none" }} />
+                  <input
+                    type="text"
+                    placeholder="Search candidates..."
+                    value={cvSearch}
+                    onChange={e => setCvSearch(e.target.value)}
+                    style={{
+                      width: "100%",
+                      paddingLeft: 34,
+                      paddingRight: 12,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                      borderRadius: 14,
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      background: "#ffffff",
+                      fontSize: 13,
+                      color: "var(--neutral-900)",
+                      outline: "none",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.01)"
+                    }}
+                  />
+                </div>
                 <select 
                   value={cvFilter} 
                   onChange={e => setCvFilter(e.target.value)}
@@ -810,7 +857,14 @@ export default function AdminPage() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {cvs.filter(c => cvFilter === "All" || c.status === cvFilter).map((cv, i) => {
+                {cvs.filter(c => {
+                  const matchesFilter = cvFilter === "All" || c.status === cvFilter;
+                  const matchesSearch = !cvSearch.trim() || 
+                    c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
+                    (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase())) ||
+                    (c.phone && c.phone.toLowerCase().includes(cvSearch.toLowerCase()));
+                  return matchesFilter && matchesSearch;
+                }).map((cv, i) => {
                   const cvComments = parseComments(cv.comments);
                   const colors = [
                     "linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)",
@@ -880,6 +934,33 @@ export default function AdminPage() {
                             <option value="Interviewing">Interviewing</option>
                             <option value="Rejected">Rejected</option>
                           </select>
+                           <button 
+                            onClick={() => { 
+                              setEditingCv(cv); 
+                              setCvName(cv.name); 
+                              setCvEmail(cv.email || ""); 
+                              setCvPhone(cv.phone || ""); 
+                              setShowCvModal(true); 
+                            }}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              padding: "7px 14px",
+                              borderRadius: 12,
+                              border: "1px solid rgba(0, 0, 0, 0.08)",
+                              background: "#ffffff",
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              color: "var(--neutral-700)",
+                              cursor: "pointer",
+                              transition: "all 0.2s"
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = "var(--neutral-50)"}
+                            onMouseLeave={(e) => e.currentTarget.style.background = "#ffffff"}
+                          >
+                            <Edit2 style={{ width: 14, height: 14 }} /> Edit
+                          </button>
                           <button 
                             onClick={() => { setSelectedCV(cv.cv_url); setCvOpen(true); }}
                             style={{
@@ -1301,10 +1382,14 @@ export default function AdminPage() {
                 padding: "32px",
                 boxShadow: "0 10px 40px rgba(0,0,0,0.05)"
               }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>Load Candidate profile</h2>
-                  <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Index a target resume directly into the primary pipeline.</p>
+                  <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>
+                    {editingCv ? "Edit Candidate Profile" : "Load Candidate profile"}
+                  </h2>
+                  <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>
+                    {editingCv ? "Modify existing candidate record details in the talent pipeline." : "Index a target resume directly into the primary pipeline."}
+                  </p>
                 </div>
                 <button onClick={closeCvModal} style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer" }}>
                   <X style={{ width: 18, height: 18 }} />
@@ -1325,7 +1410,9 @@ export default function AdminPage() {
                   <input value={cvPhone} onChange={e => setCvPhone(e.target.value)} placeholder="+91 9876543210" className="google-form-input" />
                 </div>
                 <div>
-                  <label className="google-form-label">Resume file (PDF, DOC) <span style={{ color: "var(--google-red)" }}>*</span></label>
+                  <label className="google-form-label">
+                    {editingCv ? "Resume file (optional - upload to replace)" : "Resume file (PDF, DOC)"} {!editingCv && <span style={{ color: "var(--google-red)" }}>*</span>}
+                  </label>
                   <div style={{ position: "relative", borderRadius: 12, border: "2px dashed rgba(0,0,0,0.1)", background: "rgba(0,0,0,0.005)", padding: "24px 16px", textAlign: "center", cursor: "pointer" }} className="hover-dashed-border">
                     <input type="file" accept=".pdf,.doc,.docx"
                       onChange={e => { const f = e.target.files?.[0]; if (f) setCvFile(f); }}
@@ -1339,8 +1426,8 @@ export default function AdminPage() {
 
               <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
                 <button onClick={closeCvModal} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", fontSize: 13, fontWeight: 600, color: "var(--neutral-600)", cursor: "pointer" }}>Cancel</button>
-                <button disabled={uploadingCv} onClick={handleUploadCv} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "none", background: "var(--google-blue, #1a73e8)", color: "#ffffff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: uploadingCv ? 0.7 : 1 }}>
-                  {uploadingCv ? "Uploading..." : "Save Profile"}
+                <button disabled={uploadingCv} onClick={handleSaveCv} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "none", background: "var(--google-blue, #1a73e8)", color: "#ffffff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: uploadingCv ? 0.7 : 1 }}>
+                  {uploadingCv ? (editingCv ? "Saving..." : "Uploading...") : (editingCv ? "Save Changes" : "Save Profile")}
                 </button>
               </div>
             </motion.div>
