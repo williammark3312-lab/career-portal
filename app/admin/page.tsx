@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
+import AnimatedBackground from "../../src/components/AnimatedBackground";
+import KineticText from "../../src/components/KineticText";
 
 /* ─── Interfaces ─── */
 interface Job {
@@ -419,11 +421,9 @@ export default function AdminPage() {
   /* ── Auth screens ── */
   if (authLoading && !loginSuccess) {
     return (
-      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e8f0fe", borderTopColor: "var(--google-blue, #1a73e8)", animation: "spin 0.8s linear infinite" }} />
-        <style jsx global>{`
-          @keyframes spin { to { transform: rotate(360deg); } }
-        `}</style>
+      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
+        <AnimatedBackground />
+        <div className="w-8 h-8 border-2 border-[var(--google-blue)]/30 border-t-[var(--google-blue)] rounded-full animate-spin relative z-10" />
       </main>
     );
   }
@@ -431,10 +431,11 @@ export default function AdminPage() {
   if (loginSuccess) {
     return (
       <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", color: "var(--neutral-900)" }}>
+        <AnimatedBackground />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, border: "1px solid rgba(0,0,0,0.08)", borderRadius: 24, padding: "52px 40px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)" }}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, border: "1px solid rgba(0,0,0,0.08)", borderRadius: 24, padding: "52px 40px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", position: "relative", zIndex: 10 }}
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -461,17 +462,20 @@ export default function AdminPage() {
   if (!session) {
     return (
       <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--neutral-900)", padding: "24px" }}>
+        <AnimatedBackground />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: "100%", maxWidth: 410, border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 24, padding: "48px 36px", background: "rgba(255, 255, 255, 0.8)", backdropFilter: "blur(20px)", boxShadow: "0 8px 30px rgba(0,0,0,0.03)" }}
+          style={{ width: "100%", maxWidth: 410, border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 24, padding: "48px 36px", background: "rgba(255, 255, 255, 0.8)", backdropFilter: "blur(20px)", boxShadow: "0 8px 30px rgba(0,0,0,0.03)", position: "relative", zIndex: 10 }}
         >
           <div style={{ marginBottom: 28 }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
               <Lock style={{ width: 18, height: 18, color: "var(--google-blue)" }} />
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--neutral-900)", marginBottom: 6, fontFamily: '"Google Sans", sans-serif' }}>Recruiter Console</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--neutral-900)", marginBottom: 6, fontFamily: '"Google Sans", sans-serif' }}>
+              <KineticText text="Recruiter Console" />
+            </h1>
             <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 500 }}>Sign in to manage your recruitment workspaces</p>
           </div>
 
@@ -545,7 +549,8 @@ export default function AdminPage() {
 
   /* ── Main Admin UI ── */
   return (
-    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--neutral-900)" }}>
+    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--neutral-900)", position: "relative" }}>
+      <AnimatedBackground />
       <Header session={session} handleLogout={handleLogout} />
 
       <div style={{ position: "relative", zIndex: 10, flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "110px 24px 80px" }}>

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
+import AnimatedBackground from "../../../../src/components/AnimatedBackground";
 
 /* ─── Types ─── */
 interface Job {
@@ -460,21 +461,24 @@ export default function JobScreeningPage() {
     return acc;
   }, {});
 
+  async function handleLogout() {
+    await supabase.auth.signOut();
+  }
+
   /* Loading state */
   if (authLoading) {
     return (
-      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e8f0fe", borderTopColor: "var(--google-blue, #1a73e8)", animation: "spin 0.8s linear infinite" }} />
-        <style jsx global>{`
-          @keyframes spin { to { transform: rotate(360deg); } }
-        `}</style>
+      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
+        <AnimatedBackground />
+        <div className="w-8 h-8 border-2 border-[var(--google-blue)]/30 border-t-[var(--google-blue)] rounded-full animate-spin relative z-10" />
       </main>
     );
   }
 
   return (
     <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--neutral-900)", position: "relative", zIndex: 1 }}>
-      <Header session={session} />
+      <AnimatedBackground />
+      <Header session={session} handleLogout={handleLogout} />
 
       <div style={{ flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "110px 24px 80px" }}>
 

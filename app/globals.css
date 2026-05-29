@@ -25,6 +25,11 @@
   --neutral-800: #3C4043;
   --neutral-900: #202124;
 
+  --google-blue:   #1a73e8;
+  --google-red:    #d93025;
+  --google-yellow: #f9ab00;
+  --google-green:  #1e8e3e;
+
   --blue-400:  #5B9BFF;
   --blue-500:  #3279F9;
   --blue-600:  #2563EB;
@@ -285,3 +290,25 @@ body {
 
 /* ╔══════╗ Page Transition ╔══════╗ */
 /* handled by app/template.tsx */
+
+/* ╔══════╗ Animated Background Blobs ╔══════╗ */
+.bg-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(140px);
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: multiply;
+}
+.bg-blob-blue {
+  background: var(--google-blue);
+}
+.bg-blob-red {
+  background: var(--google-red);
+}
+.bg-blob-green {
+  background: var(--google-green);
+}
+.bg-blob-yel {
+  background: var(--google-yellow);
+}
