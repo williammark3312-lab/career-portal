@@ -736,8 +736,8 @@ export default function AdminPage() {
                               background: "var(--google-blue, #1a73e8)",
                               transition: "all 0.2s"
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.opacity = 0.95}
-                            onMouseLeave={(e) => e.currentTarget.style.opacity = 1}
+                            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.95"}
+                            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
                           >
                             Review Submissions <ArrowRight style={{ width: 14, height: 14 }} />
                           </button>
@@ -1110,13 +1110,13 @@ export default function AdminPage() {
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--neutral-500)", borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 12 }}>
-                        <div style={{ display: "flex", justify="space-between" }} className="flex justify-between">
+                        <div style={{ display: "flex", justifyContent: "space-between" }} className="flex justify-between">
                           <span>Created date:</span>
                           <span style={{ fontWeight: 600, color: "var(--neutral-800)" }}>
                             {new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                           </span>
                         </div>
-                        <div style={{ display: "flex", justify="space-between" }} className="flex justify-between">
+                        <div style={{ display: "flex", justifyContent: "space-between" }} className="flex justify-between">
                           <span>Last login:</span>
                           <span style={{ fontWeight: 600, color: "var(--neutral-800)" }}>
                             {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
@@ -1207,8 +1207,6 @@ export default function AdminPage() {
                           borderRadius: 8,
                           border: "none",
                           background: "#ffffff",
-                          px: 12,
-                          py: 6,
                           fontSize: 12,
                           fontWeight: 600,
                           color: "var(--neutral-700)",
@@ -1328,10 +1326,10 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <label className="google-form-label">Resume file (PDF, DOC) <span style={{ color: "var(--google-red)" }}>*</span></label>
-                  <div style={{ position: "relative", rounded: 12, border: "2px dashed rgba(0,0,0,0.1)", background: "rgba(0,0,0,0.005)", padding: "24px 16px", textAlign: "center", cursor: "pointer" }} className="hover-dashed-border">
+                  <div style={{ position: "relative", borderRadius: 12, border: "2px dashed rgba(0,0,0,0.1)", background: "rgba(0,0,0,0.005)", padding: "24px 16px", textAlign: "center", cursor: "pointer" }} className="hover-dashed-border">
                     <input type="file" accept=".pdf,.doc,.docx"
                       onChange={e => { const f = e.target.files?.[0]; if (f) setCvFile(f); }}
-                      style={{ position: "absolute", inset: 0, w: "100%", h: "100%", opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                      style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
                     <Upload style={{ width: 22, height: 22, color: "var(--neutral-400)", margin: "0 auto 8px" }} />
                     <p style={{ fontSize: 13, fontWeight: 600, color: "var(--neutral-800)", margin: "0 0 4px" }}>{cvFile ? cvFile.name : "Select credentials file"}</p>
                     <p style={{ fontSize: 11, color: "var(--neutral-400)", margin: 0 }}>Supports PDF, DOC, DOCX up to 5 MB</p>
