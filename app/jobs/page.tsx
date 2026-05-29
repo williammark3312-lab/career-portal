@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, Suspense } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../src/lib/supabase";
 import { Canvas } from "@react-three/fiber";
@@ -79,6 +79,11 @@ export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
 
+  const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 160], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 160], [1, 0.96]);
+  const heroY = useTransform(scrollY, [0, 160], [0, -32]);
+
   useEffect(() => { fetchJobs(); }, []);
 
   async function fetchJobs() {
@@ -127,6 +132,7 @@ export default function JobsPage() {
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
           className="max-w-2xl"
         >
           <span className="dept-tag mb-5 inline-block">Join Our Team</span>
