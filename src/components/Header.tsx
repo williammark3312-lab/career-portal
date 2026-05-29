@@ -22,7 +22,7 @@ export default function Header({ session, handleLogout }: HeaderProps) {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-      className="sticky top-0 z-50 px-4 py-5 pointer-events-none flex justify-center w-full"
+      className="absolute top-0 left-0 right-0 z-50 px-4 py-5 pointer-events-none flex justify-center w-full"
       style={{ zIndex: 100 }}
     >
       <motion.div
