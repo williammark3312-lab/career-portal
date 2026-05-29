@@ -83,11 +83,11 @@ export default function JobsPage() {
   const [mounted, setMounted] = useState(false);
 
   const { scrollY } = useScroll();
-  const heroOpacity = useTransform(scrollY, [0, 160], [1, 0]);
-  const heroScale = useTransform(scrollY, [0, 160], [1, 0.96]);
-  const heroY = useTransform(scrollY, [0, 160], [0, -40]);
-  const hiringOpacity = useTransform(scrollY, [40, 160], [0, 1]);
-  const hiringScale = useTransform(scrollY, [40, 160], [0.95, 1]);
+  const heroOpacity = useTransform(scrollY, [0, 650], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 650], [1, 0.90]);
+  const heroY = useTransform(scrollY, [0, 650], [0, -120]);
+  const hiringOpacity = useTransform(scrollY, [300, 650], [0, 1]);
+  const hiringScale = useTransform(scrollY, [300, 650], [0.95, 1]);
 
   useEffect(() => {
     setMounted(true);
