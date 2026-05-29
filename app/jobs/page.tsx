@@ -79,15 +79,20 @@ export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const { scrollY } = useScroll();
   const heroOpacity = useTransform(scrollY, [0, 160], [1, 0]);
   const heroScale = useTransform(scrollY, [0, 160], [1, 0.96]);
   const heroY = useTransform(scrollY, [0, 160], [0, -40]);
-  const hiringOpacity = useTransform(scrollY, [0, 160], [0, 1]);
-  const hiringScale = useTransform(scrollY, [0, 160], [0.88, 1]);
+  // Strictly keep hidden (opacity 0) from scroll 0 to 40px to prevent any faint text on page load, then fade in gracefully between 40px and 160px
+  const hiringOpacity = useTransform(scrollY, [40, 160], [0, 1]);
+  const hiringScale = useTransform(scrollY, [40, 160], [0.88, 1]);
 
-  useEffect(() => { fetchJobs(); }, []);
+  useEffect(() => {
+    setMounted(true);
+    fetchJobs();
+  }, []);
 
   async function fetchJobs() {
     setLoading(true);
@@ -152,18 +157,20 @@ export default function JobsPage() {
       {/* Search & Filter Bar */}
       <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-8">
         {/* Active Hiring tag */}
-        <motion.div
-          style={{ opacity: hiringOpacity, scale: hiringScale }}
-          className="flex items-center gap-3 mb-4 pl-1"
-        >
-          <span className="relative flex h-2.5 w-2.5 mt-1">
-            <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
-            <span className="relative h-2.5 w-2.5 rounded-full bg-[#10B981]" />
-          </span>
-          <span className="text-[28px] md:text-[36px] font-medium tracking-[-0.03em] text-gradient leading-none">
-            hiring.
-          </span>
-        </motion.div>
+        {mounted && (
+          <motion.div
+            style={{ opacity: hiringOpacity, scale: hiringScale }}
+            className="flex items-center gap-3 mb-4 pl-1 pointer-events-none"
+          >
+            <span className="relative flex h-2.5 w-2.5 mt-1">
+              <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
+              <span className="relative h-2.5 w-2.5 rounded-full bg-[#10B981]" />
+            </span>
+            <span className="text-[28px] md:text-[36px] font-medium tracking-[-0.03em] text-gradient leading-none">
+              hiring.
+            </span>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
