@@ -7,20 +7,23 @@
   --grey-200:  #E1E6EC;
   --grey-300:  #CDD4DC;
   --grey-400:  #B2BBC5;
-  --grey-500:  #121317;
-  --grey-600:  #121317;
-  --grey-700:  #121317;
-  --grey-800:  #121317;
-  --grey-900:  #121317;
+  --grey-500:  #8E9AA8;
+  --grey-600:  #6D7A8B;
+  --grey-700:  #4E5B6E;
+  --grey-800:  #333F51;
+  --grey-900:  #1E2633;
   --grey-1000: #121317;
 
-  --neutral-300: #121317;
-  --neutral-400: #121317;
-  --neutral-500: #121317;
-  --neutral-600: #121317;
-  --neutral-700: #121317;
-  --neutral-800: #121317;
-  --neutral-900: #121317;
+  --neutral-50:  #F8F9FA;
+  --neutral-100: #F1F3F4;
+  --neutral-200: #E8EAED;
+  --neutral-300: #DADCE0;
+  --neutral-400: #BDC1C6;
+  --neutral-500: #9AA0A6;
+  --neutral-600: #70757A;
+  --neutral-700: #5F6368;
+  --neutral-800: #3C4043;
+  --neutral-900: #202124;
 
   --blue-400:  #5B9BFF;
   --blue-500:  #3279F9;

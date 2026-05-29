@@ -2,12 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Float, Environment, ContactShadows, MeshTransmissionMaterial } from "@react-three/drei";
 import { Briefcase } from "lucide-react";
 import Header from "../src/components/Header";
 import Footer from "../src/components/Footer";
+import { supabase } from "../src/lib/supabase";
 
 /* —— Same ring as jobs/admin pages —— */
 function FloatingRing() {
@@ -31,6 +32,25 @@ function FloatingRing() {
 
 export default function Home() {
   const router = useRouter();
+  const [stats, setStats] = useState<{ jobsCount: number; deptsCount: number } | null>(null);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const { data, error } = await supabase.from("jobs").select("id, department");
+        if (!error && data) {
+          const depts = new Set(data.map((j) => j.department).filter(Boolean));
+          setStats({
+            jobsCount: data.length,
+            deptsCount: depts.size,
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching homepage stats:", err);
+      }
+    }
+    fetchStats();
+  }, []);
 
   return (
     <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
@@ -78,11 +98,46 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.7 }}
-            className="text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] mb-10 text-gradient"
+            className="text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] mb-8 text-gradient"
           >
             Build the Future<br />
             With Us
           </motion.h1>
+
+          {/* Dynamic Stats Dashboard Card */}
+          {stats && stats.jobsCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.38, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-8 md:gap-12 py-4 px-8 mb-10 rounded-2xl bg-white/40 border border-[#E1E6EC] backdrop-blur-md w-fit mx-auto shadow-[0_4px_20px_-4px_rgba(18,19,23,0.04)]"
+            >
+              <div className="flex flex-col items-center sm:items-start gap-1">
+                <span className="text-[10px] font-bold tracking-widest text-[#737A87] uppercase">Active Openings</span>
+                <span className="text-[26px] font-bold text-[#1a3bbd] tracking-tight flex items-baseline gap-1.5 leading-none mt-1">
+                  {stats.jobsCount}
+                  <span className="relative flex h-2 w-2 mb-1">
+                    <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
+                    <span className="relative h-2 w-2 rounded-full bg-[#10B981]" />
+                  </span>
+                </span>
+              </div>
+              <div className="hidden sm:block w-[1px] h-8 bg-[#E1E6EC]" />
+              <div className="flex flex-col items-center sm:items-start gap-1">
+                <span className="text-[10px] font-bold tracking-widest text-[#737A87] uppercase">Departments</span>
+                <span className="text-[26px] font-bold text-[#7C3AED] tracking-tight leading-none mt-1">
+                  {stats.deptsCount}
+                </span>
+              </div>
+              <div className="hidden sm:block w-[1px] h-8 bg-[#E1E6EC]" />
+              <div className="flex flex-col items-center sm:items-start gap-1">
+                <span className="text-[10px] font-bold tracking-widest text-[#737A87] uppercase">Work Culture</span>
+                <span className="text-[12px] font-bold text-white px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#3279F9] to-[#1a3bbd] shadow-[0_2px_10px_-2px_rgba(50,121,249,0.3)] mt-1">
+                  Hybrid / Remote
+                </span>
+              </div>
+            </motion.div>
+          )}
 
           {/* Single CTA */}
           <motion.div
@@ -97,8 +152,6 @@ export default function Home() {
             </button>
           </motion.div>
         </motion.div>
-
-        {/* Stats removed */}
       </section>
 
       {/* Footer */}
