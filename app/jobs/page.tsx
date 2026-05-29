@@ -160,13 +160,21 @@ export default function JobsPage() {
         {mounted && (
           <motion.div
             style={{ opacity: hiringOpacity, scale: hiringScale }}
-            className="flex items-center gap-3 mb-4 pl-1 pointer-events-none"
+            className="flex items-center gap-4 mb-6 pl-1 pointer-events-none"
           >
-            <span className="relative flex h-2.5 w-2.5 mt-1">
+            <span className="relative flex h-4 w-4 mt-2 md:mt-3">
               <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
-              <span className="relative h-2.5 w-2.5 rounded-full bg-[#10B981]" />
+              <span className="relative h-4 w-4 rounded-full bg-[#10B981]" />
             </span>
-            <span className="text-[28px] md:text-[36px] font-medium tracking-[-0.03em] text-gradient leading-none">
+            <span 
+              className="text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-none"
+              style={{
+                background: "linear-gradient(135deg, #1a3bbd 0%, #3279F9 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text"
+              }}
+            >
               hiring.
             </span>
           </motion.div>
