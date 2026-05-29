@@ -320,7 +320,7 @@ export default function JobDetailsPage() {
           {/* Job Header */}
           <div className="px-10 py-10 border-b border-[#E1E6EC]">
             <span className="dept-tag mb-5 inline-block">{job.department}</span>
-            <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-[#1a3bbd]">{job.title}</h1>
+            <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-gradient">{job.title}</h1>
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D]">
                 <MapPin className="w-3.5 h-3.5 text-[#737A87]" />

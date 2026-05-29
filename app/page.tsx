@@ -77,10 +77,10 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.7 }}
-            className="text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-[#121317] mb-10"
+            className="text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] mb-10 text-gradient"
           >
             Build the Future<br />
-            <span className="text-[#3279F9]">With Us</span>
+            With Us
           </motion.h1>
 
           {/* Single CTA */}

@@ -130,9 +130,9 @@ export default function JobsPage() {
           className="max-w-2xl"
         >
           <span className="dept-tag mb-5 inline-block">Join Our Team</span>
-          <h1 className="text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-[1.05] text-[#121317]">
+          <h1 className="text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-[1.05] text-gradient">
             Build Your Career<br />
-            <span className="text-[#3279F9]">With Us</span>
+            With Us
           </h1>
           <p className="mt-5 text-[17px] leading-[1.7] text-[#737A87] max-w-xl">
             Explore premium career opportunities, collaborate with ambitious teams.

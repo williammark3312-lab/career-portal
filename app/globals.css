@@ -264,5 +264,14 @@ body {
   color: var(--grey-1000);
 }
 
+/* ╔══════╗ Text Gradient ╔══════╗ */
+.text-gradient {
+  background: linear-gradient(135deg, #121317 10%, #1a3bbd 65%, #3279F9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
 /* ╔══════╗ Page Transition ╔══════╗ */
 /* handled by app/template.tsx */
