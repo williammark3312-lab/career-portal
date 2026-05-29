@@ -1,28 +1,23 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 /**
- * AnimatedBackground
- * Slow-drifting gradient orbs, panning dot grid, and floating micro-particles.
- * Pure CSS animations for top-tier performance.
+ * AnimatedBackground — Google Antigravity / Material You
+ * Soft iridescent light-mode blobs on a near-white canvas.
+ * Google 4-color palette: blue, red, yellow, green.
  */
 export default function AnimatedBackground() {
-  const [particles, setParticles] = useState<
-    Array<{ id: number; left: string; delay: string; duration: string; scale: number }>
-  >([]);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    // Generate random values on mount to prevent SSR mismatch warnings
-    const tempParticles = Array.from({ length: 18 }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * -18}s`,
-      duration: `${14 + Math.random() * 10}s`,
-      scale: 0.5 + Math.random() * 0.8,
-    }));
-    setParticles(tempParticles);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
+
+  const { scrollY } = useScroll();
+  const blob1Y = useTransform(scrollY, [0, 3000], [0, 150]);
+  const blob2Y = useTransform(scrollY, [0, 3000], [0, -120]);
+  const blob3Y = useTransform(scrollY, [0, 3000], [0, 80]);
+  const blob4Y = useTransform(scrollY, [0, 3000], [0, -60]);
 
   return (
     <div
@@ -33,36 +28,81 @@ export default function AnimatedBackground() {
         zIndex: 0,
         pointerEvents: "none",
         overflow: "hidden",
-        backgroundColor: "#000000",
+        backgroundColor: "#F8F9FF",
       }}
     >
-      {/* 1. Slowly panning coordinate dot-grid */}
-      <div className="bg-grid-pan" />
+      {/* Google Blue blob — top left */}
+      <motion.div
+        className="bg-blob bg-blob-blue"
+        style={{
+          width: 700,
+          height: 700,
+          top: -200,
+          left: -150,
+          y: blob1Y,
+        }}
+      />
 
-      {/* 2. Deep luxury gradient orbs */}
-      <div className="bg-orb bg-orb-1" />
-      <div className="bg-orb bg-orb-2" />
-      <div className="bg-orb bg-orb-3" />
+      {/* Google Red blob — top right */}
+      <motion.div
+        className="bg-blob bg-blob-red"
+        style={{
+          width: 500,
+          height: 500,
+          top: 100,
+          right: -100,
+          y: blob2Y,
+        }}
+      />
 
-      {/* 3. Floating micro-particles / star dust */}
-      <div className="particle-container">
-        {particles.map((p) => (
-          <div
-            key={p.id}
-            className="particle"
-            style={{
-              left: p.left,
-              animationDelay: p.delay,
-              animationDuration: p.duration,
-              transform: `scale(${p.scale})`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Google Green blob — bottom left */}
+      <motion.div
+        className="bg-blob bg-blob-green"
+        style={{
+          width: 600,
+          height: 600,
+          bottom: -150,
+          left: -100,
+          y: blob3Y,
+        }}
+      />
 
-      {/* 4. Film grain overlay */}
-      <div className="bg-grain" />
+      {/* Google Yellow blob — bottom right */}
+      <motion.div
+        className="bg-blob bg-blob-yel"
+        style={{
+          width: 400,
+          height: 400,
+          bottom: 100,
+          right: -60,
+          y: blob4Y,
+        }}
+      />
+
+      {/* Very subtle dot grid */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.35,
+          backgroundImage: "radial-gradient(rgba(26,115,232,0.08) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Vignette — bottom */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "200px",
+          background: "linear-gradient(to top, rgba(248,249,255,0.6) 0%, transparent 100%)",
+          pointerEvents: "none",
+        }}
+      />
     </div>
   );
 }
-

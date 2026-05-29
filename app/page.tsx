@@ -2,323 +2,111 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Briefcase, MapPin, Zap } from "lucide-react";
+import { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
+import { Float, Environment, ContactShadows, MeshTransmissionMaterial } from "@react-three/drei";
+import { Briefcase } from "lucide-react";
 import Header from "../src/components/Header";
 
-const features = [
-  {
-    icon: <Zap style={{ width: 18, height: 18, color: "var(--fg-muted)" }} />,
-    title: "Move fast",
-    description:
-      "Work in small, autonomous teams that ship meaningful products without bureaucracy.",
-  },
-  {
-    icon: <Briefcase style={{ width: 18, height: 18, color: "var(--fg-muted)" }} />,
-    title: "Own your work",
-    description:
-      "Take full ownership from concept to production. Your fingerprints on what ships.",
-  },
-  {
-    icon: <MapPin style={{ width: 18, height: 18, color: "var(--fg-muted)" }} />,
-    title: "Work anywhere",
-    description:
-      "Remote-first culture with optional in-person collaboration. You set your environment.",
-  },
-];
-
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1 } },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
-};
+/* —— Same ring as jobs/admin pages —— */
+function FloatingRing() {
+  return (
+    <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
+      <mesh rotation={[0.5, -0.5, 0]}>
+        <torusGeometry args={[2, 0.45, 64, 128]} />
+        <MeshTransmissionMaterial
+          backside samples={6} thickness={0.6}
+          chromaticAberration={0.08} anisotropy={0.5}
+          distortion={0.12} distortionScale={0.2}
+          temporalDistortion={0.03} clearcoat={1}
+          clearcoatRoughness={0.05} color="#1a3bbd"
+          transmission={0.55} roughness={0.05}
+          resolution={1024}
+        />
+      </mesh>
+    </Float>
+  );
+}
 
 export default function Home() {
   const router = useRouter();
 
   return (
-    <main
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
-        background: "transparent",
-        color: "var(--white)",
-      }}
-    >
+    <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
+      {/* 3D Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-55">
+        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+          <ambientLight intensity={1.4} />
+          <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
+          <directionalLight position={[-8, -8, -4]} intensity={1.2} color="#3279F9" />
+          <Suspense fallback={null}>
+            <FloatingRing />
+            <Environment preset="city" />
+            <ContactShadows position={[0, -2.5, 0]} opacity={0.2} scale={16} blur={3} color="#737A87" />
+          </Suspense>
+        </Canvas>
+      </div>
+
+      {/* Header */}
       <Header />
 
-      {/* ── Hero ── */}
-      <section
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "120px 40px 80px",
-          textAlign: "center",
-          position: "relative",
-        }}
-      >
-        {/* Subtle vignette glow */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "radial-gradient(ellipse 60% 40% at 50% 60%, rgba(255,255,255,0.03), transparent)",
-            pointerEvents: "none",
-          }}
-        />
-
+      {/* Hero */}
+      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-20 text-center">
         <motion.div
-          initial="hidden"
-          animate="show"
-          variants={container}
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: 760,
-            width: "100%",
-          }}
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="glass w-full max-w-3xl rounded-[36px] px-12 py-16 mx-auto"
         >
-          {/* Tag */}
-          <motion.div variants={item} style={{ marginBottom: 32 }}>
-            <span className="hero-tag">
-              <span className="pulse-dot" />
-              We&apos;re Hiring
+          {/* We're Hiring pill */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.88 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="inline-flex items-center gap-2 mb-8 px-5 py-2 rounded-full border border-[rgba(50,121,249,0.2)] bg-[rgba(50,121,249,0.08)] text-[#3279F9] text-[13px] font-semibold"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inset-0 rounded-full bg-[#3279F9] animate-ping opacity-70" />
+              <span className="relative h-2 w-2 rounded-full bg-[#3279F9]" />
             </span>
+            We&apos;re Hiring
           </motion.div>
 
           {/* Heading */}
           <motion.h1
-            variants={item}
-            style={{
-              fontSize: "clamp(56px, 9vw, 100px)",
-              fontWeight: 700,
-              lineHeight: 1.0,
-              letterSpacing: "-0.04em",
-              color: "var(--white)",
-              marginBottom: 24,
-              fontFamily: '"Geist", ui-sans-serif, system-ui, sans-serif',
-            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-[#121317] mb-10"
           >
-            Build the future.{" "}
-            <span style={{ color: "var(--grey-600)" }}>With us.</span>
+            Build the Future<br />
+            <span className="text-[#3279F9]">With Us</span>
           </motion.h1>
 
-          {/* Subtitle */}
-          <motion.p
-            variants={item}
-            style={{
-              fontSize: "17px",
-              lineHeight: 1.7,
-              color: "var(--fg-muted)",
-              maxWidth: 480,
-              margin: "0 auto 48px",
-            }}
-          >
-            Join a team of builders obsessed with craft. We make products people
-            actually love.
-          </motion.p>
-
-          {/* CTA */}
+          {/* Single CTA */}
           <motion.div
-            variants={item}
-            style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45, duration: 0.5 }}
+            className="flex items-center justify-center"
           >
-            <button
-              onClick={() => router.push("/jobs")}
-              className="btn-primary btn-primary-lg"
-            >
-              View open positions
-              <ArrowRight style={{ width: 16, height: 16 }} />
+            <button onClick={() => router.push("/jobs")} className="btn-primary">
+              <Briefcase className="w-4 h-4" />
+              View Open Positions
             </button>
-            <a
-              href="https://www.linkedin.com/in/anandugirish/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary btn-secondary-lg"
-            >
-              LinkedIn
-            </a>
           </motion.div>
         </motion.div>
+
+        {/* Stats removed */}
       </section>
 
-      {/* ── Divider ── */}
-      <div className="section-divider" />
-
-      {/* ── Why Join Us ── */}
-      <section
-        style={{
-          padding: "80px 40px",
-          maxWidth: 1280,
-          margin: "0 auto",
-          width: "100%",
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          style={{ marginBottom: 56 }}
-        >
-          <p
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "var(--fg-muted)",
-              marginBottom: 16,
-            }}
-          >
-            Why join us
-          </p>
-          <h2
-            style={{
-              fontSize: "clamp(32px, 4vw, 52px)",
-              fontWeight: 700,
-              letterSpacing: "-0.035em",
-              color: "var(--white)",
-              lineHeight: 1.05,
-            }}
-          >
-            Built different.
-          </h2>
-        </motion.div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 1,
-            border: "1px solid var(--border)",
-            borderRadius: 16,
-            overflow: "hidden",
-          }}
-        >
-          {features.map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              style={{
-                padding: "40px 36px",
-                background: "var(--black-100)",
-                borderRight: i < features.length - 1 ? "1px solid var(--border)" : "none",
-                display: "flex",
-                flexDirection: "column",
-                gap: 16,
-              }}
-            >
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  border: "1px solid var(--border)",
-                  background: "var(--black-200)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {f.icon}
-              </div>
-              <h3
-                style={{
-                  fontSize: 18,
-                  fontWeight: 600,
-                  letterSpacing: "-0.025em",
-                  color: "var(--white)",
-                }}
-              >
-                {f.title}
-              </h3>
-              <p
-                style={{
-                  fontSize: 14,
-                  lineHeight: 1.65,
-                  color: "var(--fg-muted)",
-                }}
-              >
-                {f.description}
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CTA Banner ── */}
-      <section
-        style={{
-          padding: "0 40px 80px",
-          maxWidth: 1280,
-          margin: "0 auto",
-          width: "100%",
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: 16,
-            padding: "60px 48px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 32,
-            flexWrap: "wrap",
-            background: "var(--black-100)",
-          }}
-        >
-          <div>
-            <h2
-              style={{
-                fontSize: "clamp(24px, 3vw, 36px)",
-                fontWeight: 700,
-                letterSpacing: "-0.03em",
-                color: "var(--white)",
-                marginBottom: 8,
-              }}
-            >
-              Ready to apply?
-            </h2>
-            <p style={{ fontSize: 15, color: "var(--fg-muted)" }}>
-              Browse all open roles and find where you fit.
-            </p>
-          </div>
-          <button
-            onClick={() => router.push("/jobs")}
-            className="btn-primary btn-primary-lg"
-          >
-            See open positions
-            <ArrowRight style={{ width: 16, height: 16 }} />
-          </button>
-        </motion.div>
-      </section>
-
-      {/* ── Footer ── */}
+      {/* Footer */}
       <footer className="site-footer">
         <div className="site-footer-inner">
           <p>© {new Date().getFullYear()} Careers Portal</p>
           <div className="site-footer-links">
             <a href="/jobs">Careers</a>
-            <a href="https://www.linkedin.com/in/anandugirish/" target="_blank" rel="noopener noreferrer">
-              LinkedIn
-            </a>
+            <a href="https://www.linkedin.com/in/anandugirish/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
           </div>
         </div>
       </footer>

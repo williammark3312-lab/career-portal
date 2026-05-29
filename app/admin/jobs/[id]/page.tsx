@@ -4,12 +4,10 @@ import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../../../src/lib/supabase";
-import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows } from "@react-three/drei";
 import {
   ArrowLeft, FileText, MapPin, Briefcase, ExternalLink, X,
   MessageSquare, Send, Users, ChevronRight, Loader2, Trash2,
-  CheckCircle2, Clock, Eye, UserX, Search, Database,
+  CheckCircle2, Clock, Eye, UserX, Search, Database, Sparkles,
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
@@ -36,35 +34,65 @@ function parseComments(raw: string | null | undefined): Comment[] {
   return [{ id: "legacy", text: raw, created_at: new Date().toISOString(), author: "Admin" }];
 }
 
-const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
-  Pending:     { label: "Pending",     cls: "bg-amber-500/10 text-amber-400 border-amber-500/20",   icon: <Clock className="w-3 h-3" /> },
-  Reviewed:    { label: "Reviewed",    cls: "bg-blue-500/10 text-blue-400 border-blue-500/20",       icon: <Eye className="w-3 h-3" /> },
-  Shortlisted: { label: "Shortlisted", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", icon: <CheckCircle2 className="w-3 h-3" /> },
-  Rejected:    { label: "Rejected",    cls: "bg-red-500/10 text-red-400 border-red-500/20",          icon: <UserX className="w-3 h-3" /> },
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
+  Pending:     { label: "Pending",     color: "#f9ab00", bg: "rgba(249, 171, 0, 0.06)", border: "rgba(249, 171, 0, 0.12)", icon: <Clock className="w-3.5 h-3.5" /> },
+  Reviewed:    { label: "Reviewed",    color: "#9b51e0", bg: "rgba(155, 81, 224, 0.06)", border: "rgba(155, 81, 224, 0.12)", icon: <Eye className="w-3.5 h-3.5" /> },
+  Shortlisted: { label: "Shortlisted", color: "#1e8e3e", bg: "rgba(30, 142, 62, 0.06)", border: "rgba(30, 142, 62, 0.12)", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+  Rejected:    { label: "Rejected",    color: "#d93025", bg: "rgba(217, 48, 37, 0.06)", border: "rgba(217, 48, 37, 0.12)", icon: <UserX className="w-3.5 h-3.5" /> },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, cls: "bg-white/5 text-white/50 border-white/10", icon: null };
+  const cfg = STATUS_CONFIG[status] ?? { label: status, color: "#5f6368", bg: "var(--neutral-100)", border: "rgba(0,0,0,0.06)", icon: null };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.cls}`}>
-      {cfg.icon}{cfg.label}
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "4px 10px",
+        borderRadius: 10,
+        fontSize: 11.5,
+        fontWeight: 600,
+        color: cfg.color,
+        backgroundColor: cfg.bg,
+        border: `1px solid ${cfg.border}`,
+      }}
+    >
+      {cfg.icon}
+      <span>{cfg.label}</span>
     </span>
   );
 }
 
-/* ─── 3D Ring (lightweight background) ─── */
-function FloatingRing() {
-  return (
-    <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
-      <mesh rotation={[0.5, -0.5, 0]}>
-        <torusGeometry args={[2, 0.45, 64, 128]} />
-        <meshPhysicalMaterial
-          transmission={0.95} opacity={1} transparent roughness={0.1}
-          thickness={1} ior={1.5} color="#1a3bbd" clearcoat={1} clearcoatRoughness={0.1}
-        />
-      </mesh>
-    </Float>
-  );
+/* ─── Google Brand colors for departments ─── */
+function getDeptStyle(dept: string) {
+  const d = dept.toLowerCase();
+  if (d.includes("engineer") || d.includes("tech")) {
+    return {
+      color: "var(--google-blue, #1a73e8)",
+      bg: "rgba(26, 115, 232, 0.06)",
+      border: "rgba(26, 115, 232, 0.12)",
+    };
+  }
+  if (d.includes("design") || d.includes("creative")) {
+    return {
+      color: "var(--google-yellow, #f9ab00)",
+      bg: "rgba(249, 171, 0, 0.06)",
+      border: "rgba(249, 171, 0, 0.12)",
+    };
+  }
+  if (d.includes("market") || d.includes("growth")) {
+    return {
+      color: "var(--google-green, #1e8e3e)",
+      bg: "rgba(30, 142, 62, 0.06)",
+      border: "rgba(30, 142, 62, 0.12)",
+    };
+  }
+  return {
+    color: "var(--google-red, #d93025)",
+    bg: "rgba(217, 48, 37, 0.06)",
+    border: "rgba(217, 48, 37, 0.12)",
+  };
 }
 
 /* ─── Applicant Card ─── */
@@ -141,89 +169,136 @@ function ApplicantCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass rounded-[22px] overflow-hidden"
+      style={{
+        borderRadius: 24,
+        border: "1px solid rgba(0,0,0,0.06)",
+        background: "rgba(255, 255, 255, 0.75)",
+        backdropFilter: "blur(20px)",
+        overflow: "hidden",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.01)"
+      }}
     >
       {/* Top bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 border-b border-white/[0.08]">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 flex-wrap mb-1">
-            <h3 className="text-[18px] font-semibold tracking-tight text-white">{app.name}</h3>
+      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, padding: "20px 24px", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+            <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>{app.name}</h3>
             <StatusBadge status={app.status} />
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-white/60">
-            <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-white/40" />{app.email}</span>
-            {app.phone && <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-white/40" />{app.phone}</span>}
-            {app.location && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-white/40" />{app.location}</span>}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, fontSize: 12.5, color: "var(--neutral-500)", fontWeight: 500 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FileText style={{ width: 13, height: 13, color: "var(--neutral-400)" }} />{app.email}</span>
+            {app.phone && <span style={{ display: "flex", alignItems: "center", gap: 5 }}><Briefcase style={{ width: 13, height: 13, color: "var(--neutral-400)" }} />{app.phone}</span>}
+            {app.location && <span style={{ display: "flex", alignItems: "center", gap: 5 }}><MapPin style={{ width: 13, height: 13, color: "var(--neutral-400)" }} />{app.location}</span>}
+            <span style={{ color: "var(--neutral-400)" }}>• Applied {new Date(app.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
           </div>
-          <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/40">
-            Applied {new Date(app.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-          </p>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <select
             value={app.status}
             onChange={e => onStatusChange(app.id, e.target.value)}
-            className="rounded-[10px] border border-[var(--border)] bg-[var(--grey-100)] px-3 py-2 text-[13px] font-medium text-[var(--fg)]/80 outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
+            style={{
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.08)",
+              background: "#ffffff",
+              padding: "6px 12px",
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: "var(--neutral-700)",
+              outline: "none",
+              cursor: "pointer"
+            }}
           >
-            <option className="bg-[var(--grey-100)] text-[var(--fg)]">Pending</option>
-            <option className="bg-[var(--grey-100)] text-[var(--fg)]">Reviewed</option>
-            <option className="bg-[var(--grey-100)] text-[var(--fg)]">Shortlisted</option>
-            <option className="bg-[var(--grey-100)] text-[var(--fg)]">Rejected</option>
+            <option>Pending</option>
+            <option>Reviewed</option>
+            <option>Shortlisted</option>
+            <option>Rejected</option>
           </select>
           <button
             onClick={() => onOpenCV(app.resume_url)}
-            className="flex items-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-[var(--grey-100)]/80 px-4 py-2 text-[13px] font-medium text-[var(--fg)]/80 hover:border-[#3279F9] hover:text-[#3279F9] transition-colors"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              background: "#ffffff",
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: "var(--neutral-700)",
+              cursor: "pointer",
+              transition: "all 0.2s"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "var(--neutral-50)"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "#ffffff"}
           >
-            <ExternalLink className="w-3.5 h-3.5" /> View CV
+            <Eye style={{ width: 14, height: 14 }} /> View Resume
           </button>
           <button
             disabled={moving || moved}
             onClick={handleMoveToDatabase}
-            className={`flex items-center gap-1.5 rounded-[10px] border px-3.5 py-2 text-[13px] font-medium transition-all ${
-              moved
-                ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400 cursor-default"
-                : "bg-[var(--grey-100)]/80 border-[var(--border)] text-[var(--fg)]/80 hover:border-[#3279F9] hover:text-[#3279F9] active:scale-95 disabled:opacity-50"
-            }`}
-            title={moved ? "Moved to CV Database" : "Move CV to Database"}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              borderRadius: 12,
+              border: moved ? "1px solid rgba(30,142,62,0.2)" : "1px solid rgba(0, 0, 0, 0.08)",
+              background: moved ? "rgba(30,142,62,0.04)" : "#ffffff",
+              color: moved ? "var(--google-green)" : "var(--neutral-700)",
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: moved ? "default" : "pointer",
+              transition: "all 0.2s",
+              opacity: moving ? 0.65 : 1
+            }}
           >
             {moving ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" />
             ) : moved ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle2 style={{ width: 14, height: 14 }} />
             ) : (
-              <Database className="w-3.5 h-3.5 text-[#3279F9]" />
+              <Database style={{ width: 14, height: 14 }} />
             )}
-            {moved ? "In CV Database" : "Move to DB"}
+            {moved ? "In CV DB" : "Move to DB"}
           </button>
           <button
             onClick={() => onDelete(app.id)}
-            className="rounded-[10px] border border-[var(--border)] bg-[var(--grey-100)]/80 p-2 text-red-400 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+            style={{
+              padding: "8px",
+              borderRadius: 12,
+              border: "1px solid rgba(217,48,37,0.12)",
+              background: "rgba(217,48,37,0.04)",
+              color: "var(--google-red)",
+              cursor: "pointer",
+              display: "inline-flex"
+            }}
             title="Delete application"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 style={{ width: 14, height: 14 }} />
           </button>
         </div>
       </div>
 
-      {/* Comments */}
-      <div className="px-6 py-5">
+      {/* Comments remarks block */}
+      <div style={{ padding: "16px 24px", background: "rgba(0,0,0,0.005)" }}>
         <div
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center justify-between cursor-pointer hover:text-white transition-colors text-white/60"
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: "var(--neutral-500)" }}
         >
-          <div className="flex items-center gap-1.5">
-            <MessageSquare className="w-4 h-4 text-[#3279F9]" />
-            <span className="text-[13px] font-semibold text-white/80">Recruiter Comments</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600 }}>
+            <MessageSquare style={{ width: 14, height: 14, color: "var(--google-blue)" }} />
+            <span>Recruiter Remarks</span>
             {comments.length > 0 && (
-              <span className="ml-1 text-[11px] font-medium bg-white/5 text-white/60 px-2 py-0.5 rounded-full">{comments.length}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(0,0,0,0.06)", color: "var(--neutral-700)", padding: "2px 6px", borderRadius: 8 }}>{comments.length}</span>
             )}
           </div>
-          <span className="text-[12px] font-medium text-[#3279F9] hover:underline">
-            {showComments ? "Hide Comments" : "Show Comments"}
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--google-blue)" }}>
+            {showComments ? "Collapse Remarks" : "Expand Remarks"}
           </span>
         </div>
 
@@ -234,53 +309,72 @@ function ApplicantCard({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25 }}
-              className="mt-4 overflow-hidden"
+              transition={{ duration: 0.2 }}
+              style={{ overflow: "hidden" }}
             >
-              {/* Comment list */}
-              {comments.length > 0 && (
-                <div className="max-h-[240px] overflow-y-auto mb-4 space-y-2 pr-1">
-                  {comments.map(c => (
-                    <div key={c.id} className="group relative bg-[var(--grey-100)]/40 border border-[var(--border)] rounded-[12px] p-3 hover:bg-[var(--grey-100)]/70 hover:border-[#3279F9]/30 transition-all">
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="text-[12px] font-semibold text-[#5B9BFF] truncate max-w-[200px]" title={c.author}>
-                          {c.author.split("@")[0]}
-                        </span>
-                        <span className="text-[10px] text-white/40 shrink-0">
-                          {new Date(c.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                        </span>
+              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                {comments.length > 0 && (
+                  <div style={{ maxHeight: 200, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingRight: 6 }}>
+                    {comments.map(c => (
+                      <div key={c.id} style={{ position: "relative", padding: "12px", border: "1px solid rgba(0,0,0,0.05)", background: "#ffffff", borderRadius: 12, fontSize: 12.5 }} className="group">
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                          <span style={{ fontWeight: 600, color: "var(--google-blue)" }}>{c.author.split("@")[0]}</span>
+                          <span style={{ fontSize: 11, color: "var(--neutral-400)" }}>{new Date(c.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                        </div>
+                        <p style={{ color: "var(--neutral-700)", margin: 0, lineHeight: 1.5 }}>{c.text}</p>
+                        <button
+                          onClick={() => deleteComment(c.id)}
+                          style={{ position: "absolute", top: 10, right: 10, border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex" }}
+                        >
+                          <X style={{ width: 12, height: 12 }} />
+                        </button>
                       </div>
-                      <p className="text-[13px] text-white/80 whitespace-pre-wrap break-words leading-relaxed">{c.text}</p>
-                      <button
-                        onClick={() => deleteComment(c.id)}
-                        className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 text-white/40 hover:text-red-400 transition-all cursor-pointer"
-                        title="Delete comment"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
 
-              {/* New comment input */}
-              <div className="flex gap-2">
-                <textarea
-                  placeholder="Add a comment…"
-                  value={commentInput}
-                  onChange={e => setCommentInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) postComment(); }}
-                  rows={2}
-                  className="flex-1 rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)]/60 px-4 py-2.5 text-[13px] text-[var(--fg)] outline-none transition-all focus:border-[#3279F9] focus:bg-[var(--grey-100)] resize-none"
-                />
-                <button
-                  disabled={!commentInput.trim() || posting}
-                  onClick={postComment}
-                  className="btn-primary rounded-[12px] px-4 py-2 self-end flex items-center gap-1.5 text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {posting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                  Post
-                </button>
+                {/* New comment input */}
+                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  <textarea
+                    placeholder="Append recruiter note..."
+                    value={commentInput}
+                    onChange={e => setCommentInput(e.target.value)}
+                    rows={1}
+                    style={{
+                      flex: 1,
+                      borderRadius: 12,
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      background: "#ffffff",
+                      padding: "10px 14px",
+                      fontSize: 12.5,
+                      color: "var(--neutral-900)",
+                      outline: "none",
+                      resize: "none",
+                      fontFamily: "inherit"
+                    }}
+                  />
+                  <button
+                    disabled={!commentInput.trim() || posting}
+                    onClick={postComment}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 12,
+                      fontWeight: 600,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      border: "none",
+                      color: "#ffffff",
+                      background: "var(--google-blue, #1a73e8)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      alignSelf: "flex-end"
+                    }}
+                  >
+                    {posting ? <Loader2 style={{ width: 12, height: 12 }} className="animate-spin" /> : <Send style={{ width: 12, height: 12 }} />}
+                    Add
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -309,7 +403,7 @@ export default function JobScreeningPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  /* Auth */
+  /* Auth check */
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -352,7 +446,7 @@ export default function JobScreeningPage() {
     setApplications(prev => prev.filter(a => a.id !== appId));
   }
 
-  /* Derived */
+  /* Filters implementation */
   const filtered = applications.filter(a => {
     const matchSearch = !search ||
       a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -366,83 +460,72 @@ export default function JobScreeningPage() {
     return acc;
   }, {});
 
-  /* Loading / auth states */
+  /* Loading state */
   if (authLoading) {
     return (
-      <main className="min-h-screen bg-[#07080b] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[rgba(50,121,249,0.25)] border-t-[#3279F9] animate-spin" />
+      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e8f0fe", borderTopColor: "var(--google-blue, #1a73e8)", animation: "spin 0.8s linear infinite" }} />
+        <style jsx global>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+        `}</style>
       </main>
     );
   }
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#07080b] text-[#f3f4f6]">
-      {/* 3D Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <Canvas
-          camera={{ position: [0, 0, 8], fov: 45 }}
-          dpr={[1, 1.5]}
-          gl={{ antialias: false, powerPreference: "high-performance" }}
-          style={{ pointerEvents: "none" }}
-        >
-          <ambientLight intensity={1.4} />
-          <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-          <directionalLight position={[-8, -8, -4]} intensity={1.2} color="#3279F9" />
-          <Suspense fallback={null}>
-            <FloatingRing />
-            <Environment preset="city" />
-            <ContactShadows position={[0, -2.5, 0]} opacity={0.2} scale={16} blur={3} color="#737A87" />
-          </Suspense>
-        </Canvas>
-      </div>
-
+    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--neutral-900)", position: "relative", zIndex: 1 }}>
       <Header session={session} />
 
-      <div className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-10 py-10 pb-24">
+      <div style={{ flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "110px 24px 80px" }}>
 
-        {/* Breadcrumb / back */}
-        <div className="flex items-center gap-2 mb-8 text-[14px] text-white/40">
+        {/* Breadcrumbs */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--neutral-400)", marginBottom: 28 }}>
           <button
             onClick={() => router.push("/admin")}
-            className="flex items-center gap-1.5 hover:text-[#3279F9] transition-colors font-medium text-white/60"
+            style={{ border: "none", background: "none", color: "var(--neutral-500)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontWeight: 600, padding: 0 }}
           >
-            <ArrowLeft className="w-4 h-4" /> Admin
+            <ArrowLeft style={{ width: 14, height: 14 }} /> Admin
           </button>
-          <ChevronRight className="w-4 h-4 opacity-50" />
-          <span className="text-white font-semibold truncate max-w-[240px]">
-            {job?.title ?? "Job"}
+          <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} />
+          <span style={{ color: "var(--neutral-700)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
+            {job?.title ?? "Listing"}
           </span>
-          <ChevronRight className="w-4 h-4 opacity-50" />
-          <span className="text-[#3279F9] font-semibold">CV Screening</span>
+          <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} />
+          <span style={{ color: "var(--google-blue)", fontWeight: 600 }}>Candidate Reviews</span>
         </div>
 
-        {/* Page header */}
+        {/* Page title header */}
         {job && (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-10"
+            style={{ marginBottom: 36 }}
           >
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4 justify-between">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20 }}>
               <div>
-                <span className="dept-tag mb-3 inline-block">{job.department}</span>
-                <h1 className="text-[32px] font-bold tracking-[-0.025em] leading-tight text-white">
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--google-blue)", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 10, display: "inline-block", marginBottom: 12 }}>
+                  {job.department}
+                </span>
+                <h1 style={{ fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 600, tracking: "-0.025em", color: "var(--neutral-900)", lineHeight: 1.15, fontFamily: '"Google Sans Display", "Google Sans", sans-serif', margin: 0 }}>
                   {job.title}
                 </h1>
-                <div className="flex items-center gap-1.5 mt-1.5 text-[14px] text-white/60">
-                  <MapPin className="w-3.5 h-3.5 text-white/40" /> {job.location}
+                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13.5, color: "var(--neutral-500)", fontWeight: 500, marginTop: 6 }}>
+                  <MapPin style={{ width: 14, height: 14, color: "var(--neutral-400)" }} /> {job.location}
                 </div>
               </div>
 
-              {/* Status summary chips */}
-              <div className="flex flex-wrap gap-2">
-                {(["Pending", "Reviewed", "Shortlisted", "Rejected"] as const).map(s => (
-                  <div key={s} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border ${STATUS_CONFIG[s].cls}`}>
-                    {STATUS_CONFIG[s].icon}
-                    <span>{s}</span>
-                    <span className="font-bold">{counts[s] ?? 0}</span>
-                  </div>
-                ))}
+              {/* Status summary list */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                {(["Pending", "Reviewed", "Shortlisted", "Rejected"] as const).map(s => {
+                  const sc = STATUS_CONFIG[s];
+                  return (
+                    <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: sc.color, backgroundColor: sc.bg, border: `1px solid ${sc.border}` }}>
+                      {sc.icon}
+                      <span>{s}</span>
+                      <span style={{ fontWeight: 700, marginLeft: 2, background: "rgba(0,0,0,0.04)", padding: "1px 6px", borderRadius: 6 }}>{counts[s] ?? 0}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </motion.div>
@@ -451,119 +534,161 @@ export default function JobScreeningPage() {
         {/* Toolbar */}
         {!loading && applications.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row gap-3 mb-8"
+            style={{ display: "flex", flexDirection: "row", gap: 12, marginBottom: 28, flexWrap: "wrap" }}
           >
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]" />
+            <div style={{ position: "relative", flex: 1, minWidth: 260 }}>
+              <Search style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 15, height: 15, color: "var(--neutral-400)" }} />
               <input
                 type="text"
-                placeholder="Search by name or email…"
+                placeholder="Search candidates by name or email address..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-11 pr-4 py-2.5 rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)]/60 text-[14px] text-[var(--fg)] outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[#3279F9]/10 transition-all"
+                style={{
+                  width: "100%",
+                  paddingLeft: 38,
+                  paddingRight: 16,
+                  paddingTop: 10,
+                  paddingBottom: 10,
+                  background: "#ffffff",
+                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  borderRadius: 24,
+                  fontSize: 13.5,
+                  color: "var(--neutral-900)",
+                  outline: "none",
+                  transition: "all 0.2s",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.01)"
+                }}
               />
             </div>
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="rounded-[12px] border border-[var(--border)] bg-[var(--grey-100)]/60 px-4 py-2.5 text-[14px] font-medium text-[var(--fg)]/80 outline-none cursor-pointer hover:border-[#3279F9] transition-colors"
+              style={{
+                borderRadius: 24,
+                border: "1px solid rgba(0,0,0,0.08)",
+                background: "#ffffff",
+                padding: "8px 16px",
+                fontSize: 13.5,
+                fontWeight: 600,
+                color: "var(--neutral-700)",
+                outline: "none",
+                cursor: "pointer",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.01)"
+              }}
             >
-              <option value="All" className="bg-[var(--grey-100)] text-[var(--fg)]">All Statuses ({applications.length})</option>
-              <option value="Pending" className="bg-[var(--grey-100)] text-[var(--fg)]">Pending ({counts.Pending ?? 0})</option>
-              <option value="Reviewed" className="bg-[var(--grey-100)] text-[var(--fg)]">Reviewed ({counts.Reviewed ?? 0})</option>
-              <option value="Shortlisted" className="bg-[var(--grey-100)] text-[var(--fg)]">Shortlisted ({counts.Shortlisted ?? 0})</option>
-              <option value="Rejected" className="bg-[var(--grey-100)] text-[var(--fg)]">Rejected ({counts.Rejected ?? 0})</option>
+              <option value="All">All Applications ({applications.length})</option>
+              <option value="Pending">Pending ({counts.Pending ?? 0})</option>
+              <option value="Reviewed">Reviewed ({counts.Reviewed ?? 0})</option>
+              <option value="Shortlisted">Shortlisted ({counts.Shortlisted ?? 0})</option>
+              <option value="Rejected">Rejected ({counts.Rejected ?? 0})</option>
             </select>
           </motion.div>
         )}
 
-        {/* Content */}
+        {/* Grid List */}
         {loading ? (
-          <div className="flex items-center justify-center py-32">
-            <div className="w-10 h-10 rounded-full border-2 border-[rgba(50,121,249,0.25)] border-t-[#3279F9] animate-spin" />
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 100 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e8f0fe", borderTopColor: "var(--google-blue, #1a73e8)", animation: "spin 0.8s linear infinite" }} />
           </div>
         ) : applications.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#3279F9]/10 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-[#3279F9]" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "60px 40px", borderRadius: 24, border: "1px dashed rgba(0,0,0,0.1)", textAlign: "center", background: "rgba(255,255,255,0.6)" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(26, 115, 232, 0.06)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <Users style={{ width: 22, height: 22, color: "var(--google-blue)" }} />
             </div>
-            <h3 className="text-[18px] font-semibold mb-2 text-white">No applications yet</h3>
-            <p className="text-[14px] text-white/40">Candidates who apply for this role will appear here.</p>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: "var(--neutral-900)" }}>No candidate profiles</h3>
+            <p style={{ fontSize: 13.5, color: "var(--neutral-500)", margin: 0, fontWeight: 500 }}>Applications submitted for this opening will appear here in real time.</p>
           </motion.div>
         ) : filtered.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-16 text-center">
-            <p className="text-[16px] text-white/40">No applicants match your search or filter.</p>
-            <button onClick={() => { setSearch(""); setStatusFilter("All"); }} className="mt-3 text-[14px] font-medium text-[#3279F9] hover:underline">
-              Clear filters
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "50px 40px", borderRadius: 24, border: "1px solid rgba(0,0,0,0.06)", textAlign: "center", background: "rgba(255,255,255,0.6)" }}>
+            <p style={{ fontSize: 14.5, color: "var(--neutral-500)", margin: "0 0 12px", fontWeight: 500 }}>No applications match your filtering configurations.</p>
+            <button onClick={() => { setSearch(""); setStatusFilter("All"); }} style={{ border: "none", background: "none", color: "var(--google-blue)", fontWeight: 600, fontSize: 13, textDecoration: "underline", cursor: "pointer" }}>
+              Reset Filters
             </button>
           </motion.div>
         ) : (
-          <div className="space-y-5">
-            <p className="text-[13px] text-white/40 font-medium">
-              Showing <span className="text-white font-semibold">{filtered.length}</span> of {applications.length} applicants
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 600, margin: "0 0 4px" }}>
+              Showing <span style={{ color: "var(--neutral-800)", fontWeight: 700 }}>{filtered.length}</span> of {applications.length} profiles
             </p>
             {filtered.map((app, i) => (
-              <motion.div
+              <ApplicantCard
                 key={app.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <ApplicantCard
-                  app={app}
-                  session={session}
-                  onStatusChange={handleStatusChange}
-                  onDelete={handleDelete}
-                  onOpenCV={url => { setSelectedCV(url); setCvOpen(true); }}
-                />
-              </motion.div>
+                app={app}
+                session={session}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDelete}
+                onOpenCV={url => { setSelectedCV(url); setCvOpen(true); }}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {/* CV Viewer Modal */}
+      {/* CV Resume Modal Sandbox */}
       <AnimatePresence>
         {cvOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div style={{ position: "fixed", inset: 0, zIndex: 99, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-[6px]"
+              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.2)", backdropFilter: "blur(8px)" }}
               onClick={() => setCvOpen(false)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="relative w-full max-w-5xl h-[92vh] rounded-[28px] bg-[var(--grey-100)] border border-[var(--border)] overflow-hidden flex flex-col shadow-2xl"
+              exit={{ opacity: 0, scale: 0.98, y: 10 }}
+              style={{
+                position: "relative",
+                width: "100%",
+                maxWidth: 820,
+                height: "85vh",
+                borderRadius: 24,
+                background: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.08)",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.05)"
+              }}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--grey-100)] shrink-0">
-                <h3 className="text-[15px] font-bold text-[var(--fg)]">Resume Viewer</h3>
-                <div className="flex items-center gap-3">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid rgba(0,0,0,0.05)", background: "#ffffff", flexShrink: 0 }}>
+                <h3 style={{ fontSize: 14.5, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>Resume Sandbox</h3>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <a
                     href={selectedCV}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-[var(--grey-100)]/80 px-4 py-2 text-[13px] font-medium text-[var(--fg)]/80 hover:text-[#3279F9] hover:border-[#3279F9] transition-colors"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      borderRadius: 12,
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      background: "#ffffff",
+                      color: "var(--neutral-700)",
+                      padding: "6px 12px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      textDecoration: "none"
+                    }}
                   >
-                    Open in New Tab <ExternalLink className="w-3.5 h-3.5" />
+                    External view <ExternalLink style={{ width: 13, height: 13 }} />
                   </a>
                   <button
                     onClick={() => setCvOpen(false)}
-                    className="rounded-full p-2 hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+                    style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex" }}
                   >
-                    <X className="w-5 h-5" />
+                    <X style={{ width: 18, height: 18 }} />
                   </button>
                 </div>
               </div>
-              <div className="flex-1 min-h-0 p-4 bg-[var(--bg)]">
+              <div style={{ flex: 1, background: "#f8f9ff", padding: 12 }}>
                 <iframe
                   src={selectedCV}
-                  className="w-full h-full rounded-[16px] bg-white border border-white/10"
-                  title="Resume"
+                  style={{ width: "100%", height: "100%", borderRadius: 16, border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff" }}
+                  title="Resume Sandbox"
                 />
               </div>
             </motion.div>
@@ -571,10 +696,10 @@ export default function JobScreeningPage() {
         )}
       </AnimatePresence>
 
-      <footer className="site-footer">
-        <div className="site-footer-inner">
-          <p>© {new Date().getFullYear()} Careers Portal</p>
-          <div className="site-footer-links"><a href="/jobs">Careers</a></div>
+      <footer style={{ borderTop: "1px solid rgba(0, 0, 0, 0.05)", padding: "24px 0", background: "rgba(255, 255, 255, 0.4)", backdropFilter: "blur(10px)", marginTop: "auto" }}>
+        <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+          <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 500 }}>© {new Date().getFullYear()} Google Antigravity. All rights reserved.</p>
+          <div style={{ display: "flex", gap: 20 }}><a href="/jobs" style={{ fontSize: 13, color: "var(--neutral-500)", textDecoration: "none", fontWeight: 500 }}>Careers Desk</a></div>
         </div>
       </footer>
     </main>

@@ -1,664 +1,268 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 
-/* ═══════════════════════════════════════════════
-   ARKITEKWEB-INSPIRED DESIGN SYSTEM
-   Pure black · Geist · Typography-first
-═══════════════════════════════════════════════ */
-
 :root {
-  /* ── Core Palette ── */
-  --black:       #000000;
-  --black-50:    #0a0a0a;
-  --black-100:   #0e0e0e;
-  --black-200:   #111111;
-  --black-300:   #141414;
-  --black-400:   #1b1b1b;
-  --black-500:   #262626;
-  --black-600:   #2b2b2b;
-  --black-700:   #333333;
+  /* —— Palette —— */
+  --grey-50:   #F8F9FC;
+  --grey-100:  #EFF2F7;
+  --grey-200:  #E1E6EC;
+  --grey-300:  #CDD4DC;
+  --grey-400:  #B2BBC5;
+  --grey-500:  #737A87;
+  --grey-600:  #45474D;
+  --grey-700:  #2F3034;
+  --grey-800:  #212226;
+  --grey-900:  #18191D;
+  --grey-1000: #121317;
 
-  --white:       #ffffff;
-  --grey-900:    #f0f0f0;
-  --grey-800:    #cecece;
-  --grey-700:    #999999;
-  --grey-600:    #6e6e6e;
-  --grey-500:    #4a4a4a;
-  --grey-400:    #3a3a3a;
-  --grey-300:    #2f2f2f;
-  --grey-200:    #1d1d1d;
-  --grey-100:    #121212;
+  --blue-400:  #5B9BFF;
+  --blue-500:  #3279F9;
+  --blue-600:  #2563EB;
 
-  /* ── Semantic Tokens ── */
-  --bg:           var(--black);
-  --bg-subtle:    var(--black-100);
-  --bg-card:      var(--black-200);
-  --bg-card-hover:var(--black-300);
-  --fg:           var(--white);
-  --fg-muted:     var(--grey-700);
-  --fg-subtle:    var(--grey-600);
-  --border:       rgba(255, 255, 255, 0.07);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --border-strong:rgba(255, 255, 255, 0.2);
+  /* —— Semantic Tokens —— */
+  --bg:           var(--grey-50);
+  --fg:           var(--grey-1000);
+  --muted:        var(--grey-500);
+  --border:       var(--grey-200);
+  --glass-bg:     rgba(255,255,255,0.72);
+  --glass-border: rgba(255,255,255,0.5);
 
-  /* ── Accent (kept minimal — white/near-white only) ── */
-  --accent:       var(--white);
-  --accent-dim:   var(--grey-800);
-
-  /* ── Shadows ── */
-  --shadow-sm:    0 1px 2px rgba(0,0,0,0.5);
-  --shadow:       0 4px 24px rgba(0,0,0,0.6);
-  --shadow-lg:    0 12px 48px rgba(0,0,0,0.8);
-
-  /* ── Nav ── */
-  --nav-bg:       rgba(0,0,0,0.9);
-  --nav-border:   rgba(255,255,255,0.07);
+  /* —— Header / Footer (dark) —— */
+  --nav-bg:     rgba(26, 86, 219, 0.92);
+  --nav-border: rgba(37, 99, 235, 1);
 }
 
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "JetBrains Mono", monospace;
+  --font-sans: var(--font-sans), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: var(--font-mono), "JetBrains Mono", monospace;
 }
 
-/* ═══════ Reset & Base ═══════ */
+/* ╔══════╗ Reset & Base ╔══════╗ */
 *, *::before, *::after { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-  background-color: var(--black);
-  color: var(--white);
-  margin: 0;
-  padding: 0;
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  /* Subtle warm radial mesh */
+  background-image:
+    radial-gradient(ellipse 60% 40% at 20% 60%, rgba(50,121,249,0.06), transparent),
+    radial-gradient(ellipse 50% 35% at 80% 25%, rgba(50,121,249,0.04), transparent);
+  background-attachment: fixed;
+  color: var(--fg);
+  margin: 0; padding: 0;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* ═══════ Typography ═══════ */
-h1, h2, h3, h4, h5, h6 {
-  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: -0.03em;
-  margin: 0;
-  line-height: 1.05;
-}
+/* ╔══════╗ Layout Shell ╔══════╗ */
+/* Every page's <main> must be: flex flex-col min-h-screen */
 
-p { margin: 0; }
 
-/* Hero size scale */
-.text-hero {
-  font-size: clamp(56px, 8vw, 96px);
-  font-weight: 700;
-  line-height: 1.0;
-  letter-spacing: -0.04em;
-}
 
-.text-display {
-  font-size: clamp(40px, 5vw, 72px);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.035em;
-}
-
-.text-title {
-  font-size: clamp(24px, 3vw, 36px);
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-/* ═══════ Layout ═══════ */
-.container {
+/* ╔══════╗ Minimal Footer ╔══════╗ */
+.site-footer {
+  position: relative;
+  z-index: 10;
+  pointer-events: all;
   width: 100%;
+  padding: 1.5rem 0;
+  margin-top: auto;
+  border-top: 1px solid rgba(26, 86, 219, 0.1);
+  background: transparent;
+}
+.site-footer-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 40px;
-}
-
-@media (max-width: 768px) {
-  .container { padding: 0 20px; }
-}
-
-/* ═══════ Section Divider ═══════ */
-.section-divider {
-  width: 100%;
-  height: 1px;
-  background: var(--border);
-  margin: 0;
-}
-
-/* ═══════ Header / Nav ═══════ */
-.site-nav {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  width: 100%;
-  background: var(--nav-bg);
-  border-bottom: 1px solid var(--nav-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.site-nav-inner {
+  padding: 0 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 40px;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
-
-@media (max-width: 768px) {
-  .site-nav-inner { padding: 0 20px; }
+.site-footer p {
+  font-size: 12.5px;
+  color: #B2BBC5;
+  margin: 0;
+  font-weight: 500;
 }
-
-.site-nav-logo {
-  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--white);
-  letter-spacing: -0.03em;
+.site-footer-links {
+  display: flex;
+  gap: 1.25rem;
+}
+.site-footer-links a {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #B2BBC5;
   text-decoration: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  transition: color 0.2s;
+}
+.site-footer-links a:hover { color: #3279F9; }
+
+/* ╔══════╗ Glass Card ╔══════╗ */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.85) inset,
+    0 -1px 0 rgba(255,255,255,0.25) inset,
+    0 20px 40px -10px rgba(18,19,23,0.06);
 }
 
-.site-nav-logo-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--white);
-  border-radius: 50%;
-  display: inline-block;
+.glass-hover {
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1),
+              box-shadow 0.35s cubic-bezier(0.16,1,0.3,1),
+              border-color 0.35s ease;
+}
+.glass-hover:hover {
+  transform: translateY(-5px) scale(1.008);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 28px 56px -14px rgba(18,19,23,0.1),
+    0 0 0 1px rgba(50,121,249,0.18);
+  border-color: rgba(50,121,249,0.25);
 }
 
-.site-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.site-nav-link {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--fg-muted);
-  text-decoration: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  transition: color 0.2s ease;
-  cursor: pointer;
-  background: none;
-  border: none;
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.site-nav-link:hover { color: var(--white); }
-
-/* ═══════ Buttons ═══════ */
+/* ╔══════╗ Buttons ╔══════╗ */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 22px;
-  background: var(--white);
-  color: var(--black);
-  font-size: 14px;
-  font-weight: 600;
-  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-  border-radius: 100px;
+  padding: 12px 24px;
+  background: var(--blue-500);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
   text-decoration: none;
-  letter-spacing: -0.01em;
-  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
-  white-space: nowrap;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
 }
-
 .btn-primary:hover {
-  background: var(--grey-900);
-  transform: translateY(-1px);
+  background: var(--blue-600);
+  box-shadow: 0 8px 20px -4px rgba(50,121,249,0.35);
 }
-
-.btn-primary:active { transform: scale(0.97) translateY(0); }
+.btn-primary:active { transform: scale(0.97); }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 9px 22px;
-  background: transparent;
-  color: var(--white);
-  font-size: 14px;
+  padding: 11px 24px;
+  background: white;
+  color: var(--grey-1000);
+  font-size: 15px;
   font-weight: 500;
-  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-  border-radius: 100px;
-  border: 1px solid var(--border);
+  border-radius: 12px;
+  border: 1px solid var(--grey-200);
   cursor: pointer;
   text-decoration: none;
-  letter-spacing: -0.01em;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
-  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
 }
-
 .btn-secondary:hover {
-  border-color: var(--border-hover);
-  background: rgba(255,255,255,0.04);
-  transform: translateY(-1px);
+  background: var(--grey-50);
+  border-color: var(--grey-300);
 }
+.btn-secondary:active { transform: scale(0.97); }
 
-.btn-secondary:active { transform: scale(0.97) translateY(0); }
-
-/* Large CTA variant */
-.btn-primary-lg {
-  padding: 14px 32px;
-  font-size: 15px;
-}
-
-.btn-secondary-lg {
-  padding: 13px 32px;
-  font-size: 15px;
-}
-
-/* ═══════ Glass / Card (now flat dark) ═══════ */
-.glass {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-}
-
-.glass-hover {
-  transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
-}
-
-.glass-hover:hover {
-  border-color: var(--border-hover);
-  background: var(--bg-card-hover);
-  transform: translateY(-2px);
-}
-
-/* ═══════ Dark Card ═══════ */
-.dark-card {
-  background: var(--black-100);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
-}
-
-.dark-card:hover {
-  border-color: var(--border-hover);
-  background: var(--black-200);
-  transform: translateY(-2px);
-}
-
-/* ═══════ Hero Tag ═══════ */
-.hero-tag {
+.btn-dark {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  font-size: 12px;
+  padding: 12px 24px;
+  background: var(--grey-1000);
+  color: #fff;
+  font-size: 15px;
   font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-  border: 1px solid var(--border);
-  padding: 6px 14px;
-  border-radius: 100px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
 }
+.btn-dark:hover { background: var(--grey-800); }
+.btn-dark:active { transform: scale(0.97); }
 
-/* ═══════ Department Tag ═══════ */
-.dept-tag {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-  background: transparent;
-  border: 1px solid var(--border);
-  padding: 4px 12px;
-  border-radius: 100px;
-}
-
-/* ═══════ Form Inputs ═══════ */
+/* ╔══════╗ Form Inputs ╔══════╗ */
 .form-input {
   width: 100%;
   padding: 12px 16px;
-  background: var(--black-200);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-size: 14px;
-  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-  color: var(--white);
+  background: white;
+  border: 1px solid var(--grey-300);
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--grey-1000);
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-
 .form-input::placeholder { color: var(--grey-500); }
-
 .form-input:focus {
-  border-color: var(--border-strong);
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(50,121,249,0.12);
 }
 
 .form-label {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--fg-muted);
-  margin-bottom: 8px;
-  letter-spacing: 0.02em;
+  color: var(--grey-600);
+  margin-bottom: 6px;
 }
 
-/* ═══════ Status Badges ═══════ */
+/* ╔══════╗ Status Badges ╔══════╗ */
 .badge {
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   padding: 3px 10px;
   border-radius: 100px;
   border: 1px solid;
   white-space: nowrap;
-  letter-spacing: 0.02em;
 }
+.badge-pending     { background:#FEFCE8; color:#854D0E; border-color:#FEF08A; }
+.badge-reviewed    { background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; }
+.badge-shortlisted { background:#F0FDF4; color:#166534; border-color:#BBF7D0; }
+.badge-rejected    { background:#FFF1F2; color:#9F1239; border-color:#FECDD3; }
 
-.badge-pending     { background: rgba(251, 191, 36, 0.08);  color: #fbbf24; border-color: rgba(251, 191, 36, 0.2); }
-.badge-reviewed    { background: rgba(99, 102, 241, 0.08);  color: #a5b4fc; border-color: rgba(99, 102, 241, 0.2); }
-.badge-shortlisted { background: rgba(16, 185, 129, 0.08);  color: #6ee7b7; border-color: rgba(16, 185, 129, 0.2); }
-.badge-rejected    { background: rgba(239, 68, 68, 0.08);   color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); }
-
-/* ═══════ Markdown Content ═══════ */
-.md-heading {
-  font-size: 17px;
+/* ╔══════╗ Department Tag ╔══════╗ */
+.dept-tag {
+  display: inline-block;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--white);
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue-500);
+  background: rgba(50,121,249,0.08);
+  border: 1px solid rgba(50,121,249,0.18);
+  padding: 4px 12px;
+  border-radius: 100px;
 }
 
-.md-body {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--fg-muted);
-}
-
-.md-bold {
-  font-weight: 600;
-  color: var(--white);
-}
-
-.md-list {
-  list-style: disc;
-  margin: 0.75rem 0 0.75rem 1rem;
-  padding: 0;
-  color: var(--fg-muted);
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.md-list li { margin-bottom: 0.3rem; }
-.md-list li::marker { color: var(--grey-500); }
-
-/* ═══════ Panel Card (Admin) ═══════ */
-.panel-card {
-  background: var(--black-100);
-  border: 1px solid var(--border);
-}
-
-/* ═══════ Footer ═══════ */
-.site-footer {
-  width: 100%;
-  border-top: 1px solid var(--border);
-  padding: 32px 0;
-  background: var(--black);
-}
-
-.site-footer-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-@media (max-width: 768px) {
-  .site-footer-inner { padding: 0 20px; }
-}
-
-.site-footer p {
-  font-size: 13px;
-  color: var(--fg-subtle);
-  margin: 0;
-  font-weight: 400;
-  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-}
-
-.site-footer-links {
-  display: flex;
-  gap: 24px;
-}
-
-.site-footer-links a {
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--fg-subtle);
-  text-decoration: none;
-  transition: color 0.2s ease;
-  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-}
-
-.site-footer-links a:hover { color: var(--white); }
-
-/* ═══════ Scrollbar ═══════ */
-::-webkit-scrollbar { width: 4px; }
+/* ╔══════╗ Scrollbar ╔══════╗ */
+::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--grey-400);
-  border-radius: 2px;
+  background: rgba(18,19,23,0.12);
+  border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--grey-500); }
+::-webkit-scrollbar-thumb:hover { background: rgba(18,19,23,0.22); }
 
-/* ═══════ Selection ═══════ */
+/* ╔══════╗ Selection ╔══════╗ */
 ::selection {
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--white);
+  background: rgba(50,121,249,0.18);
+  color: var(--grey-1000);
 }
 
-/* ═══════ Horizontal Line ═══════ */
-hr {
-  border: none;
-  height: 1px;
-  background: var(--border);
-  margin: 0;
-}
-
-/* ═══════ Pulsing dot ═══════ */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
-}
-
-.pulse-dot {
-  width: 6px;
-  height: 6px;
-  background: #4ade80;
-  border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-/* ═══════ Spin ═══════ */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin {
-  animation: spin 0.8s linear infinite;
-}
-
-/* ═══════ Fade-up entrance (used by JS) ═══════ */
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-up {
-  animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* ═══════ Background Motion Animations (Arkitekweb style) ═══════ */
-.bg-grid-pan {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.12; /* Subtly visible grid */
-  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
-  background-size: 32px 32px;
-  animation: grid-move 45s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes grid-move {
-  0% {
-    background-position: 0px 0px;
-  }
-  100% {
-    background-position: 320px 320px;
-  }
-}
-
-.bg-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(150px);
-  opacity: 0.26; /* Highly premium luxury glow */
-  mix-blend-mode: screen;
-  pointer-events: none;
-  will-change: transform;
-}
-
-.bg-orb-1 {
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(63, 94, 251, 0.4) 0%, rgba(70, 252, 244, 0.1) 50%, rgba(0, 0, 0, 0) 70%);
-  top: -150px;
-  left: -150px;
-  animation: drift-slow 35s ease-in-out infinite alternate;
-}
-
-.bg-orb-2 {
-  width: 850px;
-  height: 850px;
-  background: radial-gradient(circle, rgba(252, 70, 107, 0.25) 0%, rgba(63, 94, 251, 0.1) 60%, rgba(0, 0, 0, 0) 80%);
-  bottom: -250px;
-  right: -150px;
-  animation: drift-reverse 45s ease-in-out infinite alternate;
-}
-
-.bg-orb-3 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.22) 0%, rgba(99, 102, 241, 0.05) 50%, rgba(0, 0, 0, 0) 70%);
-  top: 30%;
-  left: 25%;
-  animation: pulse-slow 28s ease-in-out infinite alternate;
-}
-
-@keyframes drift-slow {
-  0% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-  }
-  50% {
-    transform: translate(120px, 90px) scale(1.2) rotate(180deg);
-  }
-  100% {
-    transform: translate(-60px, 150px) scale(0.9) rotate(360deg);
-  }
-}
-
-@keyframes drift-reverse {
-  0% {
-    transform: translate(0, 0) scale(1.15) rotate(0deg);
-  }
-  50% {
-    transform: translate(-140px, -70px) scale(0.85) rotate(-180deg);
-  }
-  100% {
-    transform: translate(90px, 120px) scale(1.1) rotate(-360deg);
-  }
-}
-
-@keyframes pulse-slow {
-  0% {
-    transform: scale(0.85) translate(0, 0);
-  }
-  50% {
-    transform: scale(1.15) translate(70px, -50px);
-  }
-  100% {
-    transform: scale(0.9) translate(-40px, 30px);
-  }
-}
-
-/* Subtle Film Grain */
-.bg-grain {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.022; /* High-end cinematic grain */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  pointer-events: none;
-}
-
-/* Star Dust / Floating Microparticles */
-.particle-container {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background-color: rgba(255, 255, 255, 0.45);
-  border-radius: 50%;
-  pointer-events: none;
-  animation: float-particle 18s linear infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes float-particle {
-  0% {
-    transform: translateY(105vh) translateX(0) scale(0.8);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.8;
-  }
-  90% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateY(-5vh) translateX(50px) scale(1.2);
-    opacity: 0;
-  }
-}
-
-
+/* ╔══════╗ Page Transition ╔══════╗ */
+/* handled by app/template.tsx */
