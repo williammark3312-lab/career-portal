@@ -169,7 +169,7 @@ export default function JobsPage() {
             <span 
               className="text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-none"
               style={{
-                background: "linear-gradient(135deg, #1a3bbd 0%, #3279F9 100%)",
+                background: "linear-gradient(135deg, #2563EB 0%, #3279F9 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text"
