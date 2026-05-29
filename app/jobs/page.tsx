@@ -83,7 +83,6 @@ export default function JobsPage() {
   const heroOpacity = useTransform(scrollY, [0, 650], [1, 0]);
   const heroScale = useTransform(scrollY, [0, 650], [1, 0.90]);
   const heroY = useTransform(scrollY, [0, 650], [0, -120]);
-  const heroBlur = useTransform(scrollY, [0, 650], ["blur(0px)", "blur(16px)"]);
 
   useEffect(() => { fetchJobs(); }, []);
 
@@ -133,7 +132,7 @@ export default function JobsPage() {
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          style={{ opacity: heroOpacity, scale: heroScale, y: heroY, filter: heroBlur }}
+          style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
           className="max-w-2xl"
         >
           <span className="dept-tag mb-5 inline-block">Join Our Team</span>
