@@ -78,6 +78,7 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const { scrollY } = useScroll();
   const heroOpacity = useTransform(scrollY, [0, 160], [1, 0]);
@@ -150,23 +151,35 @@ export default function JobsPage() {
       <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="glass rounded-[20px] px-5 py-4 flex flex-wrap items-center gap-3"
+          animate={{
+            opacity: 1,
+            y: 0,
+            boxShadow: searchFocused
+              ? "0 20px 40px -10px rgba(50, 121, 249, 0.20), 0 0 0 2px rgba(50, 121, 249, 0.3)"
+              : "0 20px 40px -10px rgba(18, 19, 23, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.5)",
+            borderColor: searchFocused ? "rgba(50, 121, 249, 0.4)" : "rgba(255, 255, 255, 0.5)"
+          }}
+          transition={{ duration: 0.3 }}
+          className="glass rounded-[24px] p-5 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 transition-all duration-300 relative overflow-hidden"
         >
-          {/* Search input */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#121317] pointer-events-none" />
+          {/* Custom Search Box */}
+          <div className="relative flex-1 flex items-center bg-white/40 backdrop-blur-md rounded-[16px] border border-[#E1E6EC] focus-within:border-[#3279F9] focus-within:bg-white/80 focus-within:shadow-[0_4px_20px_-2px_rgba(50,121,249,0.08)] px-4 py-2.5 transition-all duration-300">
+            <Search className={`w-4 h-4 mr-3 transition-colors duration-300 ${searchFocused ? "text-[#3279F9]" : "text-[#737A87]"}`} />
             <input
               id="jobs-search"
               type="text"
               placeholder="Search roles, departments, locations…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2.5 bg-transparent border border-[#E1E6EC] rounded-[12px] text-[14px] text-[#121317] placeholder-[#737A87] outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[rgba(50,121,249,0.12)] transition-all"
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              className="w-full bg-transparent border-none outline-none text-[14px] text-[#121317] placeholder-[#737A87] font-medium"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#121317] hover:text-[#121317] transition-colors">
+              <button 
+                onClick={() => setSearchQuery("")} 
+                className="ml-2 p-1 rounded-full hover:bg-[#E1E6EC] text-[#737A87] hover:text-[#121317] transition-all duration-200"
+              >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
@@ -181,13 +194,20 @@ export default function JobsPage() {
                   key={dept}
                   id={`filter-${dept.toLowerCase().replace(/\s+/g, "-")}`}
                   onClick={() => setSelectedDept(dept === "All" ? "" : dept)}
-                  className={`px-4 py-2 rounded-full text-[13px] font-medium border transition-all ${
+                  className={`px-4 py-2 rounded-[12px] text-[13px] font-semibold border transition-all duration-300 relative overflow-hidden group ${
                     isActive
-                      ? "bg-[#3279F9] text-white border-[#3279F9] shadow-sm"
-                      : "bg-white text-[#121317] border-[#E1E6EC] hover:border-[#3279F9] hover:text-[#3279F9]"
+                      ? "bg-gradient-to-r from-[#3279F9] to-[#7C3AED] text-white border-transparent shadow-[0_4px_15px_-3px_rgba(50,121,249,0.35)] scale-[1.02]"
+                      : "bg-white/60 hover:bg-white text-[#121317] border-[#E1E6EC] hover:border-[#3279F9] hover:shadow-[0_4px_12px_-2px_rgba(50,121,249,0.06)] hover:-translate-y-0.5"
                   }`}
                 >
-                  {dept}
+                  <span className="relative z-10">{dept}</span>
+                  {isActive && (
+                    <motion.div
+                      animate={{ x: ["-100%", "200%"] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5, ease: "easeInOut" }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                    />
+                  )}
                 </button>
               );
             })}
@@ -195,15 +215,15 @@ export default function JobsPage() {
 
           {/* Result count / clear */}
           {!loading && (searchQuery || (selectedDept && selectedDept !== "All")) && (
-            <div className="flex items-center gap-2 ml-auto">
-              <span className="text-[13px] text-[#121317]">
-                {filteredJobs.length} result{filteredJobs.length !== 1 ? "s" : ""}
+            <div className="flex items-center gap-3 ml-auto pr-1">
+              <span className="text-[13px] font-medium text-[#737A87] bg-[#E1E6EC]/40 px-3 py-1 rounded-full border border-[#E1E6EC]">
+                <strong className="text-[#3279F9]">{filteredJobs.length}</strong> role{filteredJobs.length !== 1 ? "s" : ""} found
               </span>
               <button
                 onClick={() => { setSearchQuery(""); setSelectedDept(""); }}
-                className="text-[13px] text-[#3279F9] font-medium hover:underline"
+                className="text-[13px] text-[#7C3AED] hover:text-[#3279F9] font-semibold hover:underline flex items-center gap-1 transition-colors duration-200"
               >
-                Clear
+                Clear Filters
               </button>
             </div>
           )}
