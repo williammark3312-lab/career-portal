@@ -610,7 +610,7 @@ export default function AdminPage() {
                       {s.icon}
                     </div>
                   </div>
-                  <h3 style={{ fontSize: 28, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif', margin: 0, tracking: "-0.015em" }}>{s.value}</h3>
+                  <h3 style={{ fontSize: 28, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif', margin: 0, letterSpacing: "-0.015em" }}>{s.value}</h3>
                 </motion.div>
               ))}
             </div>
