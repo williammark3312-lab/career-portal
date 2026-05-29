@@ -149,6 +149,22 @@ export default function JobsPage() {
 
       {/* Search & Filter Bar */}
       <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-8">
+        {/* Active Hiring tag */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="flex items-center gap-2 mb-3 pl-1"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
+            <span className="relative h-2 w-2 rounded-full bg-[#10B981]" />
+          </span>
+          <span className="text-[12px] font-bold tracking-[0.15em] text-[#121317] uppercase">
+            hiring.
+          </span>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{
