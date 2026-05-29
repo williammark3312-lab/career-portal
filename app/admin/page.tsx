@@ -619,7 +619,7 @@ export default function AdminPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
               <div>
                 <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif' }}>Active Listings</h2>
-                <p style={{ fontSize: 13, color: "var(--neutral-500)", mt: 4, fontWeight: 500 }}>Select a job card to evaluate its real-time applicants panel.</p>
+                <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Select a job card to evaluate its real-time applicants panel.</p>
               </div>
               <button
                 onClick={openCreate}
@@ -757,7 +757,7 @@ export default function AdminPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap", marginBottom: 28 }}>
               <div>
                 <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif' }}>Talent Index</h2>
-                <p style={{ fontSize: 13, color: "var(--neutral-500)", mt: 4, fontWeight: 500 }}>Update active candidate status pathways, delete indexes, or write remarks.</p>
+                <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Update active candidate status pathways, delete indexes, or write remarks.</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <select 
@@ -929,7 +929,7 @@ export default function AdminPage() {
                             <MessageSquare style={{ width: 14, height: 14, color: "var(--google-blue)" }} />
                             <span>Recruiter Remarks</span>
                             {cvComments.length > 0 && (
-                              <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(0,0,0,0.06)", color: "var(--neutral-700)", px: 6, py: 2, borderRadius: 8, padding: "2px 6px" }}>{cvComments.length}</span>
+                              <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(0,0,0,0.06)", color: "var(--neutral-700)", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 8, padding: "2px 6px" }}>{cvComments.length}</span>
                             )}
                           </div>
                           <span style={{ fontSize: 12, fontWeight: 600, color: "var(--google-blue)", cursor: "pointer" }}>
@@ -1043,7 +1043,7 @@ export default function AdminPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
               <div>
                 <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif' }}>Authorized Administrators</h2>
-                <p style={{ fontSize: 13, color: "var(--neutral-500)", mt: 4, fontWeight: 500 }}>Provision supervising keys or revoke control access credentials.</p>
+                <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Provision supervising keys or revoke control access credentials.</p>
               </div>
               <button onClick={() => setShowUserModal(true)}
                 style={{
@@ -1172,7 +1172,7 @@ export default function AdminPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
                 <div>
                   <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>{editingJob ? "Modify Listing Details" : "Publish New Role"}</h2>
-                  <p style={{ fontSize: 13, color: "var(--neutral-500)", mt: 4, fontWeight: 500 }}>{editingJob ? "Adjust publication and job role descriptions." : "Configure operational parameters for candidate screening."}</p>
+                  <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>{editingJob ? "Adjust publication and job role descriptions." : "Configure operational parameters for candidate screening."}</p>
                 </div>
                 <button onClick={closeModal} style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer" }}>
                   <X style={{ width: 20, height: 20 }} />
@@ -1225,7 +1225,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div style={{ marginTop: 28, pt: 18, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
+              <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
                 <button onClick={closeModal} style={{ flex: 1, padding: "11px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", fontSize: 13.5, fontWeight: 600, color: "var(--neutral-600)", cursor: "pointer" }}>Cancel</button>
                 <button onClick={handleSave} style={{ flex: 1, padding: "11px", borderRadius: 20, border: "none", background: "var(--google-blue, #1a73e8)", color: "#ffffff", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>{editingJob ? "Save Changes" : "Publish opening"}</button>
               </div>
@@ -1254,7 +1254,7 @@ export default function AdminPage() {
                 flexDirection: "column",
                 boxShadow: "0 10px 40px rgba(0,0,0,0.05)"
               }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 20, py: 14, borderBottom: "1px solid rgba(0,0,0,0.05)", background: "#ffffff", padding: "14px 20px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 20, paddingRight: 20, paddingTop: 14, paddingBottom: 14, borderBottom: "1px solid rgba(0,0,0,0.05)", background: "#ffffff", padding: "14px 20px" }}>
                 <h3 style={{ fontSize: 14.5, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>Resume Sandbox</h3>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <a href={selectedCV} target="_blank" rel="noopener noreferrer"
@@ -1306,7 +1306,7 @@ export default function AdminPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
                 <div>
                   <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>Load Candidate profile</h2>
-                  <p style={{ fontSize: 13, color: "var(--neutral-500)", mt: 4, fontWeight: 500 }}>Index a target resume directly into the primary pipeline.</p>
+                  <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Index a target resume directly into the primary pipeline.</p>
                 </div>
                 <button onClick={closeCvModal} style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer" }}>
                   <X style={{ width: 18, height: 18 }} />
@@ -1339,7 +1339,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div style={{ marginTop: 24, pt: 14, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
+              <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
                 <button onClick={closeCvModal} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", fontSize: 13, fontWeight: 600, color: "var(--neutral-600)", cursor: "pointer" }}>Cancel</button>
                 <button disabled={uploadingCv} onClick={handleUploadCv} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "none", background: "var(--google-blue, #1a73e8)", color: "#ffffff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: uploadingCv ? 0.7 : 1 }}>
                   {uploadingCv ? "Uploading..." : "Save Profile"}
@@ -1379,7 +1379,7 @@ export default function AdminPage() {
                     <CheckCircle2 style={{ width: 24, height: 24, color: "var(--google-green)" }} />
                   </div>
                   <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>Supervisor Added</h2>
-                  <p style={{ fontSize: 13, color: "var(--neutral-500)", mt: 4, mb: 20 }}>The supervising registry credentials are live.</p>
+                  <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, marginBottom: 20 }}>The supervising registry credentials are live.</p>
                   
                   <div style={{ background: "var(--neutral-100)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 16, padding: "18px", textAlign: "left", marginBottom: 20 }}>
                     <div style={{ marginBottom: 12 }}>
@@ -1451,7 +1451,7 @@ export default function AdminPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
                     <div>
                       <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>Provision Keys</h2>
-                      <p style={{ fontSize: 13, color: "var(--neutral-500)", mt: 4, fontWeight: 500 }}>Setup supervisor login credentials details.</p>
+                      <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Setup supervisor login credentials details.</p>
                     </div>
                     <button onClick={() => { setShowUserModal(false); resetUserForm(); }} style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer" }}>
                       <X style={{ width: 18, height: 18 }} />
@@ -1486,7 +1486,7 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 24, pt: 14, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
+                  <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
                     <button onClick={() => { setShowUserModal(false); resetUserForm(); }} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", fontSize: 13, fontWeight: 600, color: "var(--neutral-600)", cursor: "pointer" }}>Cancel</button>
                     <button disabled={savingUser || !newUserEmail.trim() || !newUserPass.trim()} onClick={handleCreateAdminUser}
                       style={{ flex: 1, padding: "10px", borderRadius: 20, border: "none", background: "var(--google-blue, #1a73e8)", color: "#ffffff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: (savingUser || !newUserEmail.trim() || !newUserPass.trim()) ? 0.6 : 1 }}>
