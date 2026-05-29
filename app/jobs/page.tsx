@@ -84,6 +84,8 @@ export default function JobsPage() {
   const heroOpacity = useTransform(scrollY, [0, 160], [1, 0]);
   const heroScale = useTransform(scrollY, [0, 160], [1, 0.96]);
   const heroY = useTransform(scrollY, [0, 160], [0, -40]);
+  const hiringOpacity = useTransform(scrollY, [0, 160], [0, 1]);
+  const hiringScale = useTransform(scrollY, [0, 160], [0.88, 1]);
 
   useEffect(() => { fetchJobs(); }, []);
 
@@ -151,16 +153,14 @@ export default function JobsPage() {
       <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-8">
         {/* Active Hiring tag */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="flex items-center gap-2 mb-3 pl-1"
+          style={{ opacity: hiringOpacity, scale: hiringScale }}
+          className="flex items-center gap-3 mb-4 pl-1"
         >
-          <span className="relative flex h-2 w-2">
+          <span className="relative flex h-2.5 w-2.5 mt-1">
             <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
-            <span className="relative h-2 w-2 rounded-full bg-[#10B981]" />
+            <span className="relative h-2.5 w-2.5 rounded-full bg-[#10B981]" />
           </span>
-          <span className="text-[12px] font-bold tracking-[0.15em] text-[#121317] uppercase">
+          <span className="text-[28px] md:text-[36px] font-medium tracking-[-0.03em] text-gradient leading-none">
             hiring.
           </span>
         </motion.div>
