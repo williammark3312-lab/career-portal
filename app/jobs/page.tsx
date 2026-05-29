@@ -80,9 +80,9 @@ export default function JobsPage() {
   const [selectedDept, setSelectedDept] = useState("");
 
   const { scrollY } = useScroll();
-  const heroOpacity = useTransform(scrollY, [0, 650], [1, 0]);
-  const heroScale = useTransform(scrollY, [0, 650], [1, 0.90]);
-  const heroY = useTransform(scrollY, [0, 650], [0, -120]);
+  const heroOpacity = useTransform(scrollY, [0, 160], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 160], [1, 0.96]);
+  const heroY = useTransform(scrollY, [0, 160], [0, -40]);
 
   useEffect(() => { fetchJobs(); }, []);
 
@@ -127,7 +127,7 @@ export default function JobsPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pt-32 pb-12">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pt-44 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
