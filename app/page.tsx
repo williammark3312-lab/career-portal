@@ -51,7 +51,7 @@ export default function Home() {
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-20 text-center">
+      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pt-32 pb-20 text-center">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}

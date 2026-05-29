@@ -310,7 +310,7 @@ export default function JobDetailsPage() {
 
       <Header />
 
-      <div className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-5 sm:px-8 py-12">
+      <div className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-5 sm:px-8 pt-32 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}

@@ -122,7 +122,7 @@ export default function JobsPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pt-20 pb-12">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pt-32 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
