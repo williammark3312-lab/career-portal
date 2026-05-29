@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle2, Upload, Briefcase, MapPin, Download } from "lu
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import Header from "../../../src/components/Header";
+import Footer from "../../../src/components/Footer";
 
 type Job = {
   id: string; title: string; department: string; location: string; description: string;
@@ -288,11 +289,7 @@ export default function JobDetailsPage() {
             </button>
           </motion.div>
         </div>
-        <footer className="site-footer">
-          <div className="site-footer-inner">
-            <p>© {new Date().getFullYear()} Careers Portal</p>
-          </div>
-        </footer>
+        <Footer />
       </main>
     );
   }
@@ -415,12 +412,7 @@ export default function JobDetailsPage() {
         </motion.div>
       </div>
 
-      <footer className="site-footer">
-        <div className="site-footer-inner">
-          <p>© {new Date().getFullYear()} Careers Portal</p>
-          <div className="site-footer-links"><a href="/jobs">Careers</a></div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }

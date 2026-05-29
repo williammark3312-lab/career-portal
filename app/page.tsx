@@ -7,6 +7,7 @@ import { Canvas } from "@react-three/fiber";
 import { Float, Environment, ContactShadows, MeshTransmissionMaterial } from "@react-three/drei";
 import { Briefcase } from "lucide-react";
 import Header from "../src/components/Header";
+import Footer from "../src/components/Footer";
 
 /* —— Same ring as jobs/admin pages —— */
 function FloatingRing() {
@@ -101,15 +102,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="site-footer">
-        <div className="site-footer-inner">
-          <p>© {new Date().getFullYear()} Careers Portal</p>
-          <div className="site-footer-links">
-            <a href="/jobs">Careers</a>
-            <a href="https://www.linkedin.com/in/anandugirish/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }

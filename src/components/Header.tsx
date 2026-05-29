@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
-import { Briefcase, ExternalLink, ArrowLeft, LogOut } from "lucide-react";
+import { Briefcase, ExternalLink, ArrowLeft, LogOut, Lock } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 
 interface HeaderProps {
@@ -79,14 +79,25 @@ export default function Header({ session, handleLogout }: HeaderProps) {
               )}
             </>
           ) : isJobDetails ? (
-            <button
-              onClick={() => router.push("/jobs")}
-              className="group relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors rounded-full" />
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-              All Positions
-            </button>
+            <div className="relative flex items-center gap-1">
+              <button
+                onClick={() => router.push("/jobs")}
+                className="group relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors rounded-full" />
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                All Positions
+              </button>
+
+              <button
+                onClick={() => router.push("/admin")}
+                className="group relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors rounded-full" />
+                <Lock className="w-3.5 h-3.5" />
+                Admin
+              </button>
+            </div>
           ) : (
             <>
               {/* Active Tab Background Animation */}
@@ -118,6 +129,15 @@ export default function Header({ session, handleLogout }: HeaderProps) {
                   <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   LinkedIn
                 </a>
+
+                <button
+                  onClick={() => router.push("/admin")}
+                  className="group relative z-10 flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors rounded-full" />
+                  <Lock className="w-3.5 h-3.5" />
+                  Admin
+                </button>
               </div>
             </>
           )}

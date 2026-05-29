@@ -8,6 +8,7 @@ import { Canvas } from "@react-three/fiber";
 import { Float, Environment, ContactShadows, MeshTransmissionMaterial } from "@react-three/drei";
 import { ArrowRight, MapPin, Briefcase, Search, X } from "lucide-react";
 import Header from "../../src/components/Header";
+import Footer from "../../src/components/Footer";
 
 type Job = {
   id: string;
@@ -329,16 +330,7 @@ export default function JobsPage() {
       </section>
 
       {/* Footer */}
-      <footer className="site-footer">
-        <div className="site-footer-inner">
-          <p>© {new Date().getFullYear()} Careers Portal</p>
-          <div className="site-footer-links">
-            <a href="/">Home</a>
-            <a href="/admin">Admin</a>
-            <a href="https://www.linkedin.com/in/anandugirish/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }
