@@ -45,14 +45,14 @@ function renderMd(md: string): string {
       continue;
     }
     if (/^[•\-] /.test(line)) {
-      if (!inUl) { out.push('<ul class="space-y-1.5 my-4 ml-5 list-disc text-[#737A87]">'); inUl = true; }
+      if (!inUl) { out.push('<ul class="space-y-1.5 my-4 ml-5 list-disc text-[#121317]">'); inUl = true; }
       const text = line.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-medium text-[#121317]'>$1</strong>");
       out.push(`<li class="pl-1 marker:text-[#3279F9]">${text}</li>`);
       continue;
     }
     if (inUl) { out.push("</ul>"); inUl = false; }
     const text = line.replace(/\*\*(.*?)\*\*/g, "<strong class='font-medium text-[#121317]'>$1</strong>");
-    out.push(`<p class="my-2 text-[15px] leading-[1.7] text-[#737A87]">${text}</p>`);
+    out.push(`<p class="my-2 text-[15px] leading-[1.7] text-[#121317]">${text}</p>`);
   }
   if (inUl) out.push("</ul>");
   return out.join("\n");
@@ -181,7 +181,7 @@ export default function JobDetailsPage() {
       <main className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 rounded-full border-2 border-[rgba(50,121,249,0.25)] border-t-[#3279F9] animate-spin" />
-          <p className="text-[14px] text-[#737A87]">Loading…</p>
+          <p className="text-[14px] text-[#121317]">Loading…</p>
         </div>
       </main>
     );
@@ -224,7 +224,7 @@ export default function JobDetailsPage() {
               <h2 className="text-[24px] font-bold tracking-tight mb-1.5 text-[#1a3bbd]">
                 Application Submitted!
               </h2>
-              <p className="text-[13px] text-[#737A87]">We&apos;ve received your profile successfully</p>
+              <p className="text-[13px] text-[#121317]">We&apos;ve received your profile successfully</p>
             </div>
 
             {/* Receipt details */}
@@ -322,12 +322,12 @@ export default function JobDetailsPage() {
             <span className="dept-tag mb-5 inline-block">{job.department}</span>
             <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-gradient">{job.title}</h1>
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D]">
-                <MapPin className="w-3.5 h-3.5 text-[#737A87]" />
+              <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#121317]">
+                <MapPin className="w-3.5 h-3.5 text-[#121317]" />
                 {job.location}
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#45474D]">
-                <Briefcase className="w-3.5 h-3.5 text-[#737A87]" />
+              <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#121317]">
+                <Briefcase className="w-3.5 h-3.5 text-[#121317]" />
                 Full Time
               </div>
             </div>
@@ -351,7 +351,7 @@ export default function JobDetailsPage() {
               >
                 <div className="mb-8">
                   <h2 className="text-[26px] font-semibold text-[#1a3bbd]">Submit your application</h2>
-                  <p className="text-[14px] text-[#737A87] mt-2">
+                  <p className="text-[14px] text-[#121317] mt-2">
                     Fill out the form below to apply for <strong className="text-[#3279F9]">{job.title}</strong>
                   </p>
                 </div>
@@ -371,7 +371,7 @@ export default function JobDetailsPage() {
                     <div>
                       <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[#CDD4DC] bg-[#F8F9FC] text-[15px] font-medium text-[#45474D] select-none whitespace-nowrap">
+                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[#CDD4DC] bg-[#F8F9FC] text-[15px] font-medium text-[#121317] select-none whitespace-nowrap">
                           +91
                         </span>
                         <input
@@ -397,9 +397,9 @@ export default function JobDetailsPage() {
                         onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
-                      <Upload className="mx-auto h-7 w-7 text-[#737A87] mb-2" />
+                      <Upload className="mx-auto h-7 w-7 text-[#121317] mb-2" />
                       <p className="text-[14px] font-medium text-[#121317]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
-                      <p className="text-[12px] text-[#737A87] mt-1">PDF, DOC up to 5 MB</p>
+                      <p className="text-[12px] text-[#121317] mt-1">PDF, DOC up to 5 MB</p>
                     </div>
                     {errors.resume && <p className="mt-1.5 text-[12px] text-red-500">{errors.resume}</p>}
                   </div>

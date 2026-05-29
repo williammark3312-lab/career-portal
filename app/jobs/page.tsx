@@ -134,7 +134,7 @@ export default function JobsPage() {
             Build Your Career<br />
             With Us
           </h1>
-          <p className="mt-5 text-[17px] leading-[1.7] text-[#737A87] max-w-xl">
+          <p className="mt-5 text-[17px] leading-[1.7] text-[#121317] max-w-xl">
             Explore premium career opportunities, collaborate with ambitious teams.
           </p>
         </motion.div>
@@ -150,7 +150,7 @@ export default function JobsPage() {
         >
           {/* Search input */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737A87] pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#121317] pointer-events-none" />
             <input
               id="jobs-search"
               type="text"
@@ -160,7 +160,7 @@ export default function JobsPage() {
               className="w-full pl-9 pr-8 py-2.5 bg-transparent border border-[#E1E6EC] rounded-[12px] text-[14px] text-[#121317] placeholder-[#737A87] outline-none focus:border-[#3279F9] focus:ring-2 focus:ring-[rgba(50,121,249,0.12)] transition-all"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#737A87] hover:text-[#121317] transition-colors">
+              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#121317] hover:text-[#121317] transition-colors">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
@@ -178,7 +178,7 @@ export default function JobsPage() {
                   className={`px-4 py-2 rounded-full text-[13px] font-medium border transition-all ${
                     isActive
                       ? "bg-[#3279F9] text-white border-[#3279F9] shadow-sm"
-                      : "bg-white text-[#45474D] border-[#E1E6EC] hover:border-[#3279F9] hover:text-[#3279F9]"
+                      : "bg-white text-[#121317] border-[#E1E6EC] hover:border-[#3279F9] hover:text-[#3279F9]"
                   }`}
                 >
                   {dept}
@@ -190,7 +190,7 @@ export default function JobsPage() {
           {/* Result count / clear */}
           {!loading && (searchQuery || (selectedDept && selectedDept !== "All")) && (
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-[13px] text-[#737A87]">
+              <span className="text-[13px] text-[#121317]">
                 {filteredJobs.length} result{filteredJobs.length !== 1 ? "s" : ""}
               </span>
               <button
@@ -212,7 +212,7 @@ export default function JobsPage() {
           </div>
         ) : filteredJobs.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center">
-            <p className="text-[17px] text-[#737A87]">
+            <p className="text-[17px] text-[#121317]">
               {jobs.length === 0 ? "No open positions right now. Check back soon!" : "No roles match your search. Try different keywords."}
             </p>
             {(searchQuery || selectedDept) && (
@@ -235,20 +235,20 @@ export default function JobsPage() {
                     <div className="flex items-start justify-between gap-4 mb-6">
                       <span className="dept-tag">{job.department}</span>
                       <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-[#E1E6EC] bg-white px-3 py-1">
-                        <MapPin className="w-3.5 h-3.5 text-[#737A87]" />
-                        <span className="text-[12px] font-medium text-[#45474D]">{job.location}</span>
+                        <MapPin className="w-3.5 h-3.5 text-[#121317]" />
+                        <span className="text-[12px] font-medium text-[#121317]">{job.location}</span>
                       </div>
                     </div>
                     <h2 className="text-[24px] font-bold tracking-[-0.02em] text-[#1a3bbd] transition-colors duration-300 mb-3 group-hover:text-[#3279F9]">
                       {job.title}
                     </h2>
-                    <p className="text-[14px] leading-[1.65] text-[#737A87] line-clamp-3 flex-1">
+                    <p className="text-[14px] leading-[1.65] text-[#121317] line-clamp-3 flex-1">
                       {job.description.replace(/#{1,3} |[*_~`]/g, "")}
                     </p>
                     <div className="mt-6 pt-5 border-t border-[#E1E6EC] flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Briefcase className="w-3.5 h-3.5 text-[#737A87]" />
-                        <span className="text-[13px] font-medium text-[#45474D]">Full Time</span>
+                        <Briefcase className="w-3.5 h-3.5 text-[#121317]" />
+                        <span className="text-[13px] font-medium text-[#121317]">Full Time</span>
                       </div>
                       <span className="flex items-center gap-1.5 text-[13px] font-semibold text-[#3279F9]">
                         Apply Now
