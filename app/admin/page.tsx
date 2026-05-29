@@ -685,7 +685,7 @@ export default function AdminPage() {
                             <div style={{ display: "flex", gap: 6 }}>
                               <button 
                                 onClick={() => openEdit(job)}
-                                style={{ p: 6, border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff", color: "var(--neutral-600)", cursor: "pointer", display: "inline-flex", padding: 6, borderRadius: 8, transition: "color 0.2s" }}
+                                style={{ border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff", color: "var(--neutral-600)", cursor: "pointer", display: "inline-flex", padding: 6, borderRadius: 8, transition: "color 0.2s" }}
                                 onMouseEnter={(e) => e.currentTarget.style.color = "var(--google-blue)"}
                                 onMouseLeave={(e) => e.currentTarget.style.color = "var(--neutral-600)"}
                               >
@@ -693,7 +693,7 @@ export default function AdminPage() {
                               </button>
                               <button 
                                 onClick={() => handleDelete(job.id)}
-                                style={{ p: 6, border: "1px solid rgba(217,48,37,0.12)", background: "rgba(217,48,37,0.04)", color: "var(--google-red)", cursor: "pointer", display: "inline-flex", padding: 6, borderRadius: 8, transition: "background 0.2s" }}
+                                style={{ border: "1px solid rgba(217,48,37,0.12)", background: "rgba(217,48,37,0.04)", color: "var(--google-red)", cursor: "pointer", display: "inline-flex", padding: 6, borderRadius: 8, transition: "background 0.2s" }}
                                 onMouseEnter={(e) => e.currentTarget.style.background = "rgba(217,48,37,0.08)"}
                                 onMouseLeave={(e) => e.currentTarget.style.background = "rgba(217,48,37,0.04)"}
                               >
