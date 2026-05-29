@@ -193,7 +193,7 @@ body {
 .btn-dark:active { transform: scale(0.97); }
 
 /* ╔══════╗ Form Inputs ╔══════╗ */
-.form-input {
+.form-input, .google-form-input {
   width: 100%;
   padding: 12px 16px;
   background: white;
@@ -205,13 +205,13 @@ body {
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.form-input::placeholder { color: var(--grey-500); }
-.form-input:focus {
+.form-input::placeholder, .google-form-input::placeholder { color: var(--grey-500); }
+.form-input:focus, .google-form-input:focus {
   border-color: var(--blue-500);
   box-shadow: 0 0 0 3px rgba(50,121,249,0.12);
 }
 
-.form-label {
+.form-label, .google-form-label {
   display: block;
   font-size: 13px;
   font-weight: 500;
