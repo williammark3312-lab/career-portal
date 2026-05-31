@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
 
 /**
  * AnimatedBackground — Google Antigravity / Material You
@@ -12,12 +11,6 @@ export default function AnimatedBackground() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
-
-  const { scrollY } = useScroll();
-  const blob1Y = useTransform(scrollY, [0, 3000], [0, 150]);
-  const blob2Y = useTransform(scrollY, [0, 3000], [0, -120]);
-  const blob3Y = useTransform(scrollY, [0, 3000], [0, 80]);
-  const blob4Y = useTransform(scrollY, [0, 3000], [0, -60]);
 
   return (
     <div
@@ -32,50 +25,46 @@ export default function AnimatedBackground() {
       }}
     >
       {/* Google Blue blob — top left */}
-      <motion.div
+      <div
         className="bg-blob bg-blob-blue"
         style={{
           width: 700,
           height: 700,
           top: -200,
           left: -150,
-          y: blob1Y,
         }}
       />
 
       {/* Google Red blob — top right */}
-      <motion.div
+      <div
         className="bg-blob bg-blob-red"
         style={{
           width: 500,
           height: 500,
           top: 100,
           right: -100,
-          y: blob2Y,
         }}
       />
 
       {/* Google Green blob — bottom left */}
-      <motion.div
+      <div
         className="bg-blob bg-blob-green"
         style={{
           width: 600,
           height: 600,
           bottom: -150,
           left: -100,
-          y: blob3Y,
         }}
       />
 
       {/* Google Yellow blob — bottom right */}
-      <motion.div
+      <div
         className="bg-blob bg-blob-yel"
         style={{
           width: 400,
           height: 400,
           bottom: 100,
           right: -60,
-          y: blob4Y,
         }}
       />
 

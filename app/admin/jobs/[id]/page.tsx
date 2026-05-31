@@ -624,8 +624,12 @@ export default function JobScreeningPage() {
 
       if (jobData) {
         setJob(jobData);
-      } else if (appsData && appsData.length > 0 && (appsData[0] as any).jobs) {
-        setJob((appsData[0] as any).jobs);
+      } else if (appsData && appsData.length > 0) {
+        const firstApp = appsData[0] as any;
+        const joinedJob = firstApp.jobs || firstApp.job;
+        if (joinedJob) {
+          setJob(Array.isArray(joinedJob) ? (joinedJob[0] || null) : joinedJob);
+        }
       }
       
       if (appsData) setApplications(appsData);
@@ -683,57 +687,55 @@ export default function JobScreeningPage() {
       <div style={{ flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "clamp(80px, 8vw, 100px) clamp(12px, 3vw, 24px) 80px" }}>
 
         {/* Breadcrumbs */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: "var(--neutral-500)", marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: "#5f6368", marginBottom: 28 }}>
           <button
             onClick={() => router.push("/admin")}
-            style={{ border: "none", background: "none", color: "var(--neutral-600)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, padding: 0 }}
+            style={{ border: "none", background: "none", color: "#5f6368", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, padding: 0 }}
           >
             <ArrowLeft style={{ width: 14, height: 14 }} /> Admin
           </button>
           <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} />
-          <span style={{ color: "var(--neutral-800)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
+          <span style={{ color: "#3c4043", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
             {job?.title ?? "Listing"}
           </span>
           <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} />
-          <span style={{ color: "var(--google-blue)", fontWeight: 600 }}>Candidate Reviews</span>
+          <span style={{ color: "#1a73e8", fontWeight: 600 }}>Candidate Reviews</span>
         </div>
 
         {/* Page title header */}
-        {job && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{ marginBottom: 36 }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20 }}>
-              <div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--google-blue)", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 10, display: "inline-block", marginBottom: 12 }}>
-                  {job.department}
-                </span>
-                <h1 className="text-gradient" style={{ fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15, fontFamily: '"Google Sans Display", "Google Sans", sans-serif', margin: 0 }}>
-                  {job.title}
-                </h1>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13.5, color: "var(--neutral-500)", fontWeight: 500, marginTop: 6 }}>
-                  <MapPin style={{ width: 14, height: 14, color: "var(--neutral-400)" }} /> {job.location}
-                </div>
-              </div>
-
-              {/* Status summary list */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                {(["Pending", "Reviewed", "Shortlisted", "Rejected"] as const).map(s => {
-                  const sc = STATUS_CONFIG[s];
-                  return (
-                    <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: sc.color, backgroundColor: sc.bg, border: `1px solid ${sc.border}` }}>
-                      {sc.icon}
-                      <span>{s}</span>
-                      <span style={{ fontWeight: 700, marginLeft: 2, background: "rgba(0,0,0,0.04)", padding: "1px 6px", borderRadius: 6 }}>{counts[s] ?? 0}</span>
-                    </div>
-                  );
-                })}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ marginBottom: 36 }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20 }}>
+            <div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#1a73e8", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 10, display: "inline-block", marginBottom: 12 }}>
+                {job?.department ?? "Evaluation"}
+              </span>
+              <h1 className="text-gradient" style={{ fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15, fontFamily: '"Google Sans Display", "Google Sans", sans-serif', margin: 0 }}>
+                {job?.title ?? "Evaluation Dashboard"}
+              </h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13.5, color: "#5f6368", fontWeight: 500, marginTop: 6 }}>
+                <MapPin style={{ width: 14, height: 14, color: "#9aa0a6" }} /> {job?.location ?? "Remote / Hybrid"}
               </div>
             </div>
-          </motion.div>
-        )}
+
+            {/* Status summary list */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {(["Pending", "Reviewed", "Shortlisted", "Rejected"] as const).map(s => {
+                const sc = STATUS_CONFIG[s];
+                return (
+                  <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: sc.color, backgroundColor: sc.bg, border: `1px solid ${sc.border}` }}>
+                    {sc.icon}
+                    <span>{s}</span>
+                    <span style={{ fontWeight: 700, marginLeft: 2, background: "rgba(0,0,0,0.04)", padding: "1px 6px", borderRadius: 6 }}>{counts[s] ?? 0}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
 
         {/* Toolbar */}
         {!loading && applications.length > 0 && (
