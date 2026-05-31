@@ -914,17 +914,17 @@ export default function JobScreeningPage() {
               style={{
                 position: "relative",
                 width: "100%",
-                maxWidth: 540,
+                maxWidth: 500,
                 maxHeight: "90vh",
                 borderRadius: 24,
                 background: "#ffffff",
                 border: "1px solid rgba(0,0,0,0.08)",
-                overflowY: "auto",
                 display: "flex",
                 flexDirection: "column",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
+                boxShadow: "0 12px 48px rgba(0,0,0,0.12)",
                 padding: "24px",
-                zIndex: 101
+                zIndex: 101,
+                overflow: "visible"
               }}
             >
               {/* Header */}
@@ -968,12 +968,21 @@ export default function JobScreeningPage() {
                 </div>
               )}
 
-              {/* Propose Slots List */}
-              <div style={{ marginBottom: 20 }}>
+              {/* Propose Slots Scrollbox container */}
+              <div style={{ display: "flex", flexDirection: "column", marginBottom: 20 }}>
                 <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "var(--neutral-700)", marginBottom: 8 }}>
                   Proposed Date & Time Slots
                 </label>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                
+                <div style={{
+                  maxHeight: "220px",
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  paddingRight: 6,
+                  marginBottom: 12
+                }}>
                   {proposedSlots.map((slot, idx) => (
                     <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <input
@@ -1024,7 +1033,7 @@ export default function JobScreeningPage() {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
-                    marginTop: 10,
+                    alignSelf: "flex-start",
                     padding: "6px 12px",
                     borderRadius: 10,
                     border: "1px dashed rgba(26,115,232,0.3)",
