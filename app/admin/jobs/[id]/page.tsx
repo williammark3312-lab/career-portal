@@ -214,9 +214,7 @@ function ApplicantCard({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       style={{
         borderRadius: 24,
         border: "1px solid rgba(0,0,0,0.06)",
@@ -480,7 +478,7 @@ function ApplicantCard({
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -703,11 +701,7 @@ export default function JobScreeningPage() {
         </div>
 
         {/* Page title header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ marginBottom: 36 }}
-        >
+        <div style={{ marginBottom: 36 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20 }}>
             <div>
               <span style={{ fontSize: 11, fontWeight: 600, color: "#1a73e8", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 10, display: "inline-block", marginBottom: 12 }}>
@@ -735,15 +729,11 @@ export default function JobScreeningPage() {
               })}
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Toolbar */}
-        {!loading && applications.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{ display: "flex", flexDirection: "row", gap: 12, marginBottom: 28, flexWrap: "wrap" }}
-          >
+        {applications.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "row", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
             <div style={{ position: "relative", flex: 1, minWidth: "min(100%, 260px)" }}>
               <Search style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 15, height: 15, color: "var(--neutral-400)" }} />
               <input
@@ -790,7 +780,7 @@ export default function JobScreeningPage() {
               <option value="Shortlisted">Shortlisted ({counts.Shortlisted ?? 0})</option>
               <option value="Rejected">Rejected ({counts.Rejected ?? 0})</option>
             </select>
-          </motion.div>
+          </div>
         )}
 
         {/* Grid List */}
