@@ -488,6 +488,11 @@ export default function JobScreeningPage() {
   const router = useRouter();
   const jobId = params?.id;
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -668,7 +673,7 @@ export default function JobScreeningPage() {
   }
 
   /* Loading state */
-  if (authLoading) {
+  if (!mounted || authLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
         <AnimatedBackground />
@@ -678,7 +683,7 @@ export default function JobScreeningPage() {
   }
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--neutral-900)", position: "relative", zIndex: 1 }}>
+    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#F8F9FF", color: "var(--neutral-900)", position: "relative", zIndex: 1 }}>
       <AnimatedBackground />
       <Header session={session} handleLogout={handleLogout} />
 

@@ -85,6 +85,11 @@ function getStatusStyle(status: string) {
 export default function AdminPage() {
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   /* Jobs */
   const [jobs, setJobs]               = useState<Job[]>([]);
   const [showModal, setShowModal]     = useState(false);
@@ -419,7 +424,7 @@ export default function AdminPage() {
   async function handleLogout() { await supabase.auth.signOut(); }
 
   /* ── Auth screens ── */
-  if (authLoading && !loginSuccess) {
+  if ((!mounted || authLoading) && !loginSuccess) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
         <AnimatedBackground />
@@ -430,7 +435,7 @@ export default function AdminPage() {
 
   if (loginSuccess) {
     return (
-      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", color: "var(--neutral-900)" }}>
+      <main style={{ minHeight: "100vh", backgroundColor: "#F8F9FF", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", color: "var(--neutral-900)" }}>
         <AnimatedBackground />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -625,9 +630,8 @@ export default function AdminPage() {
     );
   }
 
-  /* ── Main Admin UI ── */
   return (
-    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--neutral-900)", position: "relative" }}>
+    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#F8F9FF", color: "var(--neutral-900)", position: "relative" }}>
       <AnimatedBackground />
       <Header session={session} handleLogout={handleLogout} />
 
