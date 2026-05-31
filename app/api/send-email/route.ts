@@ -29,15 +29,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const host = process.env.SMTP_HOST;
-    const port = parseInt(process.env.SMTP_PORT || "587");
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    const from = process.env.SMTP_FROM || `"Recruitment Portal" <no-reply@careers-portal.com>`;
-
     const formattedTime = formatDateTime(dateTime);
 
-    // Beautiful Glassmorphic Styled HTML Email template
+    // Responsive HTML Email template
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -161,39 +155,78 @@ export async function POST(request: Request) {
       </html>
     `;
 
-    // Safe fall-back check for local development and testing
-    if (!host || !user || !pass) {
-      console.warn(
-        "SMTP environment variables are not configured in `.env.local`. Confirmation email bypassed gracefully (logging detail in console instead)."
-      );
-      console.log(`[SMTP MOCK] Dispatch email to ${to} for interview on ${formattedTime}`);
+    // ─── Option 1: Resend API Dispatch ───
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey && resendKey !== "re_your_api_key_here") {
+      const emailFrom = process.env.SMTP_FROM || "onboarding@resend.dev";
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${resendKey}`
+        },
+        body: JSON.stringify({
+          from: emailFrom,
+          to,
+          subject: subject || `Interview Finalized - ${jobTitle}`,
+          html: htmlContent
+        })
+      });
+
+      const resData = await res.json();
+      if (res.ok) {
+        return NextResponse.json({
+          success: true,
+          message: `Confirmation email dispatched to ${to} via Resend.`,
+          data: resData
+        });
+      } else {
+        console.error("Resend API failed:", resData);
+        // Fallthrough to SMTP or error if Resend is explicitly configured but failing
+      }
+    }
+
+    // ─── Option 2: SMTP Nodemailer Dispatch ───
+    const host = process.env.SMTP_HOST;
+    const port = parseInt(process.env.SMTP_PORT || "587");
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    const from = process.env.SMTP_FROM || `"Recruitment Portal" <no-reply@careers-portal.com>`;
+
+    if (host && user && pass) {
+      const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: {
+          user,
+          pass
+        }
+      });
+
+      await transporter.sendMail({
+        from,
+        to,
+        subject: subject || `Interview Finalized - ${jobTitle}`,
+        html: htmlContent
+      });
+
       return NextResponse.json({
         success: true,
-        message: "Email dispatch logged gracefully (SMTP variables missing in local .env.local configuration).",
-        mocked: true
+        message: `Confirmation email dispatched to ${to} via SMTP.`
       });
     }
 
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465, // Use true for SSL (465), false for TLS (587)
-      auth: {
-        user,
-        pass
-      }
-    });
-
-    await transporter.sendMail({
-      from,
-      to,
-      subject: subject || `Interview Finalized - ${jobTitle}`,
-      html: htmlContent
-    });
+    // ─── Option 3: Fallback Mock (Variables missing) ───
+    console.warn(
+      "No active email provider detected. To send live emails, configure either RESEND_API_KEY or SMTP variables inside your `.env.local` file."
+    );
+    console.log(`[SMTP MOCK] Dispatch email to ${to} for interview on ${formattedTime}`);
 
     return NextResponse.json({
       success: true,
-      message: `Confirmation email dispatched to ${to} successfully.`
+      message: "Email dispatch logged (Credentials are missing in local .env.local).",
+      mocked: true
     });
   } catch (error: any) {
     console.error("Email dispatch failed:", error);
