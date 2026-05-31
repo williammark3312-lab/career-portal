@@ -614,11 +614,20 @@ export default function JobScreeningPage() {
     if (!session || !jobId) return;
     async function load() {
       setLoading(true);
-      const [{ data: jobData }, { data: appsData }] = await Promise.all([
+      const [{ data: jobData, error: jobErr }, { data: appsData, error: appsErr }] = await Promise.all([
         supabase.from("jobs").select("*").eq("id", jobId).single(),
-        supabase.from("applications").select("*").eq("job_id", jobId).order("created_at", { ascending: false }),
+        supabase.from("applications").select("*, jobs(*)").eq("job_id", jobId).order("created_at", { ascending: false }),
       ]);
-      if (jobData) setJob(jobData);
+      
+      if (jobErr) console.error("Direct job load error:", jobErr);
+      if (appsErr) console.error("Applications load error:", appsErr);
+
+      if (jobData) {
+        setJob(jobData);
+      } else if (appsData && appsData.length > 0 && (appsData[0] as any).jobs) {
+        setJob((appsData[0] as any).jobs);
+      }
+      
       if (appsData) setApplications(appsData);
       setLoading(false);
     }
@@ -671,18 +680,18 @@ export default function JobScreeningPage() {
       <AnimatedBackground />
       <Header session={session} handleLogout={handleLogout} />
 
-      <div style={{ flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "clamp(80px, 12vw, 110px) clamp(12px, 3vw, 24px) 80px" }}>
+      <div style={{ flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "clamp(80px, 8vw, 100px) clamp(12px, 3vw, 24px) 80px" }}>
 
         {/* Breadcrumbs */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--neutral-400)", marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: "var(--neutral-500)", marginBottom: 28 }}>
           <button
             onClick={() => router.push("/admin")}
-            style={{ border: "none", background: "none", color: "var(--neutral-500)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontWeight: 600, padding: 0 }}
+            style={{ border: "none", background: "none", color: "var(--neutral-600)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, padding: 0 }}
           >
             <ArrowLeft style={{ width: 14, height: 14 }} /> Admin
           </button>
           <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} />
-          <span style={{ color: "var(--neutral-700)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
+          <span style={{ color: "var(--neutral-800)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
             {job?.title ?? "Listing"}
           </span>
           <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} />
