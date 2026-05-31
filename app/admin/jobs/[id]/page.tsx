@@ -124,13 +124,14 @@ function getDeptStyle(dept: string) {
 
 /* ─── Applicant Card ─── */
 function ApplicantCard({
-  app, session, onStatusChange, onDelete, onOpenCV,
+  app, session, onStatusChange, onDelete, onOpenCV, onSetUpInterview,
 }: {
   app: Application;
   session: Session | null;
   onStatusChange: (id: string, status: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onOpenCV: (url: string) => void;
+  onSetUpInterview: (app: Application) => void;
 }) {
   const [commentInput, setCommentInput] = useState("");
   const notesData = parseNotes(app.notes);
@@ -141,10 +142,11 @@ function ApplicantCard({
   const [moving, setMoving] = useState(false);
   const [moved, setMoved] = useState(false);
 
-  const [showSchedule, setShowSchedule] = useState(false);
-  const [proposedSlots, setProposedSlots] = useState<string[]>(notesData.interview?.proposed_slots || [""]);
-  const [copied, setCopied] = useState(false);
-  const [savingSchedule, setSavingSchedule] = useState(false);
+  useEffect(() => {
+    const nd = parseNotes(app.notes);
+    setComments(nd.comments);
+    setInterview(nd.interview);
+  }, [app.notes]);
 
   function formatDateTime(str: string) {
     try {
@@ -154,66 +156,6 @@ function ApplicantCard({
       }
     } catch {}
     return str;
-  }
-
-  function getMailtoUrl(appName: string, jobTitle: string, link: string) {
-    const subject = encodeURIComponent(`Interview Scheduling - ${jobTitle}`);
-    const body = encodeURIComponent(
-      `Hi ${appName},\n\n` +
-      `Thank you for applying for the ${jobTitle} position.\n\n` +
-      `We would like to schedule an interview with you. Please click the link below to view our proposed time slots and confirm a time that works best for you:\n\n` +
-      `${link}\n\n` +
-      `We look forward to speaking with you!\n\n` +
-      `Best regards,\n` +
-      `Recruitment Team`
-    );
-    return `mailto:${app.email}?subject=${subject}&body=${body}`;
-  }
-
-  async function handleSaveSchedule() {
-    const slots = proposedSlots.filter(s => s.trim() !== "");
-    if (slots.length === 0) {
-      alert("Please add at least one date/time slot.");
-      return;
-    }
-    setSavingSchedule(true);
-    const updatedInterview: InterviewData = {
-      proposed_slots: slots,
-      selected_slot: interview?.selected_slot || null,
-      status: interview?.status || "pending"
-    };
-
-    const { error } = await supabase
-      .from("applications")
-      .update({ notes: JSON.stringify({ comments, interview: updatedInterview }) })
-      .eq("id", app.id);
-
-    if (!error) {
-      setInterview(updatedInterview);
-      setProposedSlots(slots);
-      alert("Scheduling link generated successfully!");
-    } else {
-      alert("Failed to save scheduling settings: " + error.message);
-    }
-    setSavingSchedule(false);
-  }
-
-  async function handleCancelSchedule() {
-    if (!confirm("Are you sure you want to cancel and delete the interview setup?")) return;
-    setSavingSchedule(true);
-    const { error } = await supabase
-      .from("applications")
-      .update({ notes: JSON.stringify({ comments, interview: null }) })
-      .eq("id", app.id);
-
-    if (!error) {
-      setInterview(null);
-      setProposedSlots([""]);
-      setShowSchedule(false);
-    } else {
-      alert("Failed to cancel schedule: " + error.message);
-    }
-    setSavingSchedule(false);
   }
 
   async function handleMoveToDatabase() {
@@ -371,7 +313,7 @@ function ApplicantCard({
             <Eye style={{ width: 14, height: 14 }} /> View Resume
           </button>
           <button
-            onClick={() => setShowSchedule(true)}
+            onClick={() => onSetUpInterview(app)}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -538,268 +480,6 @@ function ApplicantCard({
           )}
         </AnimatePresence>
       </div>
-
-      {/* Interview Scheduling Settings Modal */}
-      <AnimatePresence>
-        {showSchedule && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.25)", backdropFilter: "blur(8px)" }}
-              onClick={() => setShowSchedule(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              style={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 540,
-                maxHeight: "90vh",
-                borderRadius: 24,
-                background: "#ffffff",
-                border: "1px solid rgba(0,0,0,0.08)",
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
-                padding: "24px",
-                zIndex: 101
-              }}
-            >
-              {/* Header */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(26,115,232,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Calendar style={{ width: 18, height: 18, color: "var(--google-blue)" }} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>Interview Scheduler</h3>
-                    <p style={{ fontSize: 12, color: "var(--neutral-500)", margin: 0 }}>Propose dates for {app.name}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowSchedule(false)}
-                  style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex", padding: 4 }}
-                >
-                  <X style={{ width: 18, height: 18 }} />
-                </button>
-              </div>
-
-              {/* Status Display if confirmed */}
-              {interview && interview.status === "scheduled" && (
-                <div style={{
-                  padding: "12px 16px",
-                  borderRadius: 16,
-                  background: "rgba(30,142,62,0.06)",
-                  border: "1px solid rgba(30,142,62,0.12)",
-                  color: "#1e8e3e",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  marginBottom: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8
-                }}>
-                  <CheckCircle2 style={{ width: 16, height: 16 }} />
-                  <span>
-                    <strong>Confirmed Slot:</strong> {formatDateTime(interview.selected_slot!)}
-                  </span>
-                </div>
-              )}
-
-              {/* Propose Slots List */}
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "var(--neutral-700)", marginBottom: 8 }}>
-                  Proposed Date & Time Slots
-                </label>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {proposedSlots.map((slot, idx) => (
-                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <input
-                        type="datetime-local"
-                        value={slot}
-                        onChange={(e) => {
-                          const updated = [...proposedSlots];
-                          updated[idx] = e.target.value;
-                          setProposedSlots(updated);
-                        }}
-                        style={{
-                          flex: 1,
-                          borderRadius: 12,
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          background: "#ffffff",
-                          padding: "10px 14px",
-                          fontSize: 13,
-                          color: "var(--neutral-900)",
-                          outline: "none",
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          const updated = proposedSlots.filter((_, i) => i !== idx);
-                          setProposedSlots(updated.length === 0 ? [""] : updated);
-                        }}
-                        style={{
-                          padding: "10px",
-                          borderRadius: 12,
-                          border: "1px solid rgba(217,48,37,0.12)",
-                          background: "rgba(217,48,37,0.04)",
-                          color: "var(--google-red)",
-                          cursor: "pointer",
-                          display: "inline-flex"
-                        }}
-                        title="Remove slot"
-                      >
-                        <Trash2 style={{ width: 14, height: 14 }} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setProposedSlots([...proposedSlots, ""])}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    marginTop: 10,
-                    padding: "6px 12px",
-                    borderRadius: 10,
-                    border: "1px dashed rgba(26,115,232,0.3)",
-                    background: "rgba(26,115,232,0.02)",
-                    color: "var(--google-blue)",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Plus style={{ width: 14, height: 14 }} /> Add Option
-                </button>
-              </div>
-
-              {/* Action and Generated Link */}
-              <div style={{ borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 14 }}>
-                <button
-                  disabled={savingSchedule}
-                  onClick={handleSaveSchedule}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: 14,
-                    fontWeight: 600,
-                    fontSize: 13.5,
-                    cursor: "pointer",
-                    border: "none",
-                    color: "#ffffff",
-                    background: "var(--google-blue, #1a73e8)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                  }}
-                >
-                  {savingSchedule ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <Sparkles style={{ width: 16, height: 16 }} />}
-                  {interview ? "Update & Save Slots" : "Generate Scheduling Link"}
-                </button>
-
-                {interview && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <label style={{ fontSize: 11.5, fontWeight: 600, color: "var(--neutral-500)" }}>Scheduling Link</label>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <input
-                          type="text"
-                          readOnly
-                          value={`${window.location.origin}/schedule/${app.id}`}
-                          style={{
-                            flex: 1,
-                            borderRadius: 12,
-                            border: "1px solid rgba(0,0,0,0.08)",
-                            background: "rgba(0,0,0,0.02)",
-                            padding: "8px 12px",
-                            fontSize: 12.5,
-                            color: "var(--neutral-600)",
-                            outline: "none",
-                          }}
-                          onClick={(e) => (e.target as HTMLInputElement).select()}
-                        />
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/schedule/${app.id}`);
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                          }}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                            padding: "8px 12px",
-                            borderRadius: 12,
-                            border: "1px solid rgba(0,0,0,0.08)",
-                            background: copied ? "rgba(30,142,62,0.06)" : "#ffffff",
-                            color: copied ? "#1e8e3e" : "var(--neutral-700)",
-                            fontSize: 12,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                          }}
-                        >
-                          {copied ? <Check style={{ width: 14, height: 14 }} /> : <Copy style={{ width: 14, height: 14 }} />}
-                          {copied ? "Copied!" : "Copy"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                      <a
-                        href={getMailtoUrl(app.name, "Job Application", `${window.location.origin}/schedule/${app.id}`)}
-                        style={{
-                          flex: 1,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 6,
-                          padding: "10px",
-                          borderRadius: 12,
-                          border: "1px solid rgba(26,115,232,0.15)",
-                          background: "rgba(26,115,232,0.04)",
-                          color: "var(--google-blue)",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          textDecoration: "none",
-                          cursor: "pointer",
-                          textAlign: "center"
-                        }}
-                      >
-                        <Mail style={{ width: 14, height: 14 }} /> Email Candidate
-                      </a>
-                      <button
-                        onClick={handleCancelSchedule}
-                        style={{
-                          padding: "10px 14px",
-                          borderRadius: 12,
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          background: "#ffffff",
-                          color: "var(--google-red)",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Cancel Scheduler
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }
@@ -822,6 +502,90 @@ export default function JobScreeningPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  const [schedulingApp, setSchedulingApp] = useState<Application | null>(null);
+  const [proposedSlots, setProposedSlots] = useState<string[]>([""]);
+  const [copied, setCopied] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+
+  function formatDateTime(str: string) {
+    try {
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      }
+    } catch {}
+    return str;
+  }
+
+  function getMailtoUrl(appName: string, jobTitle: string, link: string, email: string) {
+    const subject = encodeURIComponent(`Interview Scheduling - ${jobTitle}`);
+    const body = encodeURIComponent(
+      `Hi ${appName},\n\n` +
+      `Thank you for applying for the ${jobTitle} position.\n\n` +
+      `We would like to schedule an interview with you. Please click the link below to view our proposed time slots and confirm a time that works best for you:\n\n` +
+      `${link}\n\n` +
+      `We look forward to speaking with you!\n\n` +
+      `Best regards,\n` +
+      `Recruitment Team`
+    );
+    return `mailto:${email}?subject=${subject}&body=${body}`;
+  }
+
+  async function handleSaveSchedule() {
+    if (!schedulingApp) return;
+    const slots = proposedSlots.filter(s => s.trim() !== "");
+    if (slots.length === 0) {
+      alert("Please add at least one date/time slot.");
+      return;
+    }
+    setSavingSchedule(true);
+    
+    const parsed = parseNotes(schedulingApp.notes);
+    const updatedInterview: InterviewData = {
+      proposed_slots: slots,
+      selected_slot: parsed.interview?.selected_slot || null,
+      status: parsed.interview?.status || "pending"
+    };
+
+    const updatedNotes = JSON.stringify({ comments: parsed.comments, interview: updatedInterview });
+    const { error } = await supabase
+      .from("applications")
+      .update({ notes: updatedNotes })
+      .eq("id", schedulingApp.id);
+
+    if (!error) {
+      setApplications(prev => prev.map(a => a.id === schedulingApp.id ? { ...a, notes: updatedNotes } : a));
+      setSchedulingApp(prev => prev ? { ...prev, notes: updatedNotes } : null);
+      setProposedSlots(slots);
+      alert("Scheduling link generated successfully!");
+    } else {
+      alert("Failed to save scheduling settings: " + error.message);
+    }
+    setSavingSchedule(false);
+  }
+
+  async function handleCancelSchedule() {
+    if (!schedulingApp) return;
+    if (!confirm("Are you sure you want to cancel and delete the interview setup?")) return;
+    setSavingSchedule(true);
+    
+    const parsed = parseNotes(schedulingApp.notes);
+    const updatedNotes = JSON.stringify({ comments: parsed.comments, interview: null });
+    const { error } = await supabase
+      .from("applications")
+      .update({ notes: updatedNotes })
+      .eq("id", schedulingApp.id);
+
+    if (!error) {
+      setApplications(prev => prev.map(a => a.id === schedulingApp.id ? { ...a, notes: updatedNotes } : a));
+      setSchedulingApp(null);
+      setProposedSlots([""]);
+    } else {
+      alert("Failed to cancel schedule: " + error.message);
+    }
+    setSavingSchedule(false);
+  }
 
   /* Auth check */
   useEffect(() => {
@@ -1051,6 +815,11 @@ export default function JobScreeningPage() {
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
                 onOpenCV={url => { setSelectedCV(url); setCvOpen(true); }}
+                onSetUpInterview={targetApp => {
+                  setSchedulingApp(targetApp);
+                  const parsed = parseNotes(targetApp.notes);
+                  setProposedSlots(parsed.interview?.proposed_slots || [""]);
+                }}
               />
             ))}
           </div>
@@ -1121,6 +890,268 @@ export default function JobScreeningPage() {
                   style={{ width: "100%", height: "100%", borderRadius: 16, border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff" }}
                   title="Resume Sandbox"
                 />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Interview Scheduling Settings Modal */}
+      <AnimatePresence>
+        {schedulingApp && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.25)", backdropFilter: "blur(8px)" }}
+              onClick={() => setSchedulingApp(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              style={{
+                position: "relative",
+                width: "100%",
+                maxWidth: 540,
+                maxHeight: "90vh",
+                borderRadius: 24,
+                background: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.08)",
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
+                padding: "24px",
+                zIndex: 101
+              }}
+            >
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(26,115,232,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Calendar style={{ width: 18, height: 18, color: "var(--google-blue)" }} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>Interview Scheduler</h3>
+                    <p style={{ fontSize: 12, color: "var(--neutral-500)", margin: 0 }}>Propose dates for {schedulingApp.name}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSchedulingApp(null)}
+                  style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex", padding: 4 }}
+                >
+                  <X style={{ width: 18, height: 18 }} />
+                </button>
+              </div>
+
+              {/* Status Display if confirmed */}
+              {parseNotes(schedulingApp.notes).interview && parseNotes(schedulingApp.notes).interview?.status === "scheduled" && (
+                <div style={{
+                  padding: "12px 16px",
+                  borderRadius: 16,
+                  background: "rgba(30,142,62,0.06)",
+                  border: "1px solid rgba(30,142,62,0.12)",
+                  color: "#1e8e3e",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  marginBottom: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                }}>
+                  <CheckCircle2 style={{ width: 16, height: 16 }} />
+                  <span>
+                    <strong>Confirmed Slot:</strong> {formatDateTime(parseNotes(schedulingApp.notes).interview?.selected_slot!)}
+                  </span>
+                </div>
+              )}
+
+              {/* Propose Slots List */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "var(--neutral-700)", marginBottom: 8 }}>
+                  Proposed Date & Time Slots
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {proposedSlots.map((slot, idx) => (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="datetime-local"
+                        value={slot}
+                        onChange={(e) => {
+                          const updated = [...proposedSlots];
+                          updated[idx] = e.target.value;
+                          setProposedSlots(updated);
+                        }}
+                        style={{
+                          flex: 1,
+                          borderRadius: 12,
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          background: "#ffffff",
+                          padding: "10px 14px",
+                          fontSize: 13,
+                          color: "var(--neutral-900)",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const updated = proposedSlots.filter((_, i) => i !== idx);
+                          setProposedSlots(updated.length === 0 ? [""] : updated);
+                        }}
+                        style={{
+                          padding: "10px",
+                          borderRadius: 12,
+                          border: "1px solid rgba(217,48,37,0.12)",
+                          background: "rgba(217,48,37,0.04)",
+                          color: "var(--google-red)",
+                          cursor: "pointer",
+                          display: "inline-flex"
+                        }}
+                        title="Remove slot"
+                      >
+                        <Trash2 style={{ width: 14, height: 14 }} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setProposedSlots([...proposedSlots, ""])}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginTop: 10,
+                    padding: "6px 12px",
+                    borderRadius: 10,
+                    border: "1px dashed rgba(26,115,232,0.3)",
+                    background: "rgba(26,115,232,0.02)",
+                    color: "var(--google-blue)",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Plus style={{ width: 14, height: 14 }} /> Add Option
+                </button>
+              </div>
+
+              {/* Action and Generated Link */}
+              <div style={{ borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+                <button
+                  disabled={savingSchedule}
+                  onClick={handleSaveSchedule}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: 14,
+                    fontWeight: 600,
+                    fontSize: 13.5,
+                    cursor: "pointer",
+                    border: "none",
+                    color: "#ffffff",
+                    background: "var(--google-blue, #1a73e8)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  {savingSchedule ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <Sparkles style={{ width: 16, height: 16 }} />}
+                  {parseNotes(schedulingApp.notes).interview ? "Update & Save Slots" : "Generate Scheduling Link"}
+                </button>
+
+                {parseNotes(schedulingApp.notes).interview && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <label style={{ fontSize: 11.5, fontWeight: 600, color: "var(--neutral-500)" }}>Scheduling Link</label>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <input
+                          type="text"
+                          readOnly
+                          value={`${window.location.origin}/schedule/${schedulingApp.id}`}
+                          style={{
+                            flex: 1,
+                            borderRadius: 12,
+                            border: "1px solid rgba(0,0,0,0.08)",
+                            background: "rgba(0,0,0,0.02)",
+                            padding: "8px 12px",
+                            fontSize: 12.5,
+                            color: "var(--neutral-600)",
+                            outline: "none",
+                          }}
+                          onClick={(e) => (e.target as HTMLInputElement).select()}
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/schedule/${schedulingApp.id}`);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            padding: "8px 12px",
+                            borderRadius: 12,
+                            border: "1px solid rgba(0,0,0,0.08)",
+                            background: copied ? "rgba(30,142,62,0.06)" : "#ffffff",
+                            color: copied ? "#1e8e3e" : "var(--neutral-700)",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {copied ? <Check style={{ width: 14, height: 14 }} /> : <Copy style={{ width: 14, height: 14 }} />}
+                          {copied ? "Copied!" : "Copy"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <a
+                        href={getMailtoUrl(schedulingApp.name, job?.title || "Job Application", `${window.location.origin}/schedule/${schedulingApp.id}`, schedulingApp.email)}
+                        style={{
+                          flex: 1,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          padding: "10px",
+                          borderRadius: 12,
+                          border: "1px solid rgba(26,115,232,0.15)",
+                          background: "rgba(26,115,232,0.04)",
+                          color: "var(--google-blue)",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          textDecoration: "none",
+                          cursor: "pointer",
+                          textAlign: "center"
+                        }}
+                      >
+                        <Mail style={{ width: 14, height: 14 }} /> Email Candidate
+                      </a>
+                      <button
+                        onClick={handleCancelSchedule}
+                        style={{
+                          padding: "10px 14px",
+                          borderRadius: 12,
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          background: "#ffffff",
+                          color: "var(--google-red)",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cancel Scheduler
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
