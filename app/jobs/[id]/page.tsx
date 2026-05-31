@@ -631,8 +631,27 @@ export default function JobDetailsPage() {
                       </div>
 
                       {authError && (
-                        <div className="text-[12.5px] font-semibold text-[#d93025] bg-[#d93025]/5 border border-[#d93025]/15 rounded-lg px-4 py-2.5 text-center">
-                          {authError}
+                        <div className="text-[12.5px] font-semibold text-[#d93025] bg-[#d93025]/5 border border-[#d93025]/15 rounded-lg px-4 py-3 text-center w-full">
+                          {authError.toLowerCase().includes("rate limit") ? (
+                            <div className="text-left flex flex-col gap-2">
+                              <p className="font-bold flex items-center gap-1.5"><span className="text-[14px]">⚠️</span> Email Rate Limit Exceeded</p>
+                              <p className="text-[12px] text-[#121317]/80 leading-relaxed font-medium">
+                                Supabase's default mailer restricts email auth requests to **3 emails per hour** to prevent abuse.
+                              </p>
+                              <div className="mt-1.5 p-3.5 rounded-xl bg-[rgba(26,56,179,0.06)] border border-[#1a3bbd]/15 flex flex-col gap-1.5 text-[11.5px] text-[#1a3bbd] font-semibold">
+                                <p className="font-bold text-[12px]">🛠️ How to resolve permanently:</p>
+                                <p className="text-[#121317]/70 font-medium">
+                                  Go to your <strong>Supabase Dashboard</strong> &rarr; <strong>Project Settings</strong> &rarr; <strong>Auth</strong>, and configure your own custom SMTP credentials (e.g. via Resend or SendGrid) to lift all limits.
+                                </p>
+                                <p className="mt-1 font-bold text-[12px]">⚡ To continue testing right now:</p>
+                                <p className="text-[#121317]/70 font-medium">
+                                  Use the <strong>"Continue with Google"</strong> button above, which bypasses SMTP mailer limits entirely!
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            authError
+                          )}
                         </div>
                       )}
                       {authSuccessMsg && (
