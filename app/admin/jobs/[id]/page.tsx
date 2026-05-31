@@ -8,6 +8,7 @@ import {
   ArrowLeft, FileText, MapPin, Briefcase, ExternalLink, X,
   MessageSquare, Send, Users, ChevronRight, Loader2, Trash2,
   CheckCircle2, Clock, Eye, UserX, Search, Database, Sparkles,
+  Calendar, Mail, Plus, Copy, Check,
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
@@ -25,14 +26,39 @@ interface Comment {
   id: string; text: string; created_at: string; author: string;
 }
 
-/* ─── Helpers ─── */
-function parseComments(raw: string | null | undefined): Comment[] {
-  if (!raw) return [];
+interface InterviewData {
+  proposed_slots: string[];
+  selected_slot: string | null;
+  status: "pending" | "scheduled";
+}
+
+interface NotesData {
+  comments: Comment[];
+  interview: InterviewData | null;
+}
+
+function parseNotes(raw: string | null | undefined): NotesData {
+  if (!raw) return { comments: [], interview: null };
   try {
     const p = JSON.parse(raw);
-    if (Array.isArray(p)) return p;
-  } catch { /* legacy plain text */ }
-  return [{ id: "legacy", text: raw, created_at: new Date().toISOString(), author: "Admin" }];
+    if (Array.isArray(p)) {
+      return { comments: p, interview: null };
+    }
+    if (p && typeof p === "object") {
+      return {
+        comments: Array.isArray(p.comments) ? p.comments : [],
+        interview: p.interview || null
+      };
+    }
+  } catch { /* legacy */ }
+  return {
+    comments: [{ id: "legacy", text: raw, created_at: new Date().toISOString(), author: "Admin" }],
+    interview: null
+  };
+}
+
+function parseComments(raw: string | null | undefined): Comment[] {
+  return parseNotes(raw).comments;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
@@ -107,11 +133,88 @@ function ApplicantCard({
   onOpenCV: (url: string) => void;
 }) {
   const [commentInput, setCommentInput] = useState("");
-  const [comments, setComments] = useState<Comment[]>(() => parseComments(app.notes));
+  const notesData = parseNotes(app.notes);
+  const [comments, setComments] = useState<Comment[]>(notesData.comments);
+  const [interview, setInterview] = useState<InterviewData | null>(notesData.interview);
   const [posting, setPosting] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [moving, setMoving] = useState(false);
   const [moved, setMoved] = useState(false);
+
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [proposedSlots, setProposedSlots] = useState<string[]>(notesData.interview?.proposed_slots || [""]);
+  const [copied, setCopied] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+
+  function formatDateTime(str: string) {
+    try {
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      }
+    } catch {}
+    return str;
+  }
+
+  function getMailtoUrl(appName: string, jobTitle: string, link: string) {
+    const subject = encodeURIComponent(`Interview Scheduling - ${jobTitle}`);
+    const body = encodeURIComponent(
+      `Hi ${appName},\n\n` +
+      `Thank you for applying for the ${jobTitle} position.\n\n` +
+      `We would like to schedule an interview with you. Please click the link below to view our proposed time slots and confirm a time that works best for you:\n\n` +
+      `${link}\n\n` +
+      `We look forward to speaking with you!\n\n` +
+      `Best regards,\n` +
+      `Recruitment Team`
+    );
+    return `mailto:${app.email}?subject=${subject}&body=${body}`;
+  }
+
+  async function handleSaveSchedule() {
+    const slots = proposedSlots.filter(s => s.trim() !== "");
+    if (slots.length === 0) {
+      alert("Please add at least one date/time slot.");
+      return;
+    }
+    setSavingSchedule(true);
+    const updatedInterview: InterviewData = {
+      proposed_slots: slots,
+      selected_slot: interview?.selected_slot || null,
+      status: interview?.status || "pending"
+    };
+
+    const { error } = await supabase
+      .from("applications")
+      .update({ notes: JSON.stringify({ comments, interview: updatedInterview }) })
+      .eq("id", app.id);
+
+    if (!error) {
+      setInterview(updatedInterview);
+      setProposedSlots(slots);
+      alert("Scheduling link generated successfully!");
+    } else {
+      alert("Failed to save scheduling settings: " + error.message);
+    }
+    setSavingSchedule(false);
+  }
+
+  async function handleCancelSchedule() {
+    if (!confirm("Are you sure you want to cancel and delete the interview setup?")) return;
+    setSavingSchedule(true);
+    const { error } = await supabase
+      .from("applications")
+      .update({ notes: JSON.stringify({ comments, interview: null }) })
+      .eq("id", app.id);
+
+    if (!error) {
+      setInterview(null);
+      setProposedSlots([""]);
+      setShowSchedule(false);
+    } else {
+      alert("Failed to cancel schedule: " + error.message);
+    }
+    setSavingSchedule(false);
+  }
 
   async function handleMoveToDatabase() {
     if (moved) return;
@@ -152,7 +255,7 @@ function ApplicantCard({
     const updated = [...comments, newComment];
     const { error } = await supabase
       .from("applications")
-      .update({ notes: JSON.stringify(updated) })
+      .update({ notes: JSON.stringify({ comments: updated, interview }) })
       .eq("id", app.id);
     if (!error) { setComments(updated); setCommentInput(""); }
     setPosting(false);
@@ -163,7 +266,7 @@ function ApplicantCard({
     const updated = comments.filter(c => c.id !== cid);
     const { error } = await supabase
       .from("applications")
-      .update({ notes: JSON.stringify(updated) })
+      .update({ notes: JSON.stringify({ comments: updated, interview }) })
       .eq("id", app.id);
     if (!error) setComments(updated);
   }
@@ -187,6 +290,34 @@ function ApplicantCard({
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
             <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>{app.name}</h3>
             <StatusBadge status={app.status} />
+            {interview && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "4px 10px",
+                  borderRadius: 10,
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: interview.status === "scheduled" ? "#1e8e3e" : "#1a73e8",
+                  backgroundColor: interview.status === "scheduled" ? "rgba(30, 142, 62, 0.06)" : "rgba(26, 115, 232, 0.06)",
+                  border: interview.status === "scheduled" ? "1px solid rgba(30, 142, 62, 0.12)" : "1px solid rgba(26, 115, 232, 0.12)",
+                }}
+              >
+                {interview.status === "scheduled" ? (
+                  <>
+                    <CheckCircle2 style={{ width: 13, height: 13 }} />
+                    <span>📅 Confirmed: {formatDateTime(interview.selected_slot!)}</span>
+                  </>
+                ) : (
+                  <>
+                    <Clock style={{ width: 13, height: 13 }} />
+                    <span>⏳ Awaiting Candidate Slot Confirmation</span>
+                  </>
+                )}
+              </span>
+            )}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, fontSize: 12.5, color: "var(--neutral-500)", fontWeight: 500 }}>
             <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FileText style={{ width: 13, height: 13, color: "var(--neutral-400)" }} />{app.email}</span>
@@ -238,6 +369,32 @@ function ApplicantCard({
             onMouseLeave={(e) => e.currentTarget.style.background = "#ffffff"}
           >
             <Eye style={{ width: 14, height: 14 }} /> View Resume
+          </button>
+          <button
+            onClick={() => setShowSchedule(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              borderRadius: 12,
+              border: interview ? "1px solid rgba(26,115,232,0.2)" : "1px solid rgba(0, 0, 0, 0.08)",
+              background: interview ? "rgba(26,115,232,0.04)" : "#ffffff",
+              color: interview ? "var(--google-blue)" : "var(--neutral-700)",
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.2s"
+            }}
+            onMouseEnter={(e) => {
+              if (!interview) e.currentTarget.style.background = "var(--neutral-50)";
+            }}
+            onMouseLeave={(e) => {
+              if (!interview) e.currentTarget.style.background = "#ffffff";
+            }}
+          >
+            <Calendar style={{ width: 14, height: 14 }} />
+            {interview ? "Interview Settings" : "Set Up Interview"}
           </button>
           <button
             disabled={moving || moved}
@@ -381,6 +538,268 @@ function ApplicantCard({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Interview Scheduling Settings Modal */}
+      <AnimatePresence>
+        {showSchedule && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.25)", backdropFilter: "blur(8px)" }}
+              onClick={() => setShowSchedule(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              style={{
+                position: "relative",
+                width: "100%",
+                maxWidth: 540,
+                maxHeight: "90vh",
+                borderRadius: 24,
+                background: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.08)",
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
+                padding: "24px",
+                zIndex: 101
+              }}
+            >
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(26,115,232,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Calendar style={{ width: 18, height: 18, color: "var(--google-blue)" }} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>Interview Scheduler</h3>
+                    <p style={{ fontSize: 12, color: "var(--neutral-500)", margin: 0 }}>Propose dates for {app.name}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSchedule(false)}
+                  style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex", padding: 4 }}
+                >
+                  <X style={{ width: 18, height: 18 }} />
+                </button>
+              </div>
+
+              {/* Status Display if confirmed */}
+              {interview && interview.status === "scheduled" && (
+                <div style={{
+                  padding: "12px 16px",
+                  borderRadius: 16,
+                  background: "rgba(30,142,62,0.06)",
+                  border: "1px solid rgba(30,142,62,0.12)",
+                  color: "#1e8e3e",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  marginBottom: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                }}>
+                  <CheckCircle2 style={{ width: 16, height: 16 }} />
+                  <span>
+                    <strong>Confirmed Slot:</strong> {formatDateTime(interview.selected_slot!)}
+                  </span>
+                </div>
+              )}
+
+              {/* Propose Slots List */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "var(--neutral-700)", marginBottom: 8 }}>
+                  Proposed Date & Time Slots
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {proposedSlots.map((slot, idx) => (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="datetime-local"
+                        value={slot}
+                        onChange={(e) => {
+                          const updated = [...proposedSlots];
+                          updated[idx] = e.target.value;
+                          setProposedSlots(updated);
+                        }}
+                        style={{
+                          flex: 1,
+                          borderRadius: 12,
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          background: "#ffffff",
+                          padding: "10px 14px",
+                          fontSize: 13,
+                          color: "var(--neutral-900)",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const updated = proposedSlots.filter((_, i) => i !== idx);
+                          setProposedSlots(updated.length === 0 ? [""] : updated);
+                        }}
+                        style={{
+                          padding: "10px",
+                          borderRadius: 12,
+                          border: "1px solid rgba(217,48,37,0.12)",
+                          background: "rgba(217,48,37,0.04)",
+                          color: "var(--google-red)",
+                          cursor: "pointer",
+                          display: "inline-flex"
+                        }}
+                        title="Remove slot"
+                      >
+                        <Trash2 style={{ width: 14, height: 14 }} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setProposedSlots([...proposedSlots, ""])}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginTop: 10,
+                    padding: "6px 12px",
+                    borderRadius: 10,
+                    border: "1px dashed rgba(26,115,232,0.3)",
+                    background: "rgba(26,115,232,0.02)",
+                    color: "var(--google-blue)",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Plus style={{ width: 14, height: 14 }} /> Add Option
+                </button>
+              </div>
+
+              {/* Action and Generated Link */}
+              <div style={{ borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+                <button
+                  disabled={savingSchedule}
+                  onClick={handleSaveSchedule}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: 14,
+                    fontWeight: 600,
+                    fontSize: 13.5,
+                    cursor: "pointer",
+                    border: "none",
+                    color: "#ffffff",
+                    background: "var(--google-blue, #1a73e8)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  {savingSchedule ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <Sparkles style={{ width: 16, height: 16 }} />}
+                  {interview ? "Update & Save Slots" : "Generate Scheduling Link"}
+                </button>
+
+                {interview && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <label style={{ fontSize: 11.5, fontWeight: 600, color: "var(--neutral-500)" }}>Scheduling Link</label>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <input
+                          type="text"
+                          readOnly
+                          value={`${window.location.origin}/schedule/${app.id}`}
+                          style={{
+                            flex: 1,
+                            borderRadius: 12,
+                            border: "1px solid rgba(0,0,0,0.08)",
+                            background: "rgba(0,0,0,0.02)",
+                            padding: "8px 12px",
+                            fontSize: 12.5,
+                            color: "var(--neutral-600)",
+                            outline: "none",
+                          }}
+                          onClick={(e) => (e.target as HTMLInputElement).select()}
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/schedule/${app.id}`);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            padding: "8px 12px",
+                            borderRadius: 12,
+                            border: "1px solid rgba(0,0,0,0.08)",
+                            background: copied ? "rgba(30,142,62,0.06)" : "#ffffff",
+                            color: copied ? "#1e8e3e" : "var(--neutral-700)",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {copied ? <Check style={{ width: 14, height: 14 }} /> : <Copy style={{ width: 14, height: 14 }} />}
+                          {copied ? "Copied!" : "Copy"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <a
+                        href={getMailtoUrl(app.name, "Job Application", `${window.location.origin}/schedule/${app.id}`)}
+                        style={{
+                          flex: 1,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          padding: "10px",
+                          borderRadius: 12,
+                          border: "1px solid rgba(26,115,232,0.15)",
+                          background: "rgba(26,115,232,0.04)",
+                          color: "var(--google-blue)",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          textDecoration: "none",
+                          cursor: "pointer",
+                          textAlign: "center"
+                        }}
+                      >
+                        <Mail style={{ width: 14, height: 14 }} /> Email Candidate
+                      </a>
+                      <button
+                        onClick={handleCancelSchedule}
+                        style={{
+                          padding: "10px 14px",
+                          borderRadius: 12,
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          background: "#ffffff",
+                          color: "var(--google-red)",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cancel Scheduler
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

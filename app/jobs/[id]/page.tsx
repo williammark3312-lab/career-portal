@@ -6,10 +6,7 @@ import { motion } from "framer-motion";
 import { supabase } from "../../../src/lib/supabase";
 import { Canvas } from "@react-three/fiber";
 import { Float, Environment, MeshTransmissionMaterial } from "@react-three/drei";
-import {
-  ArrowLeft, CheckCircle2, Upload, Briefcase, MapPin, Download,
-  Mail, Lock, ShieldCheck, Send, RefreshCw, Key, LogOut
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, Upload, Briefcase, MapPin, Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import Header from "../../../src/components/Header";
@@ -109,131 +106,7 @@ export default function JobDetailsPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const [candidate, setCandidate]   = useState<any>(null);
-  const [otpSent, setOtpSent]       = useState(false);
-  const [otpCode, setOtpCode]       = useState("");
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [authError, setAuthError]   = useState("");
-  const [authSuccessMsg, setAuthSuccessMsg] = useState("");
-
-  useEffect(() => {
-    fetchJob();
-    
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setCandidate(session.user);
-        setEmail(session.user.email || "");
-        if (session.user.user_metadata?.full_name) {
-          setName(session.user.user_metadata.full_name);
-        }
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setCandidate(session.user);
-        setEmail(session.user.email || "");
-        if (session.user.user_metadata?.full_name) {
-          setName(session.user.user_metadata.full_name);
-        }
-        setAuthError("");
-        setAuthSuccessMsg("");
-      } else {
-        setCandidate(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function handleGoogleSignIn() {
-    setAuthError("");
-    setAuthSuccessMsg("");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.href,
-      },
-    });
-    if (error) {
-      setAuthError(error.message);
-    }
-  }
-
-  async function handleSendOTP() {
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      setAuthError("Please enter a valid email address.");
-      return;
-    }
-    try {
-      setOtpLoading(true);
-      setAuthError("");
-      setAuthSuccessMsg("");
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: window.location.href,
-        },
-      });
-      if (error) {
-        setAuthError(error.message);
-      } else {
-        setOtpSent(true);
-        setAuthSuccessMsg(`Code sent! Please check your email inbox / spam.`);
-      }
-    } catch {
-      setAuthError("Failed to send OTP. Please try again.");
-    } finally {
-      setOtpLoading(false);
-    }
-  }
-
-  async function handleVerifyOTP() {
-    if (!otpCode || otpCode.length !== 6) {
-      setAuthError("Please enter a valid 6-digit code.");
-      return;
-    }
-    try {
-      setOtpLoading(true);
-      setAuthError("");
-      setAuthSuccessMsg("");
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: otpCode,
-        type: "email",
-      });
-      if (error) {
-        setAuthError(error.message);
-      } else {
-        setOtpSent(false);
-        setOtpCode("");
-        setAuthSuccessMsg("Email successfully verified!");
-        if (data.session) {
-          setCandidate(data.session.user);
-          setEmail(data.session.user.email || "");
-          if (data.session.user.user_metadata?.full_name) {
-            setName(data.session.user.user_metadata.full_name);
-          }
-        }
-      }
-    } catch {
-      setAuthError("Failed to verify code. Please try again.");
-    } finally {
-      setOtpLoading(false);
-    }
-  }
-
-  async function handleCandidateSignOut() {
-    await supabase.auth.signOut();
-    setCandidate(null);
-    setEmail("");
-    setName("");
-    setOtpSent(false);
-    setOtpCode("");
-    setAuthError("");
-    setAuthSuccessMsg("");
-  }
+  useEffect(() => { fetchJob(); }, []);
 
   async function fetchJob() {
     const { data } = await supabase.from("jobs").select("*").eq("id", id).single();
@@ -481,270 +354,83 @@ export default function JobDetailsPage() {
                 </div>
 
                 <div className="space-y-5">
-                  {candidate && (
-                    <div className="rounded-[16px] border border-[#1e8e3e]/30 bg-[#1e8e3e]/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#1e8e3e]/10 border border-[#1e8e3e]/20 flex items-center justify-center flex-shrink-0">
-                          <ShieldCheck className="w-5.5 h-5.5 text-[#1e8e3e]" />
-                        </div>
-                        <div>
-                          <h4 className="text-[14.5px] font-semibold text-[#121317]">Email Verified Successfully</h4>
-                          <p className="text-[12.5px] text-[#121317]/70 font-medium">Signed in as <strong className="text-[#1a3bbd]">{candidate.email}</strong></p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleCandidateSignOut}
-                        className="text-[13px] font-semibold text-[#d93025] hover:text-[#b02015] flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-[#d93025]/5 transition-colors self-start sm:self-auto"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Use different email
-                      </button>
-                    </div>
-                  )}
+                  <div>
+                    <label className="form-label">Full Name <span className="text-red-500">*</span></label>
+                    <input
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="Jane Doe"
+                      className="form-input"
+                    />
+                    {errors.name && <p className="mt-1.5 text-[12px] text-red-500">{errors.name}</p>}
+                  </div>
 
-                  {!candidate ? (
-                    <div className="rounded-[20px] border border-[#1a3bbd]/15 bg-[rgba(26,56,179,0.03)] backdrop-blur-md p-6 sm:p-8 flex flex-col gap-6 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-48 h-48 bg-[#3279F9]/10 rounded-full blur-[80px] -z-10" />
+                  <div>
+                    <label className="form-label">Email Address <span className="text-red-500">*</span></label>
+                    <input
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      type="email"
+                      placeholder="jane@example.com"
+                      className="form-input"
+                    />
+                    {errors.email && <p className="mt-1.5 text-[12px] text-red-500">{errors.email}</p>}
+                  </div>
 
-                      <div className="flex flex-col gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold text-[#1a3bbd] bg-[#1a3bbd]/8 self-start">
-                          <Lock className="w-3.5 h-3.5" /> Verification Required
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
+                      <div className="flex">
+                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[#CDD4DC] bg-[#F8F9FC] text-[15px] font-medium text-[#121317] select-none whitespace-nowrap">
+                          +91
                         </span>
-                        <h3 className="text-[18px] sm:text-[20px] font-bold text-[#121317] tracking-tight">Verify your email to continue</h3>
-                        <p className="text-[13.5px] text-[#121317]/80 leading-relaxed font-medium">
-                          To protect against spam and secure your candidate record, please authenticate using Google or verify your email address.
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleGoogleSignIn}
-                        className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-full bg-white hover:bg-[#F8F9FC] border border-[#CDD4DC] shadow-[0_2px_4px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-300 font-semibold text-[14.5px] text-[#121317]"
-                      >
-                        <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none">
-                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-                        </svg>
-                        Continue with Google
-                      </button>
-                      <p className="text-[11px] text-[#121317]/50 -mt-3.5 font-medium text-center leading-normal">
-                        Note: Google login requires provider configuration in your Supabase Dashboard.
-                      </p>
-
-                      <div className="flex items-center gap-4 text-[#CDD4DC]">
-                        <div className="h-[1px] flex-1 bg-[#CDD4DC]" />
-                        <span className="text-[12px] font-bold text-[#121317]/50 tracking-wider uppercase select-none">or</span>
-                        <div className="h-[1px] flex-1 bg-[#CDD4DC]" />
-                      </div>
-
-                      <div className="flex flex-col gap-4">
-                        {!otpSent ? (
-                          <div className="flex flex-col gap-3">
-                            <label className="text-[13px] font-bold text-[#121317]/80 uppercase tracking-wider">Email OTP Verification</label>
-                            <div className="flex flex-col sm:flex-row gap-2.5">
-                              <div className="relative flex-1">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#121317]/40" />
-                                <input
-                                  type="email"
-                                  value={email}
-                                  onChange={e => setEmail(e.target.value)}
-                                  placeholder="candidate@gmail.com"
-                                  className="form-input py-3 w-full font-medium"
-                                  style={{ paddingLeft: "44px" }}
-                                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleSendOTP(); } }}
-                                />
-                              </div>
-                              <button
-                                type="button"
-                                disabled={otpLoading}
-                                onClick={handleSendOTP}
-                                className="btn-dark sm:w-auto w-full px-6 py-3 font-semibold text-[14px] flex items-center justify-center gap-2 disabled:opacity-60"
-                              >
-                                {otpLoading ? (
-                                  <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <>
-                                    <Send className="w-4 h-4" />
-                                    Send Code
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col gap-3.5 bg-white/50 border border-[#CDD4DC]/60 rounded-xl p-4 sm:p-5">
-                            <label className="text-[13px] font-bold text-[#121317]/80 uppercase tracking-wider flex items-center gap-1.5">
-                              <Key className="w-4 h-4 text-[#1a3bbd]" /> Enter Verification Code
-                            </label>
-                            <p className="text-[12.5px] text-[#121317]/70 font-medium">
-                              We sent a 6-digit OTP code to <strong className="text-[#1a3bbd]">{email}</strong>.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-2.5">
-                              <input
-                                type="text"
-                                maxLength={6}
-                                value={otpCode}
-                                onChange={e => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                                placeholder="123456"
-                                className="form-input tracking-[0.3em] font-mono text-center text-[18px] py-2 w-full flex-1 font-semibold"
-                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleVerifyOTP(); } }}
-                              />
-                              <button
-                                type="button"
-                                disabled={otpLoading}
-                                onClick={handleVerifyOTP}
-                                className="btn-primary sm:w-auto w-full px-6 py-2.5 font-semibold text-[14px] flex items-center justify-center gap-2 disabled:opacity-60"
-                              >
-                                {otpLoading ? (
-                                  <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : "Verify Code"}
-                              </button>
-                            </div>
-                            <div className="flex items-center justify-between text-[12.5px] font-semibold mt-1">
-                              <button
-                                type="button"
-                                onClick={handleSendOTP}
-                                className="text-[#1a3bbd] hover:text-[#3279F9] transition-colors"
-                              >
-                                Resend Code
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setOtpSent(false); setAuthError(""); setAuthSuccessMsg(""); }}
-                                className="text-[#d93025] hover:text-[#b02015] transition-colors"
-                              >
-                                Change Email
-                              </button>
-                            </div>
-
-                            <div className="mt-4 p-3.5 rounded-xl bg-[rgba(26,56,179,0.06)] border border-[#1a3bbd]/15 flex items-start gap-2.5 text-left">
-                              <span className="text-[16px] leading-none">💡</span>
-                              <div className="flex-1">
-                                <p className="text-[12.5px] font-bold text-[#1a3bbd]">Received a "Sign in" link instead of a 6-digit code?</p>
-                                <p className="text-[12px] text-[#121317]/80 mt-0.5 leading-relaxed font-semibold">
-                                  Simply **click the "Sign in" button inside your email** to instantly authenticate and automatically unlock this form!
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {authError && (
-                        <div className="text-[12.5px] font-semibold text-[#d93025] bg-[#d93025]/5 border border-[#d93025]/15 rounded-lg px-4 py-3 text-center w-full">
-                          {authError.toLowerCase().includes("rate limit") ? (
-                            <div className="text-left flex flex-col gap-2">
-                              <p className="font-bold flex items-center gap-1.5"><span className="text-[14px]">⚠️</span> Email Rate Limit Exceeded</p>
-                              <p className="text-[12px] text-[#121317]/80 leading-relaxed font-medium">
-                                Supabase's default mailer restricts email auth requests to **3 emails per hour** to prevent abuse.
-                              </p>
-                              <div className="mt-1.5 p-3.5 rounded-xl bg-[rgba(26,56,179,0.06)] border border-[#1a3bbd]/15 flex flex-col gap-1.5 text-[11.5px] text-[#1a3bbd] font-semibold">
-                                <p className="font-bold text-[12px]">🛠️ How to resolve permanently:</p>
-                                <p className="text-[#121317]/70 font-medium">
-                                  Go to your <strong>Supabase Dashboard</strong> &rarr; <strong>Project Settings</strong> &rarr; <strong>Auth</strong>, and configure your own custom SMTP credentials (e.g. via Resend or SendGrid) to lift all limits.
-                                </p>
-                                <p className="mt-1 font-bold text-[12px]">⚡ To continue testing right now:</p>
-                                <p className="text-[#121317]/70 font-medium">
-                                  Use the <strong>"Continue with Google"</strong> button above, which bypasses SMTP mailer limits entirely!
-                                </p>
-                              </div>
-                            </div>
-                          ) : (
-                            authError
-                          )}
-                        </div>
-                      )}
-                      {authSuccessMsg && (
-                        <div className="text-[12.5px] font-semibold text-[#1e8e3e] bg-[#1e8e3e]/5 border border-[#1e8e3e]/15 rounded-lg px-4 py-2.5 text-center">
-                          {authSuccessMsg}
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-
-                  {candidate && (
-                    <div className="space-y-5 transition-all duration-500 relative">
-                      <div>
-                        <label className="form-label">Full Name <span className="text-red-500">*</span></label>
                         <input
-                          value={name}
-                          onChange={e => setName(e.target.value)}
-                          placeholder="Jane Doe"
-                          className="form-input"
-                        />
-                        {errors.name && <p className="mt-1.5 text-[12px] text-red-500">{errors.name}</p>}
-                      </div>
-
-                      <div>
-                        <label className="form-label">Email Address <span className="text-red-500">*</span></label>
-                        <input
-                          value={email}
-                          type="email"
-                          disabled
-                          placeholder="jane@example.com"
-                          className="form-input bg-[#F8F9FC] text-[#121317]/60 cursor-not-allowed border-[#CDD4DC]/60 font-semibold"
+                          value={phone}
+                          onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
+                          placeholder="98765 43210"
+                          maxLength={10}
+                          className="form-input rounded-l-none border-l-0"
                         />
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                          <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
-                          <div className="flex">
-                            <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[#CDD4DC] bg-[#F8F9FC] text-[15px] font-medium text-[#121317] select-none whitespace-nowrap">
-                              +91
-                            </span>
-                            <input
-                              value={phone}
-                              onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
-                              placeholder="98765 43210"
-                              maxLength={10}
-                              className="form-input rounded-l-none border-l-0"
-                            />
-                          </div>
-                          {errors.phone && <p className="mt-1.5 text-[12px] text-red-500">{errors.phone}</p>}
-                        </div>
-                        <div>
-                          <label className="form-label">City <span className="text-red-500">*</span></label>
-                          <input
-                            value={location}
-                            onChange={e => setLocation(e.target.value)}
-                            placeholder="e.g. Mumbai"
-                            className="form-input"
-                          />
-                          {errors.location && <p className="mt-1.5 text-[12px] text-red-500">{errors.location}</p>}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="form-label">Resume / CV <span className="text-red-500">*</span></label>
-                        <div className="relative rounded-[14px] border-2 border-dashed border-[#CDD4DC] bg-white/60 px-6 py-9 text-center hover:bg-white transition-colors cursor-pointer">
-                          <input
-                            type="file"
-                            accept=".pdf,.doc,.docx"
-                            onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          />
-                          <Upload className="mx-auto h-7 w-7 text-[#121317] mb-2" />
-                          <p className="text-[14px] font-medium text-[#121317]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
-                          <p className="text-[12px] text-[#121317] mt-1">PDF, DOC up to 5 MB</p>
-                        </div>
-                        {errors.resume && <p className="mt-1.5 text-[12px] text-red-500">{errors.resume}</p>}
-                      </div>
-
-                      <div className="pt-2">
-                        <button
-                          disabled={loading}
-                          onClick={handleSubmit}
-                          className="btn-dark w-full disabled:opacity-60"
-                        >
-                          {loading ? "Submitting…" : "Submit Application"}
-                        </button>
-                      </div>
+                      {errors.phone && <p className="mt-1.5 text-[12px] text-red-500">{errors.phone}</p>}
                     </div>
-                  )}
+                    <div>
+                      <label className="form-label">City <span className="text-red-500">*</span></label>
+                      <input
+                        value={location}
+                        onChange={e => setLocation(e.target.value)}
+                        placeholder="e.g. Mumbai"
+                        className="form-input"
+                      />
+                      {errors.location && <p className="mt-1.5 text-[12px] text-red-500">{errors.location}</p>}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="form-label">Resume / CV <span className="text-red-500">*</span></label>
+                    <div className="relative rounded-[14px] border-2 border-dashed border-[#CDD4DC] bg-white/60 px-6 py-9 text-center hover:bg-white transition-colors cursor-pointer">
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <Upload className="mx-auto h-7 w-7 text-[#121317] mb-2" />
+                      <p className="text-[14px] font-medium text-[#121317]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
+                      <p className="text-[12px] text-[#121317] mt-1">PDF, DOC up to 5 MB</p>
+                    </div>
+                    {errors.resume && <p className="mt-1.5 text-[12px] text-red-500">{errors.resume}</p>}
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      disabled={loading}
+                      onClick={handleSubmit}
+                      className="btn-dark w-full disabled:opacity-60"
+                    >
+                      {loading ? "Submitting…" : "Submit Application"}
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
