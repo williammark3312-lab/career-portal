@@ -712,7 +712,7 @@ export default function JobScreeningPage() {
               <span style={{ fontSize: 11, fontWeight: 600, color: "#1a73e8", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 10, display: "inline-block", marginBottom: 12 }}>
                 {job?.department ?? "Evaluation"}
               </span>
-              <h1 style={{ color: "#121317", fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15, fontFamily: '"Google Sans Display", "Google Sans", sans-serif', margin: 0 }}>
+              <h1 style={{ color: "#121317", fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15, fontFamily: "var(--font-sans), sans-serif", margin: 0 }}>
                 {job?.title ?? "Evaluation Dashboard"}
               </h1>
               <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13.5, color: "#5f6368", fontWeight: 500, marginTop: 6 }}>

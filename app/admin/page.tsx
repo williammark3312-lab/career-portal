@@ -646,7 +646,7 @@ export default function AdminPage() {
           <div style={{ display: "inline-flex", alignSelf: "flex-start", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--google-blue, #1a73e8)", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 12 }}>
             Control Console
           </div>
-          <h1 className="text-gradient" style={{ fontSize: "clamp(26px, 3.5vw, 38px)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.1, fontFamily: '"Google Sans Display", "Google Sans", sans-serif' }}>
+          <h1 className="text-gradient" style={{ fontSize: "clamp(26px, 3.5vw, 38px)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.1, fontFamily: "var(--font-sans), sans-serif" }}>
             Supervisor Control Desk
           </h1>
           <p style={{ fontSize: 13.5, color: "var(--neutral-500)", fontWeight: 500 }}>
