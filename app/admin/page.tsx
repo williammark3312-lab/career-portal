@@ -461,7 +461,7 @@ export default function AdminPage() {
 
   if (!session) {
     return (
-      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--neutral-900)", padding: "24px" }}>
+      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--neutral-900)", padding: "16px" }}>
         <AnimatedBackground />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -553,7 +553,7 @@ export default function AdminPage() {
       <AnimatedBackground />
       <Header session={session} handleLogout={handleLogout} />
 
-      <div style={{ position: "relative", zIndex: 10, flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "110px 24px 80px" }}>
+      <div style={{ position: "relative", zIndex: 10, flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "clamp(80px, 12vw, 110px) clamp(12px, 3vw, 24px) 80px" }}>
         
         {/* Title Section */}
         <motion.div
@@ -573,7 +573,7 @@ export default function AdminPage() {
         </motion.div>
 
         {/* Tab Navigation */}
-        <div style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.08)", marginBottom: 36, display: "flex", gap: 16, overflowX: "auto" }}>
+        <div style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.08)", marginBottom: 36, display: "flex", gap: 8, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
           {([
             { key: "jobs", label: "Openings & Reviews", icon: <Briefcase style={{ width: 14, height: 14 }} /> },
             { key: "cvs",  label: "Recruitment Database",  icon: <FileText style={{ width: 14, height: 14 }} /> },
@@ -581,8 +581,8 @@ export default function AdminPage() {
           ] as const).map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key)}
               style={{
-                padding: "10px 12px",
-                fontSize: 13.5,
+                padding: "10px 10px",
+                fontSize: 12.5,
                 fontWeight: 600,
                 cursor: "pointer",
                 border: "none",
@@ -608,7 +608,7 @@ export default function AdminPage() {
           <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
             
             {/* Stats Row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 20, marginBottom: 40 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))", gap: 16, marginBottom: 40 }}>
               {[
                 { label: "Active Openings", value: stats.totalJobs, icon: <Briefcase style={{ width: 18, height: 18, color: "var(--google-blue)" }} />, color: "rgba(26, 115, 232, 0.08)" },
                 { label: "Total Candidate Applications", value: stats.totalApps, icon: <Users style={{ width: 18, height: 18, color: "var(--google-green)" }} />, color: "rgba(30, 142, 62, 0.08)" },
@@ -679,7 +679,7 @@ export default function AdminPage() {
                 <p style={{ fontSize: 15, color: "var(--neutral-500)", fontWeight: 500 }}>No active openings published. Add one to start recruiting.</p>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(330px, 1fr))", gap: 20 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 330px), 1fr))", gap: 16 }}>
                 {jobs.map((job, i) => {
                   const styleInfo = getDeptStyle(job.department);
                   return (
@@ -1155,7 +1155,7 @@ export default function AdminPage() {
                 <h3 style={{ fontSize: 16, fontStyle: "italic", color: "var(--neutral-500)", margin: 0 }}>Gathering supervisory registry...</h3>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 290px), 1fr))", gap: 16 }}>
                 {adminUsers.map((u, i) => {
                   const initials = (u.name ?? u.email ?? "?")[0].toUpperCase();
                   const colors = [

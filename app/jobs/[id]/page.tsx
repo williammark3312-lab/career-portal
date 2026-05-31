@@ -200,7 +200,7 @@ export default function JobDetailsPage() {
           </Canvas>
         </div>
         <Header />
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 gap-6">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-4 sm:p-6 gap-6">
           {/* Receipt card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -213,7 +213,7 @@ export default function JobDetailsPage() {
             <div className="h-1.5 bg-gradient-to-r from-[#3279F9] via-[#7C3AED] to-[#10B981]" />
 
             {/* Receipt top */}
-            <div className="px-8 py-8 text-center border-b border-dashed border-[#E1E6EC]">
+            <div className="px-5 sm:px-8 py-6 sm:py-8 text-center border-b border-dashed border-[#E1E6EC]">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -229,7 +229,7 @@ export default function JobDetailsPage() {
             </div>
 
             {/* Receipt details */}
-            <div className="px-8 py-6">
+            <div className="px-5 sm:px-8 py-5 sm:py-6">
               <div className="flex flex-col gap-3.5">
                 {[
                   { label: "CONFIRMATION ID", value: `#${submittedApp?.id?.slice(0, 8).toUpperCase() || "N/A"}` },
@@ -307,17 +307,17 @@ export default function JobDetailsPage() {
 
       <Header />
 
-      <div className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-5 sm:px-8 pt-44 pb-12">
+      <div className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-4 sm:px-5 md:px-8 pt-28 sm:pt-44 pb-8 sm:pb-12">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="glass rounded-[32px] overflow-hidden"
+          className="glass rounded-[24px] sm:rounded-[32px] overflow-hidden"
         >
           {/* Job Header */}
-          <div className="px-10 py-10 border-b border-[#E1E6EC]">
+          <div className="px-5 sm:px-10 py-6 sm:py-10 border-b border-[#E1E6EC]">
             <span className="dept-tag mb-5 inline-block">{job.department}</span>
-            <h1 className="text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-6 text-gradient">{job.title}</h1>
+            <h1 className="text-[28px] sm:text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-4 sm:mb-6 text-gradient">{job.title}</h1>
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#121317]">
                 <MapPin className="w-3.5 h-3.5 text-[#121317]" />
@@ -331,7 +331,7 @@ export default function JobDetailsPage() {
           </div>
 
           {/* Job Body */}
-          <div className="px-10 py-10">
+          <div className="px-5 sm:px-10 py-6 sm:py-10">
             <h2 className="text-[22px] font-semibold mb-6 text-[#121317]">About the role</h2>
             <div className="text-[15px]" dangerouslySetInnerHTML={{ __html: renderMd(job.description) }} />
 

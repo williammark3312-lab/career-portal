@@ -135,7 +135,7 @@ export default function JobsPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pt-44 pb-12">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 pt-28 sm:pt-44 pb-8 sm:pb-12">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
@@ -144,18 +144,18 @@ export default function JobsPage() {
           className="max-w-2xl"
         >
           <span className="dept-tag mb-5 inline-block">Join Our Team</span>
-          <h1 className="text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-[1.05] text-gradient">
+          <h1 className="text-[32px] sm:text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-[1.05] text-gradient">
             Build Your Career<br />
             With Us
           </h1>
-          <p className="mt-5 text-[17px] leading-[1.7] text-[#121317] max-w-xl">
+          <p className="mt-3 sm:mt-5 text-[15px] sm:text-[17px] leading-[1.7] text-[#121317] max-w-xl">
             Explore premium career opportunities, collaborate with ambitious teams.
           </p>
         </motion.div>
       </section>
 
       {/* Search & Filter Bar */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-8">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 pb-8">
         {/* Dynamic Live Stats Bar */}
         {mounted && (
           <motion.div
@@ -271,7 +271,7 @@ export default function JobsPage() {
       </section>
 
       {/* Job Cards */}
-      <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-10 pb-24">
+      <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 pb-16 sm:pb-24">
         {loading ? (
           <div className="flex items-center justify-center py-32">
             <div className="w-8 h-8 border-2 border-[#3279F9]/30 border-t-[#3279F9] rounded-full animate-spin" />
@@ -292,10 +292,10 @@ export default function JobsPage() {
           </motion.div>
         ) : (
           <AnimatePresence mode="popLayout">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {filteredJobs.map((job, i) => (
                 <Card3D key={job.id} delay={i * 0.08} onClick={() => router.push(`/jobs/${job.id}`)}
-                  className="rounded-[24px] p-8 cursor-pointer"
+                  className="rounded-[20px] sm:rounded-[24px] p-5 sm:p-8 cursor-pointer"
                 >
                   <div className="flex flex-col h-full">
                     <div className="flex items-start justify-between gap-4 mb-6">

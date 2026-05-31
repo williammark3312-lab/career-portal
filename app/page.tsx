@@ -51,12 +51,12 @@ export default function Home() {
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pt-44 pb-20 text-center">
+      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-28 sm:pt-44 pb-12 sm:pb-20 text-center">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="glass w-full max-w-3xl rounded-[36px] px-12 py-16 mx-auto"
+          className="glass w-full max-w-3xl rounded-[24px] sm:rounded-[36px] px-5 sm:px-12 py-10 sm:py-16 mx-auto"
         >
           {/* We're Hiring pill */}
           <motion.div
@@ -77,7 +77,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.7 }}
-            className="text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] mb-8 text-gradient"
+            className="text-[36px] sm:text-[48px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] mb-6 sm:mb-8 text-gradient"
           >
             Build the Future<br />
             With Us

@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
-import { Briefcase, ExternalLink, ArrowLeft, LogOut, Lock } from "lucide-react";
+import { Briefcase, ExternalLink, ArrowLeft, LogOut, Lock, Menu, X } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 
 interface HeaderProps {
@@ -13,6 +14,7 @@ interface HeaderProps {
 export default function Header({ session, handleLogout }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isAdminPage = pathname?.startsWith("/admin");
   const isJobDetails = pathname?.startsWith("/jobs/") && pathname !== "/jobs";
@@ -22,11 +24,11 @@ export default function Header({ session, handleLogout }: HeaderProps) {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-      className="sticky top-0 z-50 px-4 py-5 pointer-events-none flex justify-center w-full"
+      className="sticky top-0 z-50 px-3 sm:px-4 py-4 sm:py-5 pointer-events-none flex justify-center w-full"
       style={{ zIndex: 100 }}
     >
       <motion.div
-        className="pointer-events-auto relative flex items-center justify-between w-full max-w-4xl rounded-full bg-[rgba(26,56,179,0.88)] backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_-4px_rgba(26,86,219,0.4)] px-5 py-3 overflow-hidden"
+        className="pointer-events-auto relative flex items-center justify-between w-full max-w-4xl rounded-full bg-[rgba(26,56,179,0.88)] backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_-4px_rgba(26,86,219,0.4)] px-4 sm:px-5 py-2.5 sm:py-3 overflow-hidden"
         whileHover={{ boxShadow: "0 12px 40px -4px rgba(26,86,219,0.6)", borderColor: "rgba(255,255,255,0.3)" }}
       >
         {/* Animated sheen effect sweeping across the pill */}
@@ -38,25 +40,25 @@ export default function Header({ session, handleLogout }: HeaderProps) {
 
         {/* Logo Section */}
         <div
-          className="relative z-10 flex items-center gap-3 cursor-pointer group"
+          className="relative z-10 flex items-center gap-2 sm:gap-3 cursor-pointer group"
           onClick={() => router.push(isAdminPage ? "/jobs" : "/")}
         >
-          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/25 transition-all duration-300 relative overflow-hidden">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/25 transition-all duration-300 relative overflow-hidden">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               className="absolute inset-[-50%] bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-30"
             />
-            <div className="w-[14px] h-[14px] bg-white rounded-[4px] rotate-45 group-hover:rotate-90 transition-transform duration-500 relative z-10" />
+            <div className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] bg-white rounded-[4px] rotate-45 group-hover:rotate-90 transition-transform duration-500 relative z-10" />
           </div>
-          <span className="text-[16px] font-bold text-white tracking-tight flex items-center gap-1.5">
+          <span className="text-[14px] sm:text-[16px] font-bold text-white tracking-tight flex items-center gap-1.5">
             Careers Portal
-            {isAdminPage && <span className="text-white/50 font-normal">/ Admin</span>}
+            {isAdminPage && <span className="text-white/50 font-normal hidden sm:inline">/ Admin</span>}
           </span>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="relative z-10 flex items-center gap-1.5">
+        {/* Desktop Navigation Links */}
+        <nav className="relative z-10 hidden md:flex items-center gap-1.5">
           {isAdminPage ? (
             <>
               <button
@@ -142,7 +144,78 @@ export default function Header({ session, handleLogout }: HeaderProps) {
             </>
           )}
         </nav>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="relative z-10 md:hidden flex items-center justify-center w-8 h-8 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-all"
+        >
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </motion.div>
+
+      {/* Mobile Dropdown */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="pointer-events-auto absolute top-full left-3 right-3 mt-2 rounded-2xl bg-[rgba(26,56,179,0.95)] backdrop-blur-2xl border border-white/20 shadow-[0_12px_40px_-4px_rgba(26,86,219,0.5)] p-3 md:hidden z-50"
+          >
+            <div className="flex flex-col gap-1">
+              {isAdminPage ? (
+                <>
+                  <button
+                    onClick={() => { router.push("/jobs"); setMobileOpen(false); }}
+                    className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-[14px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to site
+                  </button>
+                  {session && handleLogout && (
+                    <button
+                      onClick={() => { handleLogout(); setMobileOpen(false); }}
+                      className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-[14px] font-medium text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign out
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => { router.push("/jobs"); setMobileOpen(false); }}
+                    className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-[14px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    View Openings
+                  </button>
+                  <a
+                    href="https://www.linkedin.com/in/anandugirish/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-[14px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    LinkedIn
+                  </a>
+                  <button
+                    onClick={() => { router.push("/admin"); setMobileOpen(false); }}
+                    className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-[14px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Admin
+                  </button>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }

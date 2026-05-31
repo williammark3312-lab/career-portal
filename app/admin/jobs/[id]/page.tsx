@@ -182,7 +182,7 @@ function ApplicantCard({
       }}
     >
       {/* Top bar */}
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, padding: "20px 24px", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "16px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
             <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>{app.name}</h3>
@@ -286,7 +286,7 @@ function ApplicantCard({
       </div>
 
       {/* Comments remarks block */}
-      <div style={{ padding: "16px 24px", background: "rgba(0,0,0,0.005)" }}>
+      <div style={{ padding: "12px 16px", background: "rgba(0,0,0,0.005)" }}>
         <div
           onClick={() => setShowComments(!showComments)}
           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: "var(--neutral-500)" }}
@@ -480,7 +480,7 @@ export default function JobScreeningPage() {
       <AnimatedBackground />
       <Header session={session} handleLogout={handleLogout} />
 
-      <div style={{ flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "110px 24px 80px" }}>
+      <div style={{ flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "clamp(80px, 12vw, 110px) clamp(12px, 3vw, 24px) 80px" }}>
 
         {/* Breadcrumbs */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--neutral-400)", marginBottom: 28 }}>
@@ -542,7 +542,7 @@ export default function JobScreeningPage() {
             animate={{ opacity: 1, y: 0 }}
             style={{ display: "flex", flexDirection: "row", gap: 12, marginBottom: 28, flexWrap: "wrap" }}
           >
-            <div style={{ position: "relative", flex: 1, minWidth: 260 }}>
+            <div style={{ position: "relative", flex: 1, minWidth: "min(100%, 260px)" }}>
               <Search style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 15, height: 15, color: "var(--neutral-400)" }} />
               <input
                 type="text"
