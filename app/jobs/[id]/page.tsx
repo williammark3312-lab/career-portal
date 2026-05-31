@@ -549,7 +549,8 @@ export default function JobDetailsPage() {
                                   value={email}
                                   onChange={e => setEmail(e.target.value)}
                                   placeholder="candidate@gmail.com"
-                                  className="form-input pl-11 py-3 w-full font-medium"
+                                  className="form-input py-3 w-full font-medium"
+                                  style={{ paddingLeft: "44px" }}
                                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleSendOTP(); } }}
                                 />
                               </div>
