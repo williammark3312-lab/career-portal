@@ -179,6 +179,21 @@ export default function CandidateSchedulingPage() {
       } else {
         playChime();
         setConfirmedSlot(selectedSlot);
+
+        // Dispatch Confirmation Email to Candidate's Gmail
+        fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: app.email,
+            subject: `Interview Finalized - ${job?.title || "Job Application"}`,
+            candidateName: app.name,
+            jobTitle: job?.title || "Job Application",
+            dateTime: selectedSlot
+          })
+        }).catch(err => {
+          console.error("Email API fetch failed:", err);
+        });
       }
     } catch (err: any) {
       alert("Error confirming slot: " + err.message);
