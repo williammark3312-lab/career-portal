@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, Suspense } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../src/lib/supabase";
 import { Canvas } from "@react-three/fiber";
@@ -82,12 +82,7 @@ export default function JobsPage() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const { scrollY } = useScroll();
-  const heroOpacity = useTransform(scrollY, [0, 650], [1, 0]);
-  const heroScale = useTransform(scrollY, [0, 650], [1, 0.90]);
-  const heroY = useTransform(scrollY, [0, 650], [0, -120]);
-  const hiringOpacity = useTransform(scrollY, [300, 650], [0, 1]);
-  const hiringScale = useTransform(scrollY, [300, 650], [0.95, 1]);
+
 
   useEffect(() => {
     setMounted(true);
@@ -135,12 +130,11 @@ export default function JobsPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 pt-28 sm:pt-44 pb-8 sm:pb-12">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 pt-24 sm:pt-32 pb-6 sm:pb-10">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
           className="max-w-2xl"
         >
           <span className="dept-tag mb-5 inline-block">Join Our Team</span>
@@ -159,8 +153,10 @@ export default function JobsPage() {
         {/* Dynamic Live Stats Bar */}
         {mounted && (
           <motion.div
-            style={{ opacity: hiringOpacity, scale: hiringScale }}
-            className="flex flex-wrap items-center gap-3.5 mb-4 pl-1.5 pointer-events-none"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="flex flex-wrap items-center gap-3.5 mb-4 pl-1.5"
           >
             {/* Live Status Badge */}
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.18)]">
