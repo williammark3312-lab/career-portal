@@ -615,6 +615,16 @@ export default function JobDetailsPage() {
                                 Change Email
                               </button>
                             </div>
+
+                            <div className="mt-4 p-3.5 rounded-xl bg-[rgba(26,56,179,0.06)] border border-[#1a3bbd]/15 flex items-start gap-2.5 text-left">
+                              <span className="text-[16px] leading-none">💡</span>
+                              <div className="flex-1">
+                                <p className="text-[12.5px] font-bold text-[#1a3bbd]">Received a "Sign in" link instead of a 6-digit code?</p>
+                                <p className="text-[12px] text-[#121317]/80 mt-0.5 leading-relaxed font-semibold">
+                                  Simply **click the "Sign in" button inside your email** to instantly authenticate and automatically unlock this form!
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -632,88 +642,86 @@ export default function JobDetailsPage() {
                     </div>
                   ) : null}
 
-                  <div className={`space-y-5 transition-all duration-500 relative ${!candidate ? "opacity-35 pointer-events-none select-none blur-[2px]" : ""}`}>
-                    <div>
-                      <label className="form-label">Full Name <span className="text-red-500">*</span></label>
-                      <input
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="Jane Doe"
-                        className="form-input"
-                        disabled={!candidate}
-                      />
-                      {errors.name && <p className="mt-1.5 text-[12px] text-red-500">{errors.name}</p>}
-                    </div>
-
-                    <div>
-                      <label className="form-label">Email Address <span className="text-red-500">*</span></label>
-                      <input
-                        value={email}
-                        type="email"
-                        disabled
-                        placeholder="jane@example.com"
-                        className="form-input bg-[#F8F9FC] text-[#121317]/60 cursor-not-allowed border-[#CDD4DC]/60 font-semibold"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {candidate && (
+                    <div className="space-y-5 transition-all duration-500 relative">
                       <div>
-                        <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
-                        <div className="flex">
-                          <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[#CDD4DC] bg-[#F8F9FC] text-[15px] font-medium text-[#121317] select-none whitespace-nowrap">
-                            +91
-                          </span>
-                          <input
-                            value={phone}
-                            onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
-                            placeholder="98765 43210"
-                            maxLength={10}
-                            disabled={!candidate}
-                            className="form-input rounded-l-none border-l-0"
-                          />
-                        </div>
-                        {errors.phone && <p className="mt-1.5 text-[12px] text-red-500">{errors.phone}</p>}
-                      </div>
-                      <div>
-                        <label className="form-label">City <span className="text-red-500">*</span></label>
+                        <label className="form-label">Full Name <span className="text-red-500">*</span></label>
                         <input
-                          value={location}
-                          onChange={e => setLocation(e.target.value)}
-                          placeholder="e.g. Mumbai"
-                          disabled={!candidate}
+                          value={name}
+                          onChange={e => setName(e.target.value)}
+                          placeholder="Jane Doe"
                           className="form-input"
                         />
-                        {errors.location && <p className="mt-1.5 text-[12px] text-red-500">{errors.location}</p>}
+                        {errors.name && <p className="mt-1.5 text-[12px] text-red-500">{errors.name}</p>}
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="form-label">Resume / CV <span className="text-red-500">*</span></label>
-                      <div className="relative rounded-[14px] border-2 border-dashed border-[#CDD4DC] bg-white/60 px-6 py-9 text-center hover:bg-white transition-colors cursor-pointer">
+                      <div>
+                        <label className="form-label">Email Address <span className="text-red-500">*</span></label>
                         <input
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          disabled={!candidate}
-                          onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          value={email}
+                          type="email"
+                          disabled
+                          placeholder="jane@example.com"
+                          className="form-input bg-[#F8F9FC] text-[#121317]/60 cursor-not-allowed border-[#CDD4DC]/60 font-semibold"
                         />
-                        <Upload className="mx-auto h-7 w-7 text-[#121317] mb-2" />
-                        <p className="text-[14px] font-medium text-[#121317]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
-                        <p className="text-[12px] text-[#121317] mt-1">PDF, DOC up to 5 MB</p>
                       </div>
-                      {errors.resume && <p className="mt-1.5 text-[12px] text-red-500">{errors.resume}</p>}
-                    </div>
 
-                    <div className="pt-2">
-                      <button
-                        disabled={loading || !candidate}
-                        onClick={handleSubmit}
-                        className="btn-dark w-full disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {loading ? "Submitting…" : "Submit Application"}
-                      </button>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                          <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
+                          <div className="flex">
+                            <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[#CDD4DC] bg-[#F8F9FC] text-[15px] font-medium text-[#121317] select-none whitespace-nowrap">
+                              +91
+                            </span>
+                            <input
+                              value={phone}
+                              onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
+                              placeholder="98765 43210"
+                              maxLength={10}
+                              className="form-input rounded-l-none border-l-0"
+                            />
+                          </div>
+                          {errors.phone && <p className="mt-1.5 text-[12px] text-red-500">{errors.phone}</p>}
+                        </div>
+                        <div>
+                          <label className="form-label">City <span className="text-red-500">*</span></label>
+                          <input
+                            value={location}
+                            onChange={e => setLocation(e.target.value)}
+                            placeholder="e.g. Mumbai"
+                            className="form-input"
+                          />
+                          {errors.location && <p className="mt-1.5 text-[12px] text-red-500">{errors.location}</p>}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="form-label">Resume / CV <span className="text-red-500">*</span></label>
+                        <div className="relative rounded-[14px] border-2 border-dashed border-[#CDD4DC] bg-white/60 px-6 py-9 text-center hover:bg-white transition-colors cursor-pointer">
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          <Upload className="mx-auto h-7 w-7 text-[#121317] mb-2" />
+                          <p className="text-[14px] font-medium text-[#121317]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
+                          <p className="text-[12px] text-[#121317] mt-1">PDF, DOC up to 5 MB</p>
+                        </div>
+                        {errors.resume && <p className="mt-1.5 text-[12px] text-red-500">{errors.resume}</p>}
+                      </div>
+
+                      <div className="pt-2">
+                        <button
+                          disabled={loading}
+                          onClick={handleSubmit}
+                          className="btn-dark w-full disabled:opacity-60"
+                        >
+                          {loading ? "Submitting…" : "Submit Application"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </motion.div>
             )}
