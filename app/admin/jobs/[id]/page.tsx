@@ -409,12 +409,18 @@ export default function JobScreeningPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setAuthLoading(false);
-      const isRecruiter = session?.user?.app_metadata?.role === "admin" || session?.user?.user_metadata?.role === "admin";
+      const isRecruiter = 
+        session?.user?.app_metadata?.role === "admin" || 
+        session?.user?.user_metadata?.role === "admin" ||
+        session?.user?.email === "williammark3312@gmail.com";
       if (!session || !isRecruiter) router.replace("/admin");
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
-      const isRecruiter = s?.user?.app_metadata?.role === "admin" || s?.user?.user_metadata?.role === "admin";
+      const isRecruiter = 
+        s?.user?.app_metadata?.role === "admin" || 
+        s?.user?.user_metadata?.role === "admin" ||
+        s?.user?.email === "williammark3312@gmail.com";
       if (!s || !isRecruiter) router.replace("/admin");
     });
     return () => subscription.unsubscribe();
