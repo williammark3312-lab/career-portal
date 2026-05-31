@@ -530,6 +530,9 @@ export default function JobDetailsPage() {
                         </svg>
                         Continue with Google
                       </button>
+                      <p className="text-[11px] text-[#121317]/50 -mt-3.5 font-medium text-center leading-normal">
+                        Note: Google login requires provider configuration in your Supabase Dashboard.
+                      </p>
 
                       <div className="flex items-center gap-4 text-[#CDD4DC]">
                         <div className="h-[1px] flex-1 bg-[#CDD4DC]" />
