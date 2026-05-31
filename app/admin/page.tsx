@@ -548,6 +548,81 @@ export default function AdminPage() {
   }
 
   /* ── Main Admin UI ── */
+  const isRecruiter = session?.user?.app_metadata?.role === "admin" || session?.user?.user_metadata?.role === "admin";
+
+  if (session && !isRecruiter) {
+    return (
+      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--neutral-900)", padding: "16px" }}>
+        <AnimatedBackground />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+          style={{ width: "100%", maxWidth: 460, border: "1px solid rgba(217, 48, 37, 0.15)", borderRadius: 24, padding: "48px 36px", background: "rgba(255, 255, 255, 0.85)", backdropFilter: "blur(20px)", boxShadow: "0 8px 30px rgba(0,0,0,0.03)", position: "relative", zIndex: 10, textAlign: "center" }}
+        >
+          <div style={{ marginBottom: 24, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(217, 48, 37, 0.08)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(217, 48, 37, 0.2)", marginBottom: 20 }}>
+              <Lock style={{ width: 22, height: 22, color: "var(--google-red, #d93025)" }} />
+            </div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--neutral-900)", marginBottom: 8, fontFamily: '"Google Sans", sans-serif', letterSpacing: "-0.02em" }}>
+              Access Restricted
+            </h1>
+            <p style={{ fontSize: 14, color: "var(--neutral-600)", fontWeight: 500, lineHeight: 1.6 }}>
+              You are signed in as <strong style={{ color: "var(--google-blue)" }}>{session.user.email}</strong> (Candidate).
+              Only authorized recruiter accounts have permission to access the Recruiter Console.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <button
+              onClick={handleLogout}
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "12px 24px",
+                borderRadius: 24,
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: "pointer",
+                border: "none",
+                color: "#ffffff",
+                background: "var(--google-red, #d93025)",
+                boxShadow: "0 2px 4px rgba(217, 48, 37, 0.15)",
+                transition: "all 0.2s"
+              }}
+            >
+              Sign Out & Recruiter Login
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                display: "flex",
+                alignItems: "center",
+                padding: "12px 24px",
+                borderRadius: 24,
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: "pointer",
+                border: "1px solid rgba(0,0,0,0.1)",
+                color: "var(--neutral-700)",
+                background: "transparent",
+                transition: "all 0.2s"
+              }}
+            >
+              Back to Careers Page
+            </button>
+          </div>
+        </motion.div>
+      </main>
+    );
+  }
+
+  /* ── Main Admin UI ── */
   return (
     <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--neutral-900)", position: "relative" }}>
       <AnimatedBackground />

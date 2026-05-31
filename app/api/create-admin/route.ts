@@ -33,7 +33,8 @@ export async function POST(request: Request) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: name ?? "" },
+      user_metadata: { full_name: name ?? "", role: "admin" },
+      app_metadata: { role: "admin" },
     });
 
     if (error) {
