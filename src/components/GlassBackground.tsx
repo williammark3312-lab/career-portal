@@ -3,16 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-  alpha: number;
-  baseAlpha: number;
-}
-
 export default function GlassBackground() {
   const [mounted, setMounted] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -32,35 +22,12 @@ export default function GlassBackground() {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let particles: Particle[] = [];
-    const maxParticles = 55;
-    const connectionDist = 110;
-    const mouseConnectionDist = 160;
+    let time = 0;
 
     // Handle Resize
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      initParticles();
-    };
-
-    // Initialize particles
-    const initParticles = () => {
-      particles = [];
-      const w = canvas.width;
-      const h = canvas.height;
-      for (let i = 0; i < maxParticles; i++) {
-        const baseAlpha = Math.random() * 0.4 + 0.15;
-        particles.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          vx: (Math.random() - 0.5) * 0.35,
-          vy: (Math.random() - 0.5) * 0.35,
-          radius: Math.random() * 2 + 1,
-          alpha: baseAlpha,
-          baseAlpha: baseAlpha,
-        });
-      }
     };
 
     window.addEventListener("resize", resizeCanvas);
@@ -82,6 +49,11 @@ export default function GlassBackground() {
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseleave", onMouseLeave);
 
+    // Grid Parameters
+    const cols = 26;
+    const rows = 18;
+    const focalLength = 350;
+
     // Animation Loop
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -89,82 +61,127 @@ export default function GlassBackground() {
       const h = canvas.height;
       const mouse = mouseRef.current;
 
-      // Update and Draw Particles
-      particles.forEach((p) => {
-        // Move particle
-        p.x += p.vx;
-        p.y += p.vy;
+      time += 0.012;
 
-        // Wrap around boundaries
-        if (p.x < 0) p.x = w;
-        if (p.x > w) p.x = 0;
-        if (p.y < 0) p.y = h;
-        if (p.y > h) p.y = 0;
+      // 3D Grid coordinates calculation
+      const points: { sx: number; sy: number; scale: number; alpha: number }[][] = [];
 
-        // Mouse Attraction
-        if (mouse.active) {
-          const dx = mouse.x - p.x;
-          const dy = mouse.y - p.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < mouseConnectionDist) {
-            // Apply a gentle pull towards mouse
-            const force = (mouseConnectionDist - dist) / mouseConnectionDist;
-            p.x += (dx / dist) * force * 0.45;
-            p.y += (dy / dist) * force * 0.45;
-            // Flare brightness slightly
-            p.alpha = Math.min(1.0, p.baseAlpha + force * 0.4);
-          } else {
-            // Smoothly ease back to base alpha
-            p.alpha += (p.baseAlpha - p.alpha) * 0.05;
+      // Grid boundaries in 3D space
+      const gridWidth = w * 1.2;
+      const gridDepth = 600;
+      const centerY = h * 0.55;
+
+      for (let r = 0; r < rows; r++) {
+        points[r] = [];
+        const z3d = 100 + (r / (rows - 1)) * gridDepth; // Depth from 100 to 700
+
+        for (let c = 0; c < cols; c++) {
+          const x3d = -gridWidth / 2 + (c / (cols - 1)) * gridWidth; // X centered around 0
+
+          // Calculate wave height (Y)
+          let waveY = 
+            Math.sin(c * 0.25 + time) * 15 + 
+            Math.cos(r * 0.35 - time * 0.7) * 15;
+
+          // Projected point coordinates prior to mouse displacement (to calculate distance to cursor)
+          const tempScale = focalLength / (focalLength + z3d);
+          const tempSx = w / 2 + x3d * tempScale;
+          const tempSy = centerY + waveY * tempScale + (z3d - 300) * 0.35; // Tilt the grid slightly downwards
+
+          // Mouse Gravitational Distortion (Gravity Well)
+          if (mouse.active) {
+            const dx = mouse.x - tempSx;
+            const dy = mouse.y - tempSy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxInfluence = 180;
+            if (dist < maxInfluence) {
+              const force = (maxInfluence - dist) / maxInfluence;
+              // Push the grid points downwards at the cursor location (making a well)
+              waveY += force * force * 70;
+            }
           }
-        } else {
-          p.alpha += (p.baseAlpha - p.alpha) * 0.05;
+
+          // Recompute final projection with displacement
+          const scale = focalLength / (focalLength + z3d);
+          const sx = w / 2 + x3d * scale;
+          const sy = centerY + waveY * scale + (z3d - 300) * 0.35;
+
+          // Compute opacity based on depth (closer points are brighter)
+          const depthProgress = (z3d - 100) / gridDepth; // 0 (closest) to 1 (furthest)
+          const alpha = (1 - depthProgress) * 0.25 + 0.05;
+
+          points[r][c] = { sx, sy, scale, alpha };
         }
+      }
 
-        // Draw individual particle
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
-        ctx.shadowBlur = p.radius * 2;
-        ctx.shadowColor = "#60a5fa";
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset shadow
-      });
+      // Draw Grid Lines (connecting rows and columns)
+      ctx.lineWidth = 1;
+      
+      // Horizontal Lines (connecting cols in each row)
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols - 1; c++) {
+          const p1 = points[r][c];
+          const p2 = points[r][c + 1];
 
-      // Draw Connection Lines between neighboring particles
-      for (let i = 0; i < particles.length; i++) {
-        const p1 = particles[i];
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const dx = p1.x - p2.x;
-          const dy = p1.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          // Skip drawing if coordinates are invalid/offscreen
+          if (Math.abs(p1.sx - p2.sx) > w * 0.5) continue;
 
-          if (dist < connectionDist) {
-            const alpha = (1 - dist / connectionDist) * 0.09;
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(129, 140, 248, ${alpha})`;
-            ctx.lineWidth = 0.8;
-            ctx.stroke();
-          }
+          const grad = ctx.createLinearGradient(p1.sx, p1.sy, p2.sx, p2.sy);
+          const avgAlpha = (p1.alpha + p2.alpha) / 2;
+          grad.addColorStop(0, `rgba(99, 102, 241, ${p1.alpha * 0.8})`); // indigo
+          grad.addColorStop(0.5, `rgba(96, 165, 250, ${avgAlpha * 0.9})`); // blue
+          grad.addColorStop(1, `rgba(168, 85, 247, ${p2.alpha * 0.8})`); // purple
+
+          ctx.beginPath();
+          ctx.moveTo(p1.sx, p1.sy);
+          ctx.lineTo(p2.sx, p2.sy);
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = (p1.scale + p2.scale) * 0.4;
+          ctx.stroke();
         }
+      }
 
-        // Draw connections to mouse
-        if (mouse.active) {
-          const dx = mouse.x - p1.x;
-          const dy = mouse.y - p1.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < mouseConnectionDist) {
-            const alpha = (1 - dist / mouseConnectionDist) * 0.16;
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(mouse.x, mouse.y);
-            ctx.strokeStyle = `rgba(96, 165, 250, ${alpha})`;
-            ctx.lineWidth = 0.9;
-            ctx.stroke();
+      // Vertical Lines (connecting rows in each col)
+      for (let c = 0; c < cols; c++) {
+        for (let r = 0; r < rows - 1; r++) {
+          const p1 = points[r][c];
+          const p2 = points[r + 1][c];
+
+          const grad = ctx.createLinearGradient(p1.sx, p1.sy, p2.sx, p2.sy);
+          const avgAlpha = (p1.alpha + p2.alpha) / 2;
+          grad.addColorStop(0, `rgba(99, 102, 241, ${p1.alpha * 0.8})`);
+          grad.addColorStop(1, `rgba(168, 85, 247, ${p2.alpha * 0.8})`);
+
+          ctx.beginPath();
+          ctx.moveTo(p1.sx, p1.sy);
+          ctx.lineTo(p2.sx, p2.sy);
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = (p1.scale + p2.scale) * 0.4;
+          ctx.stroke();
+        }
+      }
+
+      // Draw Grid Nodes (dots)
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const p = points[r][c];
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, p.scale * 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 1.8})`;
+          
+          // Add a subtle glow to dots closer to cursor
+          if (mouse.active) {
+            const dx = mouse.x - p.sx;
+            const dy = mouse.y - p.sy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 100) {
+              ctx.shadowBlur = (100 - dist) * 0.1;
+              ctx.shadowColor = "#60a5fa";
+            }
           }
+
+          ctx.fill();
+          ctx.shadowBlur = 0; // reset
         }
       }
 
@@ -185,73 +202,47 @@ export default function GlassBackground() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ background: "#09090b" }}>
-      {/* Dynamic Nebula Aurora Blobs in background layer */}
-      <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen">
-        {/* Nebula 1 — Indigo/Purple orb */}
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ background: "#060608" }}>
+      {/* Background Ambient Cosmic Nebulas */}
+      <div className="absolute inset-0 z-0 opacity-30 mix-blend-screen">
+        {/* Nebula 1 — Deep purple blob */}
         <motion.div
           animate={{
-            scale: [1, 1.25, 0.95, 1.12, 1],
-            x: [0, 80, -40, 30, 0],
-            y: [0, -60, 45, -20, 0],
-            rotate: [0, 90, 180, 270, 360],
+            scale: [1, 1.2, 0.95, 1.1, 1],
+            x: [0, 50, -30, 20, 0],
+            y: [0, -40, 30, -10, 0],
           }}
-          transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-10%] left-[-15%] w-[70vw] h-[70vw] max-w-[850px] max-h-[850px] rounded-full"
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[-15%] left-[-10%] w-[75vw] h-[75vw] max-w-[900px] max-h-[900px] rounded-full"
           style={{
-            background: "radial-gradient(circle at 50% 50%, rgba(99,102,241,0.22), rgba(139,92,246,0.1) 40%, transparent 70%)",
+            background: "radial-gradient(circle at 50% 50%, rgba(99,102,241,0.22), rgba(124,58,237,0.08) 45%, transparent 70%)",
             filter: "blur(90px)",
           }}
         />
 
-        {/* Nebula 2 — Blue/Cyan orb */}
+        {/* Nebula 2 — Emerald / Cyan ambient bloom */}
         <motion.div
           animate={{
-            scale: [1.1, 0.9, 1.15, 1.0, 1.1],
-            x: [0, -90, 50, -30, 0],
-            y: [0, 70, -50, 40, 0],
-            rotate: [360, 270, 180, 90, 0],
+            scale: [1.1, 0.95, 1.15, 1.0, 1.1],
+            x: [0, -60, 40, -20, 0],
+            y: [0, 50, -40, 30, 0],
           }}
-          transition={{ duration: 26, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-15%] right-[-10%] w-[65vw] h-[65vw] max-w-[780px] max-h-[780px] rounded-full"
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-20%] right-[-15%] w-[70vw] h-[70vw] max-w-[850px] max-h-[850px] rounded-full"
           style={{
-            background: "radial-gradient(circle at 45% 55%, rgba(59,130,246,0.18), rgba(20,184,166,0.08) 45%, transparent 70%)",
-            filter: "blur(80px)",
-          }}
-        />
-
-        {/* Nebula 3 — Violet/Rose center shift */}
-        <motion.div
-          animate={{
-            scale: [0.9, 1.15, 0.88, 1.05, 0.9],
-            x: [30, -40, 25, -15, 30],
-            y: [-30, 45, -20, 35, -30],
-          }}
-          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[25%] left-[25%] w-[45vw] h-[45vw] max-w-[550px] max-h-[550px] rounded-full"
-          style={{
-            background: "radial-gradient(circle at 50% 50%, rgba(168,85,247,0.15), rgba(236,72,153,0.06) 50%, transparent 80%)",
-            filter: "blur(100px)",
+            background: "radial-gradient(circle at 45% 55%, rgba(6,182,212,0.16), rgba(99,102,241,0.06) 50%, transparent 75%)",
+            filter: "blur(95px)",
           }}
         />
       </div>
 
-      {/* Constellation Canvas Layer */}
+      {/* Grid Canvas Rendered Layer */}
       <canvas ref={canvasRef} className="absolute inset-0 z-10 w-full h-full" />
 
-      {/* Fine-Line Grid Mesh Overlay */}
-      <div
-        className="absolute inset-0 z-20 opacity-[0.14]"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)
-          `,
-          backgroundSize: "56px 56px",
-          maskImage: "radial-gradient(circle at 50% 40%, black 15%, transparent 85%)",
-          WebkitMaskImage: "radial-gradient(circle at 50% 40%, black 15%, transparent 85%)",
-        }}
-      />
+      {/* Subtle vignettes overlay */}
+      <div className="absolute inset-0 z-20 bg-radial-vignette" style={{
+        background: "radial-gradient(circle at 50% 50%, transparent 20%, rgba(6,6,8,0.7) 100%)"
+      }} />
     </div>
   );
 }
