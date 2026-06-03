@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../src/lib/supabase";
-import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows, MeshTransmissionMaterial } from "@react-three/drei";
-import { ArrowRight, MapPin, Briefcase, Search, X } from "lucide-react";
+import { ArrowRight, MapPin, Briefcase, Search, X, Sparkles } from "lucide-react";
 import Header from "../../src/components/Header";
 import Footer from "../../src/components/Footer";
+import GlassBackground from "../../src/components/GlassBackground";
 
 type Job = {
   id: string;
@@ -17,25 +16,6 @@ type Job = {
   location: string;
   description: string;
 };
-
-function FloatingRing() {
-  return (
-    <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
-      <mesh rotation={[0.5, -0.5, 0]}>
-        <torusGeometry args={[2, 0.45, 64, 128]} />
-        <MeshTransmissionMaterial
-          backside samples={6} thickness={0.6}
-          chromaticAberration={0.08} anisotropy={0.5}
-          distortion={0.12} distortionScale={0.2}
-          temporalDistortion={0.03} clearcoat={1}
-          clearcoatRoughness={0.05} color="#1a3bbd"
-          transmission={0.55} roughness={0.05}
-          resolution={1024}
-        />
-      </mesh>
-    </Float>
-  );
-}
 
 function Card3D({
   children, className = "", onClick, delay = 0,
@@ -47,9 +27,9 @@ function Card3D({
   function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     const el = ref.current; if (!el) return;
     const r = el.getBoundingClientRect();
-    const rx = ((e.clientY - r.top  - r.height / 2) / (r.height / 2)) * -5;
-    const ry = ((e.clientX - r.left - r.width  / 2) / (r.width  / 2)) *  5;
-    el.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.02,1.02,1.02)`;
+    const rx = ((e.clientY - r.top  - r.height / 2) / (r.height / 2)) * -4;
+    const ry = ((e.clientX - r.left - r.width  / 2) / (r.width  / 2)) *  4;
+    el.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.01,1.01,1.01)`;
   }
   function onMouseLeave() {
     const el = ref.current; if (!el) return;
@@ -58,14 +38,19 @@ function Card3D({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.65, delay, ease: [0.16, 1, 0.3, 1] }}
       className="h-full"
     >
-      <div ref={ref} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave} onClick={onClick}
-        className={`glass glass-hover h-full ${className}`} style={{ transformStyle: "preserve-3d" }}
+      <div 
+        ref={ref} 
+        onMouseMove={onMouseMove} 
+        onMouseLeave={onMouseLeave} 
+        onClick={onClick}
+        className={`bg-white/85 backdrop-blur-xl border border-zinc-200/60 rounded-3xl shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-300 cursor-pointer h-full ${className}`} 
+        style={{ transformStyle: "preserve-3d", transition: "transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease" }}
       >
         {children}
       </div>
@@ -81,8 +66,6 @@ export default function JobsPage() {
   const [selectedDept, setSelectedDept] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
-
-
 
   useEffect(() => {
     setMounted(true);
@@ -112,117 +95,112 @@ export default function JobsPage() {
 
   return (
     <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
-      {/* 3D Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-30">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-          <ambientLight intensity={1.4} />
-          <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-          <directionalLight position={[-10, -8, -5]} intensity={1} color="#3279F9" />
-          <Suspense fallback={null}>
-            <FloatingRing />
-            <Environment preset="city" />
-            <ContactShadows position={[0, -3, 0]} opacity={0.25} scale={20} blur={3} color="#737A87" />
-          </Suspense>
-        </Canvas>
-      </div>
+      {/* 2D Premium Glow Background */}
+      <GlassBackground />
 
       {/* Header */}
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 pt-24 sm:pt-32 pb-6 sm:pb-10">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pt-32 sm:pt-40 pb-6 sm:pb-8">
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-2xl"
+          className="max-w-3xl"
         >
-          <span className="dept-tag mb-5 inline-block">Join Our Team</span>
-          <h1 className="text-[32px] sm:text-[48px] md:text-[64px] font-medium tracking-[-0.03em] leading-[1.05] text-gradient">
-            Build Your Career<br />
-            With Us
+          {/* Pill Badge */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-50/50 text-blue-600 text-xs font-bold uppercase tracking-wider mb-5">
+            <Sparkles className="w-3.5 h-3.5" />
+            Careers Portal
+          </div>
+          
+          <h1 className="text-[36px] sm:text-[54px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-gradient">
+            Shape the Future<br />
+            With Antigravity
           </h1>
-          <p className="mt-3 sm:mt-5 text-[15px] sm:text-[17px] leading-[1.7] text-[#121317] max-w-xl">
-            Explore premium career opportunities, collaborate with ambitious teams.
+          <p className="mt-4 sm:mt-6 text-base sm:text-lg leading-[1.65] text-zinc-500 max-w-xl font-medium">
+            Join a fast-moving, design-obsessed team building the next generation of web infrastructure. Discover open opportunities below.
           </p>
         </motion.div>
       </section>
 
       {/* Search & Filter Bar */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 pb-8">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-10">
         {/* Dynamic Live Stats Bar */}
         {mounted && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="flex flex-wrap items-center gap-3.5 mb-4 pl-1.5"
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="flex flex-wrap items-center gap-3 mb-5 pl-1"
           >
-            {/* Live Status Badge */}
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.18)]">
+            {/* Live Database Badge */}
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 shadow-sm">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inset-0 rounded-full bg-[#10B981] animate-ping opacity-75" />
-                <span className="relative h-2 w-2 rounded-full bg-[#10B981]" />
+                <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75" />
+                <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
               </span>
-              <span className="text-[11px] font-bold text-[#10B981] uppercase tracking-[0.05em]">
-                Live database
-              </span>
-            </div>
-
-            {/* Open Roles Badge */}
-            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-[#E1E6EC] shadow-sm">
-              <span className="text-[11px] font-bold text-[#121317] uppercase tracking-[0.05em]">
-                Open Roles: <strong className="text-[#3279F9]">{jobs.length}</strong>
+              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                Active Openings
               </span>
             </div>
 
-            {/* Department Count Badge */}
-            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-[#E1E6EC] shadow-sm">
-              <span className="text-[11px] font-bold text-[#121317] uppercase tracking-[0.05em]">
-                Departments: <strong className="text-[#7C3AED]">{departments.length - 1}</strong>
+            {/* Total Roles */}
+            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/70 backdrop-blur-md border border-zinc-200/50 shadow-sm">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Positions: <strong className="text-zinc-800">{jobs.length}</strong>
+              </span>
+            </div>
+
+            {/* Departments Count */}
+            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/70 backdrop-blur-md border border-zinc-200/50 shadow-sm">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Departments: <strong className="text-zinc-800">{departments.length - 1}</strong>
               </span>
             </div>
           </motion.div>
         )}
 
+        {/* Elegant Glass Search Area */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{
             opacity: 1,
             y: 0,
             boxShadow: searchFocused
-              ? "0 20px 40px -10px rgba(50, 121, 249, 0.20), 0 0 0 2px rgba(50, 121, 249, 0.3)"
-              : "0 20px 40px -10px rgba(18, 19, 23, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.5)",
-            borderColor: searchFocused ? "rgba(50, 121, 249, 0.4)" : "rgba(255, 255, 255, 0.5)"
+              ? "0 24px 48px -12px rgba(37, 99, 235, 0.08), 0 0 0 2px rgba(37, 99, 235, 0.15)"
+              : "0 20px 40px -12px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(255, 255, 255, 0.4)",
+            borderColor: searchFocused ? "rgba(37, 99, 235, 0.3)" : "rgba(228, 228, 231, 0.5)"
           }}
-          transition={{ duration: 0.3 }}
-          className="glass rounded-[24px] p-5 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 transition-all duration-300 relative overflow-hidden"
+          transition={{ duration: 0.25 }}
+          className="bg-white/60 backdrop-blur-2xl rounded-3xl p-4 flex flex-col xl:flex-row items-stretch xl:items-center gap-4 transition-all duration-300 border relative overflow-hidden"
         >
           {/* Custom Search Box */}
-          <div className="relative flex-1 flex items-center bg-white/40 backdrop-blur-md rounded-[16px] border border-[#E1E6EC] focus-within:border-[#3279F9] focus-within:bg-white/80 focus-within:shadow-[0_4px_20px_-2px_rgba(50,121,249,0.08)] px-4 py-2.5 transition-all duration-300">
-            <Search className={`w-4 h-4 mr-3 transition-colors duration-300 ${searchFocused ? "text-[#3279F9]" : "text-[#737A87]"}`} />
+          <div className="relative flex-1 flex items-center bg-white/80 rounded-2xl border border-zinc-200/60 focus-within:border-blue-500 focus-within:bg-white focus-within:shadow-md px-4 py-3 transition-all duration-300">
+            <Search className={`w-4 h-4 mr-3 transition-colors duration-300 ${searchFocused ? "text-blue-600" : "text-zinc-400"}`} />
             <input
               id="jobs-search"
               type="text"
-              placeholder="Search roles, departments, locations…"
+              placeholder="Search by role name, description, or city..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
-              className="w-full bg-transparent border-none outline-none text-[14px] text-[#121317] placeholder-[#737A87] font-medium"
+              className="w-full bg-transparent border-none outline-none text-sm text-zinc-800 placeholder-zinc-400 font-semibold"
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery("")} 
-                className="ml-2 p-1 rounded-full hover:bg-[#E1E6EC] text-[#737A87] hover:text-[#121317] transition-all duration-200"
+                className="ml-2 p-1 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-all duration-200"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          {/* Dept pills */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Department filter pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             {departments.map((dept) => {
               const isActive = (selectedDept || "All") === dept;
               return (
@@ -230,36 +208,29 @@ export default function JobsPage() {
                   key={dept}
                   id={`filter-${dept.toLowerCase().replace(/\s+/g, "-")}`}
                   onClick={() => setSelectedDept(dept === "All" ? "" : dept)}
-                  className={`px-4 py-2 rounded-[12px] text-[13px] font-semibold border transition-all duration-300 relative overflow-hidden group ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 relative overflow-hidden group cursor-pointer ${
                     isActive
-                      ? "bg-gradient-to-r from-[#3279F9] to-[#7C3AED] text-white border-transparent shadow-[0_4px_15px_-3px_rgba(50,121,249,0.35)] scale-[1.02]"
-                      : "bg-white/60 hover:bg-white text-[#121317] border-[#E1E6EC] hover:border-[#3279F9] hover:shadow-[0_4px_12px_-2px_rgba(50,121,249,0.06)] hover:-translate-y-0.5"
+                      ? "bg-zinc-950 text-white border-transparent shadow-md scale-[1.02]"
+                      : "bg-white hover:bg-zinc-50 text-zinc-600 border-zinc-200/70 hover:border-zinc-300"
                   }`}
                 >
                   <span className="relative z-10">{dept}</span>
-                  {isActive && (
-                    <motion.div
-                      animate={{ x: ["-100%", "200%"] }}
-                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5, ease: "easeInOut" }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                    />
-                  )}
                 </button>
               );
             })}
           </div>
 
-          {/* Result count / clear */}
+          {/* Results Info */}
           {!loading && (searchQuery || (selectedDept && selectedDept !== "All")) && (
-            <div className="flex items-center gap-3 ml-auto pr-1">
-              <span className="text-[13px] font-medium text-[#737A87] bg-[#E1E6EC]/40 px-3 py-1 rounded-full border border-[#E1E6EC]">
-                <strong className="text-[#3279F9]">{filteredJobs.length}</strong> role{filteredJobs.length !== 1 ? "s" : ""} found
+            <div className="flex items-center gap-3 ml-auto xl:ml-0 xl:pl-2 shrink-0">
+              <span className="text-xs font-semibold text-zinc-500 bg-zinc-100 border border-zinc-250/30 px-3 py-1.5 rounded-full">
+                Found <strong className="text-blue-600">{filteredJobs.length}</strong> matching role{filteredJobs.length !== 1 ? "s" : ""}
               </span>
               <button
                 onClick={() => { setSearchQuery(""); setSelectedDept(""); }}
-                className="text-[13px] text-[#7C3AED] hover:text-[#3279F9] font-semibold hover:underline flex items-center gap-1 transition-colors duration-200"
+                className="text-xs text-blue-600 hover:text-blue-700 font-bold transition-colors cursor-pointer"
               >
-                Clear Filters
+                Reset
               </button>
             </div>
           )}
@@ -267,54 +238,73 @@ export default function JobsPage() {
       </section>
 
       {/* Job Cards */}
-      <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10 pb-16 sm:pb-24">
+      <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-24">
         {loading ? (
           <div className="flex items-center justify-center py-32">
-            <div className="w-8 h-8 border-2 border-[#3279F9]/30 border-t-[#3279F9] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
           </div>
         ) : filteredJobs.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-[24px] p-20 text-center">
-            <p className="text-[17px] text-[#121317]">
-              {jobs.length === 0 ? "No open positions right now. Check back soon!" : "No roles match your search. Try different keywords."}
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            className="bg-white/60 backdrop-blur-xl border border-zinc-200/50 rounded-3xl p-16 text-center"
+          >
+            <Briefcase className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+            <p className="text-zinc-500 font-semibold">
+              {jobs.length === 0 ? "No open vacancies listed at this moment. check back later!" : "No jobs match your search parameters. Try adjusting filters."}
             </p>
             {(searchQuery || selectedDept) && (
               <button
                 onClick={() => { setSearchQuery(""); setSelectedDept(""); }}
-                className="mt-4 btn-secondary text-[14px] px-5 py-2"
+                className="mt-4 px-4 py-2 bg-zinc-950 text-white rounded-xl text-xs font-bold hover:bg-zinc-900 cursor-pointer"
               >
-                Clear filters
+                Reset filters
               </button>
             )}
           </motion.div>
         ) : (
           <AnimatePresence mode="popLayout">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredJobs.map((job, i) => (
-                <Card3D key={job.id} delay={i * 0.08} onClick={() => router.push(`/jobs/${job.id}`)}
-                  className="rounded-[20px] sm:rounded-[24px] p-5 sm:p-8 cursor-pointer"
+                <Card3D 
+                  key={job.id} 
+                  delay={i * 0.06} 
+                  onClick={() => router.push(`/jobs/${job.id}`)}
+                  className="rounded-3xl p-6 sm:p-8 cursor-pointer flex flex-col group"
                 >
-                  <div className="flex flex-col h-full">
-                    <div className="flex items-start justify-between gap-4 mb-6">
-                      <span className="dept-tag">{job.department}</span>
-                      <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-[#E1E6EC] bg-white px-3 py-1">
-                        <MapPin className="w-3.5 h-3.5 text-[#121317]" />
-                        <span className="text-[12px] font-medium text-[#121317]">{job.location}</span>
+                  <div className="flex flex-col h-full justify-between gap-5">
+                    <div>
+                      {/* Department / Location Row */}
+                      <div className="flex items-center justify-between gap-3 mb-5">
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100/50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          {job.department}
+                        </span>
+                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-zinc-200/40 bg-zinc-50 text-zinc-500">
+                          <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+                          <span className="text-[11px] font-bold uppercase tracking-wider">{job.location}</span>
+                        </div>
                       </div>
+
+                      {/* Job Title */}
+                      <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 mb-3 group-hover:text-blue-600 transition-colors duration-250">
+                        {job.title}
+                      </h2>
+
+                      {/* Description Snippet */}
+                      <p className="text-sm leading-relaxed text-zinc-500 font-medium line-clamp-3">
+                        {job.description.replace(/#{1,3} |[*_~`]/g, "")}
+                      </p>
                     </div>
-                    <h2 className="text-[24px] font-bold tracking-[-0.02em] text-[#1a3bbd] transition-colors duration-300 mb-3 group-hover:text-[#3279F9]">
-                      {job.title}
-                    </h2>
-                    <p className="text-[14px] leading-[1.65] text-[#121317] line-clamp-3 flex-1">
-                      {job.description.replace(/#{1,3} |[*_~`]/g, "")}
-                    </p>
-                    <div className="mt-6 pt-5 border-t border-[#E1E6EC] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Briefcase className="w-3.5 h-3.5 text-[#121317]" />
-                        <span className="text-[13px] font-medium text-[#121317]">Full Time</span>
+
+                    {/* Bottom Status / Apply */}
+                    <div className="pt-4 border-t border-zinc-150/60 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-zinc-400 text-xs font-semibold">
+                        <Briefcase className="w-3.5 h-3.5 text-zinc-300" />
+                        <span>Full Time</span>
                       </div>
-                      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-[#3279F9]">
-                        Apply Now
-                        <ArrowRight className="w-3.5 h-3.5" />
+                      <span className="flex items-center gap-1 text-xs font-bold text-blue-600 group-hover:text-blue-700 transition-colors">
+                        View Details
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                       </span>
                     </div>
                   </div>

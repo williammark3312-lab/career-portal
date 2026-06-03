@@ -5,9 +5,9 @@ import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../../src/lib/supabase";
 import {
-  Calendar, CheckCircle2, Clock, AlertTriangle, Loader2, Sparkles, Check, ChevronRight
+  Calendar, CheckCircle2, Clock, AlertTriangle, Loader2, Sparkles, Check
 } from "lucide-react";
-import AnimatedBackground from "../../../src/components/AnimatedBackground";
+import GlassBackground from "../../../src/components/GlassBackground";
 
 /* ─── Interfaces ─── */
 interface Comment {
@@ -204,190 +204,131 @@ export default function CandidateSchedulingPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
-        <AnimatedBackground />
-        <div className="w-8 h-8 border-2 border-[var(--google-blue)]/30 border-t-[var(--google-blue)] rounded-full animate-spin relative z-10" />
+      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FC] relative overflow-hidden">
+        <GlassBackground />
+        <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin relative z-10" />
       </main>
     );
   }
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "transparent", color: "var(--neutral-900)", position: "relative", zIndex: 1 }}>
-      <AnimatedBackground />
+    <main className="min-h-screen flex flex-col justify-between bg-[#F8F9FC] text-zinc-800 relative z-10 overflow-hidden">
+      <GlassBackground />
 
       {/* Decorative Header Banner */}
-      <div style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 6,
-        background: "linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335)"
-      }} />
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-rose-500 z-20" />
 
-      <div style={{ flex: 1, width: "100%", maxWidth: 640, margin: "0 auto", padding: "clamp(60px, 10vw, 90px) clamp(16px, 4vw, 24px) 80px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <div className="flex-1 w-full max-w-lg mx-auto px-6 py-28 flex flex-col justify-center relative z-10">
         
         {error ? (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{
-              padding: "36px",
-              borderRadius: 24,
-              border: "1px solid rgba(217,48,37,0.1)",
-              background: "rgba(255, 255, 255, 0.75)",
-              backdropFilter: "blur(20px)",
-              textAlign: "center",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.02)"
-            }}
+            className="bg-white border border-red-100 rounded-3xl p-8 text-center shadow-xl shadow-red-500/2"
           >
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(217,48,37,0.06)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-              <AlertTriangle style={{ width: 24, height: 24, color: "var(--google-red, #d93025)" }} />
+            <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-5 border border-red-100/50">
+              <AlertTriangle className="w-6 h-6" />
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: "0 0 10px" }}>Unable to load page</h2>
-            <p style={{ fontSize: 14, color: "var(--neutral-500)", lineHeight: 1.6, margin: 0 }}>{error}</p>
+            <h2 className="text-lg font-bold text-zinc-900 mb-2">Unable to Load Scheduling Page</h2>
+            <p className="text-xs font-semibold text-zinc-400 leading-relaxed">{error}</p>
           </motion.div>
         ) : confirmedSlot ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            style={{
-              padding: "40px 32px",
-              borderRadius: 28,
-              border: "1px solid rgba(30,142,62,0.15)",
-              background: "rgba(255, 255, 255, 0.75)",
-              backdropFilter: "blur(20px)",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.03)",
-              textAlign: "center"
-            }}
+            className="bg-white border border-zinc-200/60 rounded-[32px] p-8 text-center shadow-xl shadow-blue-500/5"
           >
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(30,142,62,0.08)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
-              <CheckCircle2 style={{ width: 32, height: 32, color: "#1e8e3e" }} />
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mx-auto mb-6 border border-emerald-100/80 shadow-inner animate-pulse-slow">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
             
-            <h1 className="text-gradient" style={{ fontSize: 24, fontWeight: 600, fontFamily: '"Google Sans Display", sans-serif', margin: "0 0 8px" }}>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-950 mb-2">
               Interview Confirmed!
             </h1>
-            <p style={{ fontSize: 14.5, color: "var(--neutral-500)", margin: "0 0 32px", fontWeight: 500 }}>
-              Hi {app?.name}, your meeting has been successfully booked with our recruitment team.
+            <p className="text-xs font-semibold text-zinc-400 leading-relaxed max-w-[280px] mx-auto mb-8">
+              Hi {app?.name}, your discussion slot has been finalized with the recruitment team.
             </p>
 
-            <div style={{
-              background: "rgba(30,142,62,0.03)",
-              border: "1px solid rgba(30,142,62,0.1)",
-              borderRadius: 20,
-              padding: "24px 20px",
-              textAlign: "left",
-              marginBottom: 32
-            }}>
-              <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#1e8e3e", display: "block", marginBottom: 12 }}>
-                Booking Summary
+            <div className="bg-emerald-50/20 border border-emerald-100/70 rounded-2xl p-6 text-left mb-8 shadow-sm">
+              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-2">
+                Confirmed Meeting Info
               </span>
-              <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--neutral-800)", margin: "0 0 6px" }}>
-                {job?.title || "Job Application"}
+              <h3 className="text-base font-bold text-zinc-800 mb-1">
+                {job?.title || "Role Interview"}
               </h3>
-              <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 500, margin: "0 0 18px" }}>
-                Interview Slot Selection
+              <p className="text-xs font-semibold text-zinc-400 mb-4">
+                Recruitment Candidate Evaluation
               </p>
-              <div style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14.5, color: "var(--neutral-700)", fontWeight: 600 }}>
-                <Calendar style={{ width: 18, height: 18, color: "#1e8e3e", flexShrink: 0, marginTop: 2 }} />
+              <div className="flex gap-2.5 items-start text-xs font-bold text-zinc-700">
+                <Calendar className="w-4.5 h-4.5 text-emerald-600 shrink-0 mt-0.5" />
                 <span>{formatDateTime(confirmedSlot)}</span>
               </div>
             </div>
 
-            <p style={{ fontSize: 13, color: "var(--neutral-400)", margin: 0 }}>
-              A calendar invitation has been configured for {app?.email}. We look forward to connecting with you!
+            <p className="text-[11px] text-zinc-400 font-semibold leading-relaxed">
+              We have dispatched a calendar invitation to <strong className="text-zinc-600 font-bold">{app?.email}</strong>. We look forward to speaking with you!
             </p>
           </motion.div>
         ) : proposedSlots.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{
-              padding: "36px",
-              borderRadius: 24,
-              border: "1px solid rgba(0,0,0,0.06)",
-              background: "rgba(255, 255, 255, 0.75)",
-              backdropFilter: "blur(20px)",
-              textAlign: "center",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.02)"
-            }}
+            className="bg-white border border-zinc-200/60 rounded-[32px] p-8 text-center shadow-xl shadow-blue-500/5"
           >
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(66,133,244,0.06)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-              <Clock style={{ width: 24, height: 24, color: "var(--google-blue, #1a73e8)" }} />
+            <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mx-auto mb-5 border border-blue-100/50">
+              <Clock className="w-6 h-6 animate-pulse-slow" />
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: "0 0 10px" }}>No time slots proposed yet</h2>
-            <p style={{ fontSize: 14, color: "var(--neutral-500)", lineHeight: 1.6, margin: 0 }}>
-              The recruiter hasn't proposed scheduling options for this profile yet. Please reach out to your point of contact to set up proposed slots.
+            <h2 className="text-lg font-bold text-zinc-900 mb-2">No Time Slots Offered</h2>
+            <p className="text-xs font-semibold text-zinc-400 leading-relaxed">
+              Our team has not proposed scheduling options for this applicant profile yet. Reach out to your coordinator to set up your meeting window.
             </p>
           </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{
-              padding: "36px 28px",
-              borderRadius: 28,
-              border: "1px solid rgba(0,0,0,0.06)",
-              background: "rgba(255, 255, 255, 0.75)",
-              backdropFilter: "blur(20px)",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.03)"
-            }}
+            className="bg-white border border-zinc-200/60 rounded-[32px] p-8 shadow-xl shadow-blue-500/5"
           >
-            <div style={{ marginBottom: 28 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--google-blue)", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 10, display: "inline-block", marginBottom: 12 }}>
-                Interview Selection
+            <div className="mb-6 text-center sm:text-left">
+              <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100/50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-3.5 inline-block">
+                Choose a time
               </span>
-              <h1 className="text-gradient" style={{ fontSize: "clamp(22px, 3vw, 28px)", fontWeight: 600, fontFamily: '"Google Sans Display", sans-serif', letterSpacing: "-0.02em", margin: "0 0 6px" }}>
-                Select your interview slot
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 mb-1.5">
+                Select Interview Slot
               </h1>
-              <p style={{ fontSize: 14, color: "var(--neutral-500)", fontWeight: 500, margin: 0 }}>
-                Hi {app?.name}, please choose a convenient time slot from the recruiter proposed options below.
+              <p className="text-xs font-semibold text-zinc-400 leading-relaxed">
+                Hi {app?.name}, please choose a convenient slot from the proposed options below:
               </p>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
+            <div className="flex flex-col gap-3.5 mb-8">
               {proposedSlots.map((slot, idx) => {
                 const isSelected = selectedSlot === slot;
                 return (
                   <button
                     key={idx}
                     onClick={() => setSelectedSlot(slot)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "16px 20px",
-                      borderRadius: 18,
-                      border: isSelected ? "2px solid var(--google-blue, #1a73e8)" : "1px solid rgba(0,0,0,0.08)",
-                      background: isSelected ? "rgba(26,115,232,0.03)" : "#ffffff",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      transition: "all 0.15s ease",
-                      outline: "none",
-                      boxShadow: isSelected ? "0 4px 12px rgba(26,115,232,0.05)" : "none"
-                    }}
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 text-left outline-none cursor-pointer w-full ${
+                      isSelected
+                        ? "border-blue-500 bg-blue-50/20 shadow-sm"
+                        : "border-zinc-200 hover:border-zinc-300 bg-white"
+                    }`}
                   >
-                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                      <div style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: "50%",
-                        background: isSelected ? "rgba(26,115,232,0.1)" : "rgba(0,0,0,0.03)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: isSelected ? "var(--google-blue)" : "var(--neutral-400)"
-                      }}>
-                        <Calendar style={{ width: 15, height: 15 }} />
+                    <div className="flex gap-3.5 items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                        isSelected ? "bg-blue-100 text-blue-600" : "bg-zinc-50 text-zinc-400"
+                      }`}>
+                        <Calendar className="w-4 h-4" />
                       </div>
-                      <span style={{ fontSize: 14.5, fontWeight: isSelected ? 600 : 500, color: isSelected ? "var(--neutral-900)" : "var(--neutral-700)" }}>
+                      <span className={`text-xs sm:text-sm font-bold ${
+                        isSelected ? "text-zinc-800" : "text-zinc-600"
+                      }`}>
                         {formatDateTime(slot)}
                       </span>
                     </div>
                     {isSelected && (
-                      <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--google-blue)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff" }}>
-                        <Check style={{ width: 12, height: 12 }} />
+                      <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/10">
+                        <Check className="w-3.5 h-3.5" />
                       </div>
                     )}
                   </button>
@@ -398,37 +339,27 @@ export default function CandidateSchedulingPage() {
             <button
               disabled={!selectedSlot || confirming}
               onClick={handleConfirmSlot}
-              style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: 16,
-                fontWeight: 600,
-                fontSize: 14.5,
-                cursor: selectedSlot ? "pointer" : "not-allowed",
-                border: "none",
-                color: "#ffffff",
-                background: selectedSlot ? "var(--google-blue, #1a73e8)" : "var(--neutral-300)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                transition: "all 0.2s"
-              }}
+              className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs cursor-pointer border-none text-white flex items-center justify-center gap-2 transition-all duration-200 ${
+                selectedSlot 
+                  ? "bg-zinc-950 hover:bg-zinc-900 shadow-md shadow-zinc-950/15" 
+                  : "bg-zinc-300 cursor-not-allowed"
+              }`}
             >
               {confirming ? (
-                <Loader2 style={{ width: 18, height: 18 }} className="animate-spin" />
+                <Loader2 className="w-4.5 h-4.5 animate-spin" />
               ) : (
-                <Sparkles style={{ width: 18, height: 18 }} />
+                <Sparkles className="w-4.5 h-4.5" />
               )}
-              Confirm Interview Time
+              Confirm Interview Slot
             </button>
           </motion.div>
         )}
       </div>
 
-      <footer style={{ borderTop: "1px solid rgba(0, 0, 0, 0.05)", padding: "24px 0", background: "rgba(255, 255, 255, 0.4)", backdropFilter: "blur(10px)", marginTop: "auto" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-          <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 500 }}>© {new Date().getFullYear()} Google Antigravity. All rights reserved.</p>
+      {/* Footer */}
+      <footer className="border-t border-zinc-200/50 py-6 bg-white/40 backdrop-blur-md mt-auto z-15">
+        <div className="max-w-lg mx-auto px-6 flex justify-between items-center text-[11px] text-zinc-500 font-semibold">
+          <p>© {new Date().getFullYear()} Google Antigravity. All rights reserved.</p>
         </div>
       </footer>
     </main>
