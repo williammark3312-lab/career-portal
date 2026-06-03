@@ -8,7 +8,8 @@ import {
   Plus, MapPin, Briefcase, FileText, X, ExternalLink,
   CheckCircle2, Upload, MessageSquare, Send, Users,
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
-  Copy, Eye, Lock, Search, LogOut, Shield, ChevronRight
+  Copy, Eye, Lock, Search, LogOut, Shield, ChevronRight,
+  User, Mail, Phone, Calendar, Loader2
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -41,48 +42,28 @@ function parseComments(raw: string | null | undefined): Comment[] {
 function getDeptStyle(dept: string) {
   const d = dept.toLowerCase();
   if (d.includes("engineer") || d.includes("tech")) {
-    return {
-      color: "#1a73e8",
-      bg: "rgba(26, 115, 232, 0.06)",
-      border: "rgba(26, 115, 232, 0.15)",
-      glowClass: "glow-blue"
-    };
+    return { color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", dot: "#3b82f6" };
   }
   if (d.includes("design") || d.includes("creative")) {
-    return {
-      color: "#f9ab00",
-      bg: "rgba(249, 171, 0, 0.06)",
-      border: "rgba(249, 171, 0, 0.15)",
-      glowClass: "glow-yellow"
-    };
+    return { color: "#d97706", bg: "#fef3c7", border: "#fde68a", dot: "#f59e0b" };
   }
   if (d.includes("market") || d.includes("growth")) {
-    return {
-      color: "#1e8e3e",
-      bg: "rgba(30, 142, 62, 0.06)",
-      border: "rgba(30, 142, 62, 0.15)",
-      glowClass: "glow-green"
-    };
+    return { color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", dot: "#10b981" };
   }
-  return {
-    color: "#d93025",
-    bg: "rgba(217, 48, 37, 0.06)",
-    border: "rgba(217, 48, 37, 0.15)",
-    glowClass: "glow-red"
-  };
+  return { color: "#dc2626", bg: "#fef2f2", border: "#fecaca", dot: "#ef4444" };
 }
 
-/* ─── Status badge styling ─── */
+/* ─── Status badge helper ─── */
 function getStatusStyle(status: string) {
   switch (status) {
     case "Called":
-      return { color: "#1e8e3e", bg: "rgba(30, 142, 62, 0.08)", border: "rgba(30, 142, 62, 0.18)" };
+      return { color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", dot: "#10b981" };
     case "Interviewing":
-      return { color: "#1a73e8", bg: "rgba(26, 115, 232, 0.08)", border: "rgba(26, 115, 232, 0.18)" };
+      return { color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", dot: "#3b82f6" };
     case "Rejected":
-      return { color: "#d93025", bg: "rgba(217, 48, 37, 0.08)", border: "rgba(217, 48, 37, 0.18)" };
+      return { color: "#dc2626", bg: "#fef2f2", border: "#fecaca", dot: "#ef4444" };
     default:
-      return { color: "#5f6368", bg: "rgba(95, 99, 104, 0.08)", border: "rgba(95, 99, 104, 0.15)" };
+      return { color: "#71717a", bg: "#f4f4f5", border: "#e4e4e7", dot: "#a1a1aa" };
   }
 }
 
@@ -126,9 +107,11 @@ export default function AdminPage() {
   const [cvPhone, setCvPhone] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvCommentValues, setCvCommentValues] = useState<Record<string, string>>({});
-  const [expandedCvComments, setExpandedCvComments] = useState<Record<string, boolean>>({});
+  
+  /* Right Slide-over profile preview drawer */
+  const [activePreviewCandidate, setActivePreviewCandidate] = useState<CVRecord | null>(null);
 
-  /* CV Viewer state */
+  /* CV Viewer modal state (fallback/independent view) */
   const [selectedCV, setSelectedCV] = useState("");
   const [cvOpen, setCvOpen] = useState(false);
 
@@ -210,6 +193,12 @@ export default function AdminPage() {
       const seed: Record<string, string> = {};
       data.forEach((cv: CVRecord) => { seed[cv.id] = ""; });
       setCvCommentValues(seed);
+      
+      // Update active preview reference if open
+      if (activePreviewCandidate) {
+        const fresh = data.find(c => c.id === activePreviewCandidate.id);
+        if (fresh) setActivePreviewCandidate(fresh);
+      }
     }
   }
   async function loadAdminUsers() {
@@ -307,7 +296,7 @@ export default function AdminPage() {
     setTimeout(()=>{ ta.focus(); ta.selectionStart=s; ta.selectionEnd=s+result.length; },0);
   }
 
-  /* ── CV Database ── */
+  /* ── CV Database CRUD ── */
   function closeCvModal() {
     setShowCvModal(false);
     setEditingCv(null);
@@ -353,13 +342,22 @@ export default function AdminPage() {
 
   async function handleCvStatus(cvId: string, status: string) {
     const { error } = await supabase.from("cv_database").update({ status }).eq("id", cvId);
-    if (error) alert(error.message); else loadCvs();
+    if (error) {
+      alert(error.message);
+    } else {
+      loadCvs();
+    }
   }
 
   async function handleDeleteCv(cvId: string) {
     if (!confirm("Delete this CV?")) return;
     const { error } = await supabase.from("cv_database").delete().eq("id", cvId);
-    if (error) alert(error.message); else {
+    if (error) {
+      alert(error.message);
+    } else {
+      if (activePreviewCandidate?.id === cvId) {
+        setActivePreviewCandidate(null);
+      }
       loadCvs();
       loadStats();
     }
@@ -367,11 +365,17 @@ export default function AdminPage() {
 
   async function handleUpdateCvComments(cvId: string, comments: string) {
     const { error } = await supabase.from("cv_database").update({ comments }).eq("id", cvId);
-    if (error) alert("Failed to save comments: " + error.message);
-    else setCvs(prev => prev.map(c => c.id === cvId ? { ...c, comments } : c));
+    if (error) {
+      alert("Failed to save comments: " + error.message);
+    } else {
+      setCvs(prev => prev.map(c => c.id === cvId ? { ...c, comments } : c));
+      if (activePreviewCandidate?.id === cvId) {
+        setActivePreviewCandidate(prev => prev ? { ...prev, comments } : null);
+      }
+    }
   }
 
-  /* ── Admin Users ── */
+  /* ── Admin Users CRUD ── */
   function resetUserForm() {
     setNewUserName(""); setNewUserEmail(""); setNewUserPass(""); setNewUserConfirm(""); setShowPass(false);
   }
@@ -417,7 +421,7 @@ export default function AdminPage() {
     });
   }
 
-  /* ── Auth ── */
+  /* ── Auth Handlers ── */
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setAuthLoading(true); setAuthError("");
@@ -427,19 +431,20 @@ export default function AdminPage() {
   }
   async function handleLogout() { await supabase.auth.signOut(); }
 
-  /* ── Auth screen rendering ── */
+  /* ── Spinner loading state ── */
   if ((!mounted || authLoading) && !loginSuccess) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
         <AnimatedBackground />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
-          <p className="text-sm font-semibold text-slate-500 tracking-wide animate-pulse-slow">Loading Supervisor Space...</p>
+          <p className="text-sm font-bold text-slate-500 tracking-wide animate-pulse-slow">Initializing Control Console...</p>
         </div>
       </main>
     );
   }
 
+  /* ── Auth Success Animation ── */
   if (loginSuccess) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
@@ -458,64 +463,68 @@ export default function AdminPage() {
             <CheckCircle2 className="w-8 h-8" />
           </motion.div>
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Access Granted</h2>
-            <p className="text-sm text-slate-500 font-medium">Session authorized. Redirecting you to console desk...</p>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Access Authorized</h2>
+            <p className="text-sm text-slate-500 font-medium">Session secured. Entering supervisor desk...</p>
           </div>
         </motion.div>
       </main>
     );
   }
 
+  /* ── Sleek Dark Login screen ── */
   if (!session) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden p-4">
-        <AnimatedBackground />
+      <main className="min-h-screen flex items-center justify-center bg-[#09090b] relative overflow-hidden p-4">
+        {/* Deep, glowing background rings */}
+        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-violet-500/10 blur-[120px] pointer-events-none" />
+        
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-md border border-white/60 rounded-[32px] p-10 sm:p-12 bg-white/70 backdrop-blur-3xl shadow-xl shadow-slate-900/5 relative z-10"
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-md border border-zinc-800/80 rounded-[32px] p-10 sm:p-12 bg-zinc-950/80 backdrop-blur-3xl shadow-2xl relative z-10 flex flex-col gap-8"
         >
-          <div className="flex flex-col gap-2 mb-8">
-            <div className="w-12 h-12 rounded-2xl border border-blue-100 bg-blue-50 flex items-center justify-center text-blue-600 mb-2 shadow-sm">
-              <Lock className="w-5 h-5" />
+          <div className="flex flex-col gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-violet-600 flex items-center justify-center text-white mb-2 shadow-lg shadow-blue-500/10">
+              <Lock className="w-4 h-4" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 leading-tight">
-              <KineticText text="Recruiter Desk" />
+            <h1 className="text-2xl font-bold tracking-tight text-white leading-tight">
+              Recruiter Desk
             </h1>
-            <p className="text-[14px] text-slate-500 font-medium">Sign in to manage openings, candidates, and evaluations.</p>
+            <p className="text-sm text-zinc-400 font-semibold">Sign in to access your administrative dashboard.</p>
           </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
+          <form onSubmit={handleLogin} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Address</label>
               <input
                 type="email"
                 value={authEmail}
                 onChange={e => setAuthEmail(e.target.value)}
                 required
-                className="google-form-input focus:border-blue-600 focus:shadow-md transition-all rounded-xl p-3 border-slate-200"
+                className="w-full border-b border-zinc-800 focus:border-blue-500 bg-transparent text-white text-sm py-2.5 outline-none transition-colors"
                 placeholder="recruiter@company.com"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Password</label>
               <input
                 type="password"
                 value={authPassword}
                 onChange={e => setAuthPassword(e.target.value)}
                 required
-                className="google-form-input focus:border-blue-600 focus:shadow-md transition-all rounded-xl p-3 border-slate-200"
+                className="w-full border-b border-zinc-800 focus:border-blue-500 bg-transparent text-white text-sm py-2.5 outline-none transition-colors"
                 placeholder="••••••••"
               />
             </div>
 
             {authError && (
               <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3 text-center"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-xs font-bold text-rose-500 bg-rose-950/20 border border-rose-900/50 rounded-xl px-4 py-3 text-center"
               >
                 {authError}
               </motion.div>
@@ -524,11 +533,11 @@ export default function AdminPage() {
             <button
               type="submit"
               disabled={authLoading}
-              className="w-full justify-center flex items-center gap-2 py-3 px-6 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-70 disabled:cursor-not-allowed mt-3"
+              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-75 disabled:cursor-not-allowed mt-4 flex items-center justify-center"
             >
               {authLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : "Authenticate Access"}
+              ) : "Sign In to Workspace"}
             </button>
           </form>
         </motion.div>
@@ -543,34 +552,32 @@ export default function AdminPage() {
 
   if (session && !isRecruiter) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden p-4">
-        <AnimatedBackground />
+      <main className="min-h-screen flex items-center justify-center bg-[#09090b] relative overflow-hidden p-4">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-md border border-rose-100 rounded-[32px] p-10 sm:p-12 bg-white/80 backdrop-blur-3xl shadow-xl shadow-rose-950/5 relative z-10 text-center flex flex-col items-center"
+          className="w-full max-w-md border border-rose-950 rounded-[32px] p-10 sm:p-12 bg-zinc-950/80 backdrop-blur-3xl shadow-2xl relative z-10 text-center flex flex-col items-center"
         >
-          <div className="w-14 h-14 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center text-rose-600 mb-6 shadow-inner animate-pulse-slow">
+          <div className="w-14 h-14 bg-rose-950/30 border border-rose-900 text-rose-500 rounded-full flex items-center justify-center mb-6 shadow-inner animate-pulse-slow">
             <Shield className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-3">Access Denied</h1>
-          <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8">
-            You are signed in as <span className="font-semibold text-blue-600">{session.user.email}</span>. Only supervisor accounts are authorized to enter this portal.
+          <h1 className="text-2xl font-bold text-white tracking-tight mb-3">Access Denied</h1>
+          <p className="text-sm text-zinc-400 font-semibold leading-relaxed mb-8">
+            You are signed in as <span className="text-blue-400">{session.user.email}</span>. Only supervisor accounts are authorized to access this console.
           </p>
 
           <div className="flex flex-col gap-3 w-full">
             <button
               onClick={handleLogout}
-              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-rose-500/10"
+              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer"
             >
               Sign Out & Relogin
             </button>
             <button
               onClick={() => router.push("/")}
-              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer"
+              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer"
             >
-              Back to Careers Page
+              Back to Home page
             </button>
           </div>
         </motion.div>
@@ -578,61 +585,65 @@ export default function AdminPage() {
     );
   }
 
-  /* ── Main Dashboard Panel UI ── */
+  /* ── MAIN DASHBOARD PANEL ── */
   return (
-    <main className="min-h-screen bg-[#F8F9FF] text-slate-800 relative z-10 flex flex-col lg:flex-row overflow-hidden">
+    <main className="min-h-screen bg-[#F8F9FC] text-zinc-800 relative z-10 flex flex-col lg:flex-row overflow-hidden">
       <AnimatedBackground />
 
-      {/* ── Desktop Sidebar ── */}
-      <aside className="w-80 sidebar-glass hidden lg:flex flex-col justify-between p-6 fixed h-screen z-20">
+      {/* ── Midnight-Dark Sidebar (Stripe Style) ── */}
+      <aside className="w-72 bg-zinc-950 border-r border-zinc-900/80 hidden lg:flex flex-col justify-between p-6 fixed h-screen z-20">
         <div className="flex flex-col gap-8">
-          {/* Logo Section */}
+          
+          {/* Logo Branding */}
           <div className="flex items-center gap-3 px-2 py-1 cursor-pointer" onClick={() => router.push("/jobs")}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1a73e8] to-[#2563EB] flex items-center justify-center shadow-md shadow-blue-500/10">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/10">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-slate-950 tracking-tight leading-none">Antigravity</h1>
-              <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Recruiter Desk</span>
+              <h1 className="text-sm font-bold text-white tracking-tight leading-none">Antigravity</h1>
+              <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Supervisor Space</span>
             </div>
           </div>
 
-          {/* User Widget */}
-          <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-white/80 shadow-sm flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+          {/* User Account context */}
+          <div className="bg-zinc-900/40 rounded-xl p-3 border border-zinc-800 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-extrabold text-xs">
               {session?.user?.email?.[0].toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Admin</p>
-              <p className="text-sm font-semibold text-slate-800 truncate" title={session?.user?.email}>{session?.user?.email}</p>
+              <p className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest">Signed In</p>
+              <p className="text-xs font-bold text-zinc-300 truncate" title={session?.user?.email}>{session?.user?.email}</p>
             </div>
           </div>
 
-          {/* Tab Navigation Menu */}
-          <nav className="flex flex-col gap-1.5">
+          {/* Navigation Links */}
+          <nav className="flex flex-col gap-1">
             {([
               { key: "jobs", label: "Openings & Reviews", icon: <Briefcase className="w-4 h-4" />, count: stats.totalJobs },
-              { key: "cvs", label: "Recruitment Database", icon: <FileText className="w-4 h-4" />, count: stats.totalCVs },
+              { key: "cvs", label: "Talent Index", icon: <FileText className="w-4 h-4" />, count: stats.totalCVs },
               { key: "users", label: "Supervisor Accounts", icon: <Users className="w-4 h-4" />, count: adminUsers.length },
             ] as const).map(t => {
               const isActive = activeTab === t.key;
               return (
                 <button
                   key={t.key}
-                  onClick={() => setActiveTab(t.key)}
-                  className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-[13.5px] font-bold transition-all relative overflow-hidden cursor-pointer ${
+                  onClick={() => {
+                    setActiveTab(t.key);
+                    setActivePreviewCandidate(null);
+                  }}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     isActive
-                      ? "text-blue-600 bg-blue-50/70 border border-blue-100/60 shadow-sm"
-                      : "text-slate-500 hover:text-slate-950 hover:bg-slate-100/50 border border-transparent"
+                      ? "text-white bg-zinc-900 border border-zinc-850"
+                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent"
                   }`}
                 >
-                  <div className="flex items-center gap-3 z-10">
+                  <div className="flex items-center gap-2.5">
                     {t.icon}
                     <span>{t.label}</span>
                   </div>
                   {t.count !== undefined && (
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full z-10 transition-colors ${
-                      isActive ? "bg-blue-600 text-white" : "bg-slate-200/70 text-slate-600"
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
+                      isActive ? "bg-zinc-800 text-zinc-200" : "bg-zinc-900 text-zinc-500"
                     }`}>
                       {t.count}
                     </span>
@@ -643,38 +654,41 @@ export default function AdminPage() {
           </nav>
         </div>
 
-        {/* Sidebar Footer */}
+        {/* Sidebar Footer context */}
         <div className="flex flex-col gap-4">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-[13.5px] font-bold text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-950/20 border border-transparent hover:border-rose-950 transition-all cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
-            <span>Sign Out Session</span>
+            <span>Sign Out</span>
           </button>
-          <div className="text-[11px] text-slate-400 font-medium px-4">
+          <div className="text-[10px] text-zinc-600 font-semibold px-3">
             © {new Date().getFullYear()} Google Antigravity
           </div>
         </div>
       </aside>
 
-      {/* ── Header component for mobile navigation (hidden on desktop sidebar) ── */}
+      {/* ── Mobile Layout header ── */}
       <div className="lg:hidden w-full relative z-30">
         <Header session={session} handleLogout={handleLogout} />
-        {/* Mobile Tab row */}
-        <div className="bg-white/70 backdrop-blur-md border-b border-slate-200/50 px-4 py-2 flex gap-1 overflow-x-auto">
+        {/* Mobile menu navigation tab strip */}
+        <div className="bg-white/80 backdrop-blur-md border-b border-zinc-250 px-4 py-2 flex gap-1 overflow-x-auto">
           {([
             { key: "jobs", label: "Openings", icon: <Briefcase className="w-3.5 h-3.5" /> },
-            { key: "cvs", label: "Database", icon: <FileText className="w-3.5 h-3.5" /> },
+            { key: "cvs", label: "Talent Index", icon: <FileText className="w-3.5 h-3.5" /> },
             { key: "users", label: "Supervisors", icon: <Users className="w-3.5 h-3.5" /> },
           ] as const).map(t => (
             <button
               key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer ${
+              onClick={() => {
+                setActiveTab(t.key);
+                setActivePreviewCandidate(null);
+              }}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer ${
                 activeTab === t.key
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-500/10"
-                  : "text-slate-500 bg-slate-100 hover:bg-slate-200"
+                  ? "bg-zinc-950 text-white shadow-sm"
+                  : "text-zinc-500 bg-zinc-100 hover:bg-zinc-200"
               }`}
             >
               {t.icon}
@@ -684,30 +698,28 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* ── Main Content Dashboard ── */}
-      <div className="flex-1 lg:ml-80 min-h-screen flex flex-col p-4 sm:p-8 lg:p-10 relative z-10 pt-20 lg:pt-10 overflow-y-auto">
-        <div className="max-w-5xl w-full mx-auto flex flex-col gap-8 flex-grow pb-16">
+      {/* ── Main content pane ── */}
+      <div className="flex-1 lg:ml-72 min-h-screen flex flex-col p-4 sm:p-8 lg:p-10 relative z-10 pt-20 lg:pt-10 overflow-y-auto">
+        <div className="max-w-5xl w-full mx-auto flex flex-col gap-6 flex-grow pb-16">
           
           {/* Header Panel */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/40 pb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-200/50">
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest">
-                <span>Supervisor Space</span>
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-                <span className="text-slate-500 font-semibold lowercase">
-                  {activeTab === "jobs" ? "listings & submissions" : activeTab === "cvs" ? "cv index database" : "admin controls"}
-                </span>
+              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                <span>Console</span>
+                <ChevronRight className="w-3 h-3" />
+                <span className="text-zinc-500 font-semibold">{activeTab}</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                {activeTab === "jobs" ? "Job Openings Desk" : activeTab === "cvs" ? "Talent database Index" : "Supervisory Credentials"}
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 leading-none">
+                {activeTab === "jobs" ? "Job Openings Desk" : activeTab === "cvs" ? "Talent Registry Index" : "Supervising Registry"}
               </h1>
             </div>
 
-            {/* Quick Action Button for active view */}
+            {/* Quick header action button */}
             {activeTab === "jobs" && (
               <button
                 onClick={openCreate}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-lg shadow-blue-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
               >
                 <Plus className="w-4 h-4" /> Create Opening
               </button>
@@ -715,120 +727,100 @@ export default function AdminPage() {
             {activeTab === "cvs" && (
               <button
                 onClick={() => setShowCvModal(true)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-lg shadow-blue-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
               >
-                <Upload className="w-4 h-4" /> Upload candidate CV
+                <Upload className="w-4 h-4" /> Upload CV File
               </button>
             )}
             {activeTab === "users" && (
               <button
                 onClick={() => setShowUserModal(true)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-lg shadow-blue-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" /> Provision Account
               </button>
             )}
           </div>
 
-          {/* ── Jobs Tab ── */}
+          {/* ── Openings & Reviews Tab ── */}
           {activeTab === "jobs" && (
-            <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-              {/* Stats Row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
+              
+              {/* Vercel-Style Extralight Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "Active Listings", value: stats.totalJobs, icon: <Briefcase className="w-5 h-5 text-blue-600" />, bg: "bg-blue-50 border-blue-100/50" },
-                  { label: "Applications", value: stats.totalApps, icon: <Users className="w-5 h-5 text-emerald-600" />, bg: "bg-emerald-50 border-emerald-100/50" },
-                  { label: "Pending Screening", value: stats.pendingApps, icon: <Clock className="w-5 h-5 text-amber-600" />, bg: "bg-amber-50 border-amber-100/50" },
-                  { label: "CV Repository", value: stats.totalCVs, icon: <FileText className="w-5 h-5 text-rose-600" />, bg: "bg-rose-50 border-rose-100/50" }
+                  { label: "Active Jobs", value: stats.totalJobs, icon: <Briefcase className="w-4 h-4" /> },
+                  { label: "Applications", value: stats.totalApps, icon: <Users className="w-4 h-4" /> },
+                  { label: "Evaluations Pending", value: stats.pendingApps, icon: <Clock className="w-4 h-4" /> },
+                  { label: "Talent Repository", value: stats.totalCVs, icon: <FileText className="w-4 h-4" /> }
                 ].map((s, idx) => (
-                  <div
-                    key={s.label}
-                    className={`p-5 rounded-2xl border ${s.bg} bg-white/60 backdrop-blur-md shadow-sm flex flex-col justify-between gap-4`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</span>
-                      <div className="p-2 rounded-xl bg-white/80 shadow-inner flex items-center justify-center">
-                        {s.icon}
-                      </div>
+                  <div key={idx} className="bg-white border border-zinc-200/60 rounded-2xl p-5 flex flex-col gap-3 shadow-sm hover:border-zinc-300 transition-all">
+                    <div className="flex justify-between items-center text-zinc-400">
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{s.label}</span>
+                      {s.icon}
                     </div>
-                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-none">{s.value}</span>
+                    <span className="text-3xl font-extralight tracking-tight text-zinc-900 leading-none">{s.value}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Jobs Cards Grid */}
+              {/* Jobs List (Minimal List Design) */}
               {jobs.length === 0 ? (
-                <div className="p-16 border border-dashed border-slate-200 bg-white/40 backdrop-blur-md rounded-3xl text-center">
-                  <Briefcase className="w-10 h-10 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium">No published roles found. Click "Create Opening" to start recruiting.</p>
+                <div className="p-16 border border-dashed border-zinc-200 bg-white/40 backdrop-blur-md rounded-2xl text-center">
+                  <Briefcase className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+                  <p className="text-sm text-zinc-500 font-semibold">No job listings published. Click "Create Opening" to start.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="flex flex-col gap-3">
                   {jobs.map((job) => {
                     const styleInfo = getDeptStyle(job.department);
                     return (
-                      <motion.div
+                      <div
                         key={job.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
-                        className="dashboard-card rounded-3xl p-6 flex flex-col justify-between gap-6 border-slate-200/50 relative overflow-hidden"
+                        className="bg-white border border-zinc-200/60 rounded-2xl p-5 hover:border-zinc-300 hover:shadow-sm transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                       >
-                        {/* Shadow Gradient Accent */}
-                        <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-transparent to-transparent opacity-10 rounded-bl-full pointer-events-none ${styleInfo.color}`} />
-
-                        <div className="flex flex-col gap-4">
-                          <div className="flex justify-between items-start gap-4">
-                            <span
-                              style={{ color: styleInfo.color, backgroundColor: styleInfo.bg, borderColor: styleInfo.border }}
-                              className="text-[10px] font-extrabold px-3 py-1 rounded-full border tracking-wide uppercase"
-                            >
-                              {job.department}
-                            </span>
-                            
-                            {/* Card CRUD Options */}
-                            <div className="flex gap-1.5">
-                              <button
-                                onClick={() => openEdit(job)}
-                                className="p-2 border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl transition-all cursor-pointer hover:scale-105"
-                                title="Edit Job Opening"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(job.id)}
-                                className="p-2 border border-rose-100 bg-rose-50/50 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-xl transition-all cursor-pointer hover:scale-105"
-                                title="Delete Job Opening"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col gap-1">
-                            <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-snug group-hover:text-blue-600 transition-colors">
+                        <div className="flex items-start gap-4 min-w-0">
+                          {/* Colored circular dot representing dept */}
+                          <div
+                            style={{ backgroundColor: styleInfo.dot }}
+                            className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex flex-col gap-1">
+                            <h2 className="text-base font-bold text-zinc-900 tracking-tight leading-none hover:text-blue-600 cursor-pointer" onClick={() => router.push(`/admin/jobs/${job.id}`)}>
                               {job.title}
                             </h2>
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                              {job.location}
+                            <div className="flex items-center gap-2 text-xs text-zinc-400 font-semibold">
+                              <span>{job.department}</span>
+                              <span>•</span>
+                              <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {job.location}</span>
                             </div>
                           </div>
-
-                          <p className="text-[13px] text-slate-500 leading-relaxed truncate-3-lines">
-                            {job.description.replace(/#{1,3} |[*_~`•]/g, "").slice(0, 110)}
-                            {job.description.length > 110 ? "..." : ""}
-                          </p>
                         </div>
 
-                        <button
-                          onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer hover:shadow-md hover:shadow-blue-500/5 active:scale-[0.98]"
-                        >
-                          Review Candidate Pool <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      </motion.div>
+                        {/* Controls Toolbar */}
+                        <div className="flex items-center gap-3 self-stretch sm:self-auto justify-end">
+                          <button
+                            onClick={() => openEdit(job)}
+                            className="p-2 border border-zinc-200/60 bg-white hover:bg-zinc-50 text-zinc-400 hover:text-zinc-800 rounded-xl transition-all cursor-pointer"
+                            title="Modify Listing"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(job.id)}
+                            className="p-2 border border-zinc-200/60 bg-rose-50/50 hover:bg-rose-50 text-rose-500 rounded-xl transition-all cursor-pointer"
+                            title="Delete Listing"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                            className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-900 text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-[0.98]"
+                          >
+                            Reviews <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
@@ -836,304 +828,177 @@ export default function AdminPage() {
             </motion.section>
           )}
 
-          {/* ── CV Database Tab ── */}
+          {/* ── Talent Index (DataTable Layout) ── */}
           {activeTab === "cvs" && (
-            <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex flex-col gap-6">
+            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-4">
               
-              {/* Search & Filter Toolbar */}
-              <div className="bg-white/70 backdrop-blur-md rounded-2xl p-4 border border-slate-200/50 shadow-sm flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+              {/* Search Toolbar */}
+              <div className="bg-white border border-zinc-200/60 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Search talent registry (name, email, phone)..."
+                    placeholder="Search candidate registry database..."
                     value={cvSearch}
                     onChange={e => setCvSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200/80 bg-white/90 text-sm focus:outline-none focus:border-blue-600 focus:shadow-inner transition-all text-slate-800"
+                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-zinc-200/80 bg-white text-xs font-semibold focus:outline-none focus:border-blue-600 transition-colors text-zinc-800"
                   />
                 </div>
                 
-                <div className="flex gap-2">
-                  <select
-                    value={cvFilter}
-                    onChange={e => setCvFilter(e.target.value)}
-                    className="px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white/90 text-xs font-bold text-slate-600 focus:outline-none focus:border-blue-600 cursor-pointer"
-                  >
-                    <option value="All">All Pathways</option>
-                    <option value="Not Called">Not Called</option>
-                    <option value="Called">Called</option>
-                    <option value="Interviewing">Interviewing</option>
-                    <option value="Rejected">Rejected</option>
-                  </select>
-                </div>
+                <select
+                  value={cvFilter}
+                  onChange={e => setCvFilter(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-zinc-200/80 bg-white text-xs font-bold text-zinc-600 focus:outline-none cursor-pointer"
+                >
+                  <option value="All">All Statuses</option>
+                  <option value="Not Called">Not Called</option>
+                  <option value="Called">Called</option>
+                  <option value="Interviewing">Interviewing</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
               </div>
 
-              {/* CV Lists */}
+              {/* Data Table */}
               {cvs.length === 0 ? (
-                <div className="p-16 border border-dashed border-slate-200 bg-white/40 backdrop-blur-md rounded-3xl text-center">
-                  <FileText className="w-10 h-10 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium">No CV files archived. Select "Upload candidate CV" to append.</p>
+                <div className="p-16 border border-dashed border-zinc-200 bg-white/40 backdrop-blur-md rounded-2xl text-center">
+                  <FileText className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+                  <p className="text-sm text-zinc-500 font-semibold">No candidate profile files indexed.</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
-                  {cvs.filter(c => {
-                    const matchesFilter = cvFilter === "All" || c.status === cvFilter;
-                    const matchesSearch = !cvSearch.trim() ||
-                      c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
-                      (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase())) ||
-                      (c.phone && c.phone.toLowerCase().includes(cvSearch.toLowerCase()));
-                    return matchesFilter && matchesSearch;
-                  }).map((cv) => {
-                    const cvComments = parseComments(cv.comments);
-                    const colors = [
-                      "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-                      "linear-gradient(135deg, #10b981 0%, #047857 100%)",
-                      "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
-                      "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)"
-                    ];
-                    const colorIndex = cv.name.charCodeAt(0) % colors.length;
-                    const gradient = colors[colorIndex];
-                    const initials = cv.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-                    const statusStyle = getStatusStyle(cv.status);
-
-                    return (
-                      <motion.div
-                        key={cv.id}
-                        layout
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="bg-white/60 border border-slate-200/50 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-md"
-                      >
-                        {/* Upper primary info */}
-                        <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100">
-                          <div className="flex items-center gap-4 min-w-0">
-                            <div
-                              style={{ background: gradient }}
-                              className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-slate-900/5 flex-shrink-0"
+                <div className="bg-white border border-zinc-200/60 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="premium-table">
+                      <thead>
+                        <tr>
+                          <th>Candidate</th>
+                          <th>Status</th>
+                          <th>Indexed Date</th>
+                          <th className="text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cvs.filter(c => {
+                          const matchesFilter = cvFilter === "All" || c.status === cvFilter;
+                          const matchesSearch = !cvSearch.trim() ||
+                            c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
+                            (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase()));
+                          return matchesFilter && matchesSearch;
+                        }).map((cv) => {
+                          const statusStyle = getStatusStyle(cv.status);
+                          const initials = cv.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+                          
+                          return (
+                            <tr
+                              key={cv.id}
+                              className="group cursor-pointer"
+                              onClick={() => setActivePreviewCandidate(cv)}
                             >
-                              {initials}
-                            </div>
-                            <div className="min-w-0 flex flex-col gap-1">
-                              <div className="flex items-center gap-2.5 flex-wrap">
-                                <h3 className="text-base font-bold text-slate-950 truncate leading-none">{cv.name}</h3>
-                                <span
-                                  style={{ color: statusStyle.color, backgroundColor: statusStyle.bg, borderColor: statusStyle.border }}
-                                  className="text-[10px] font-bold px-2 py-0.5 border rounded-lg whitespace-nowrap"
-                                >
-                                  {cv.status}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2.5 flex-wrap text-xs text-slate-400 font-semibold">
-                                {cv.email && <span className="truncate">{cv.email}</span>}
-                                {cv.phone && <span>• {cv.phone}</span>}
-                                <span>• Indexed {new Date(cv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Interactive status selectors */}
-                          <div className="flex items-center gap-2 self-stretch md:self-auto justify-end flex-wrap">
-                            <select
-                              value={cv.status}
-                              onChange={e => handleCvStatus(cv.id, e.target.value)}
-                              className="px-3 py-2 rounded-xl border border-slate-200/80 bg-white text-xs font-bold text-slate-600 focus:outline-none cursor-pointer"
-                            >
-                              <option value="Not Called">Not Called</option>
-                              <option value="Called">Called</option>
-                              <option value="Interviewing">Interviewing</option>
-                              <option value="Rejected">Rejected</option>
-                            </select>
-
-                            <button
-                              onClick={() => {
-                                setEditingCv(cv);
-                                setCvName(cv.name);
-                                setCvEmail(cv.email || "");
-                                setCvPhone(cv.phone || "");
-                                setShowCvModal(true);
-                              }}
-                              className="p-2 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl transition-all cursor-pointer"
-                              title="Edit candidate profile"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => { setSelectedCV(cv.cv_url); setCvOpen(true); }}
-                              className="p-2 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl transition-all cursor-pointer"
-                              title="View Document sandbox"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCv(cv.id)}
-                              className="p-2 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700 rounded-xl transition-all cursor-pointer"
-                              title="Delete index file"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Recruiter Remarks */}
-                        <div className="bg-slate-50/50 p-4 border-t border-slate-100">
-                          <div
-                            onClick={() => setExpandedCvComments(v => ({ ...v, [cv.id]: !v[cv.id] }))}
-                            className="flex justify-between items-center cursor-pointer text-slate-500"
-                          >
-                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide">
-                              <MessageSquare className="w-4 h-4 text-blue-500" />
-                              <span>Recruiter Remarks</span>
-                              {cvComments.length > 0 && (
-                                <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{cvComments.length}</span>
-                              )}
-                            </div>
-                            <span className="text-xs font-bold text-blue-600 hover:underline">
-                              {expandedCvComments[cv.id] ? "Collapse comments" : "Expand comments"}
-                            </span>
-                          </div>
-
-                          <AnimatePresence>
-                            {expandedCvComments[cv.id] && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden mt-4"
-                              >
-                                <div className="flex flex-col gap-4">
-                                  {cvComments.length > 0 && (
-                                    <div className="max-h-48 overflow-y-auto flex flex-col gap-3 pr-2">
-                                      {cvComments.map(comment => (
-                                        <div key={comment.id} className="comment-bubble p-3 rounded-2xl relative flex flex-col gap-1">
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-xs font-bold text-blue-600">{comment.author.split("@")[0]}</span>
-                                            <span className="text-[10px] font-bold text-slate-400">
-                                              {new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                                            </span>
-                                          </div>
-                                          <p className="text-[12.5px] text-slate-700 leading-relaxed pr-6">{comment.text}</p>
-                                          
-                                          <button
-                                            onClick={async (e) => {
-                                              e.stopPropagation();
-                                              if (confirm("Delete this comment?")) {
-                                                const updated = cvComments.filter(c => c.id !== comment.id);
-                                                await handleUpdateCvComments(cv.id, JSON.stringify(updated));
-                                              }
-                                            }}
-                                            className="absolute top-2 right-2 border-none bg-none text-slate-300 hover:text-rose-500 cursor-pointer"
-                                          >
-                                            <X className="w-3.5 h-3.5" />
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-
-                                  <div className="flex gap-2">
-                                    <textarea
-                                      placeholder="Add evaluation note..."
-                                      value={cvCommentValues[cv.id] ?? ""}
-                                      onChange={e => setCvCommentValues(v => ({ ...v, [cv.id]: e.target.value }))}
-                                      rows={1}
-                                      className="flex-1 rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 bg-white resize-none"
-                                    />
-                                    <button
-                                      disabled={!(cvCommentValues[cv.id] ?? "").trim()}
-                                      onClick={async () => {
-                                        const text = (cvCommentValues[cv.id] ?? "").trim();
-                                        if (!text) return;
-                                        const newComment: Comment = {
-                                          id: Math.random().toString(36).substring(2, 9),
-                                          text,
-                                          created_at: new Date().toISOString(),
-                                          author: session?.user?.email ?? "Admin",
-                                        };
-                                        const updated = [...cvComments, newComment];
-                                        await handleUpdateCvComments(cv.id, JSON.stringify(updated));
-                                        setCvCommentValues(v => ({ ...v, [cv.id]: "" }));
-                                      }}
-                                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer self-end shadow-sm"
-                                    >
-                                      <Send className="w-3 h-3" /> Add
-                                    </button>
+                              <td>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-700 font-bold text-[11px] border border-zinc-200">
+                                    {initials}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="font-bold text-zinc-950">{cv.name}</span>
+                                    <span className="text-xs text-zinc-400 font-semibold">{cv.email || "No email handle"}</span>
                                   </div>
                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                              </td>
+                              <td>
+                                <span className="inline-flex items-center gap-1.5">
+                                  <span style={{ backgroundColor: statusStyle.dot }} className="w-1.5 h-1.5 rounded-full" />
+                                  <span style={{ color: statusStyle.color }} className="text-xs font-bold">{cv.status}</span>
+                                </span>
+                              </td>
+                              <td className="text-xs font-semibold text-zinc-400">
+                                {new Date(cv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              </td>
+                              <td>
+                                <div className="flex gap-1.5 justify-end" onClick={e => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => {
+                                      setEditingCv(cv);
+                                      setCvName(cv.name);
+                                      setCvEmail(cv.email || "");
+                                      setCvPhone(cv.phone || "");
+                                      setShowCvModal(true);
+                                    }}
+                                    className="p-1.5 bg-white border border-zinc-200 hover:bg-slate-50 text-zinc-400 hover:text-zinc-800 rounded-lg transition-all cursor-pointer"
+                                    title="Edit Candidate"
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCv(cv.id)}
+                                    className="p-1.5 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 rounded-lg transition-all cursor-pointer"
+                                    title="Delete Record"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </motion.section>
           )}
 
-          {/* ── Users Tab ── */}
+          {/* ── Supervisor Accounts Tab ── */}
           {activeTab === "users" && (
-            <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex flex-col gap-6">
+            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
               {adminUsers.length === 0 ? (
-                <div className="p-16 border border-dashed border-slate-200 bg-white/40 backdrop-blur-md rounded-3xl text-center">
-                  <Users className="w-10 h-10 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium">Gathering administrative accounts details...</p>
+                <div className="p-16 border border-dashed border-zinc-200 bg-white/40 backdrop-blur-md rounded-2xl text-center">
+                  <Users className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+                  <p className="text-sm text-zinc-500 font-semibold font-mono tracking-tight animate-pulse-slow">Loading supervisory accounts list...</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {adminUsers.map((u) => {
                     const initials = (u.name ?? u.email ?? "?")[0].toUpperCase();
-                    const colors = [
-                      "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-                      "linear-gradient(135deg, #10b981 0%, #047857 100%)",
-                      "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)"
-                    ];
-                    const gradient = colors[u.email.charCodeAt(0) % colors.length];
-
                     return (
-                      <motion.div
+                      <div
                         key={u.id}
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white/60 border border-slate-200/50 rounded-3xl p-5 flex flex-col justify-between gap-5 relative overflow-hidden backdrop-blur-md shadow-sm"
+                        className="bg-white border border-zinc-200/60 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between gap-5 shadow-sm hover:border-zinc-300 transition-all"
                       >
-                        <div className="flex items-center gap-4">
-                          <div
-                            style={{ background: gradient }}
-                            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-slate-900/5 flex-shrink-0"
-                          >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-white font-extrabold text-sm shadow-md">
                             {initials}
                           </div>
-                          <div className="min-w-0 flex flex-col gap-0.5">
-                            <p className="text-base font-bold text-slate-900 truncate leading-none">
-                              {u.name ?? <span className="italic text-slate-400 font-medium">Unnamed Supervisor</span>}
+                          <div className="min-w-0">
+                            <p className="font-bold text-zinc-950 truncate leading-none">
+                              {u.name || <span className="italic text-zinc-400 font-semibold">Unnamed Admin</span>}
                             </p>
-                            <p className="text-xs font-semibold text-slate-400 truncate">{u.email}</p>
+                            <p className="text-xs text-zinc-400 font-semibold mt-0.5">{u.email}</p>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-500">
+                        <div className="flex flex-col gap-1.5 border-t border-zinc-100 pt-4 text-[11px] font-semibold text-zinc-400">
                           <div className="flex justify-between">
                             <span>Key Provisioned:</span>
-                            <span className="text-slate-800">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                            <span className="text-zinc-700">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Last Sign-In:</span>
-                            <span className="text-slate-800">
+                            <span className="text-zinc-700">
                               {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
                             </span>
                           </div>
                         </div>
 
-                        {/* Revoke administrator access key */}
+                        {/* Revoke account button */}
                         <button
                           onClick={() => handleDeleteAdminUser(u.id)}
-                          className="absolute top-4 right-4 p-2 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700 rounded-xl transition-all cursor-pointer"
-                          title="Revoke supervisory rights"
+                          className="absolute top-4 right-4 p-2 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 rounded-xl cursor-pointer transition-all"
+                          title="Revoke access key"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>
@@ -1143,83 +1008,244 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* ── Job Creation/Modification Modal ── */}
+      {/* ── ╔══════╗ Right Slide-over profile preview drawer (Ashby Style) ╔══════╗ ── */}
       <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {activePreviewCandidate && (
+          <div className="fixed inset-0 z-50 flex justify-end">
+            {/* Backdrop Blur */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
-              onClick={closeModal}
+              className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm"
+              onClick={() => setActivePreviewCandidate(null)}
             />
-            
+
+            {/* Split screen slide drawer */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 380, damping: 35 }}
+              className="relative w-full max-w-4xl h-full bg-white shadow-2xl border-l border-zinc-200 z-10 flex flex-col md:flex-row overflow-hidden"
+            >
+              {/* LEFT HALF: Candidate Info & Comments Timeline */}
+              <div className="w-full md:w-1/2 h-full flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-100">
+                <div className="flex-1 overflow-y-auto p-6 premium-scrollbar flex flex-col gap-6">
+                  
+                  {/* Drawer Header */}
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-white font-extrabold text-xs">
+                        {activePreviewCandidate.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </div>
+                      <div>
+                        <h2 className="text-base font-bold text-zinc-950">{activePreviewCandidate.name}</h2>
+                        <span className="text-xs text-zinc-400 font-semibold">Candidate Record Overview</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setActivePreviewCandidate(null)}
+                      className="p-2 hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 rounded-xl transition-all cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Candidate Quick Contact Details */}
+                  <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-4 flex flex-col gap-3">
+                    <div className="flex items-center gap-2.5 text-xs text-zinc-600 font-semibold">
+                      <Mail className="w-4 h-4 text-zinc-400" />
+                      <span>{activePreviewCandidate.email || "No email provided"}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-xs text-zinc-600 font-semibold">
+                      <Phone className="w-4 h-4 text-zinc-400" />
+                      <span>{activePreviewCandidate.phone || "No contact phone"}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-xs text-zinc-600 font-semibold">
+                      <Calendar className="w-4 h-4 text-zinc-400" />
+                      <span>Indexed: {new Date(activePreviewCandidate.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    </div>
+                  </div>
+
+                  {/* Status Picker Selector */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Candidate Status</label>
+                    <select
+                      value={activePreviewCandidate.status}
+                      onChange={e => handleCvStatus(activePreviewCandidate.id, e.target.value)}
+                      className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-xs font-bold text-zinc-700 bg-white focus:outline-none cursor-pointer"
+                    >
+                      <option value="Not Called">Not Called</option>
+                      <option value="Called">Called</option>
+                      <option value="Interviewing">Interviewing</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+
+                  {/* Slack-style Remarks thread timeline */}
+                  <div className="flex flex-col gap-4">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Recruiter Remarks feed</span>
+                    </label>
+
+                    <div className="flex flex-col gap-3 max-h-60 overflow-y-auto pr-1 premium-scrollbar">
+                      {parseComments(activePreviewCandidate.comments).length === 0 ? (
+                        <p className="text-xs text-zinc-400 italic">No notes created. Write a comment below to index evaluation logs.</p>
+                      ) : (
+                        parseComments(activePreviewCandidate.comments).map(comment => (
+                          <div key={comment.id} className="comment-bubble p-3 rounded-2xl relative flex flex-col gap-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-bold text-blue-600">{comment.author.split("@")[0]}</span>
+                              <span className="text-[9px] font-bold text-slate-400">
+                                {new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
+                            <p className="text-[12px] text-zinc-700 leading-relaxed pr-6">{comment.text}</p>
+                            <button
+                              onClick={async () => {
+                                if (confirm("Delete this remark?")) {
+                                  const freshComments = parseComments(activePreviewCandidate.comments).filter(c => c.id !== comment.id);
+                                  await handleUpdateCvComments(activePreviewCandidate.id, JSON.stringify(freshComments));
+                                }
+                              }}
+                              className="absolute top-2.5 right-2 text-zinc-300 hover:text-rose-500 cursor-pointer transition-colors border-none bg-none"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Input box at bottom of Remarks panel */}
+                <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex gap-2">
+                  <textarea
+                    placeholder="Append recruiter note..."
+                    value={cvCommentValues[activePreviewCandidate.id] ?? ""}
+                    onChange={e => setCvCommentValues(v => ({ ...v, [activePreviewCandidate.id]: e.target.value }))}
+                    rows={1}
+                    className="flex-1 rounded-xl border border-zinc-200 p-2.5 text-xs text-zinc-800 focus:outline-none bg-white resize-none"
+                  />
+                  <button
+                    disabled={!(cvCommentValues[activePreviewCandidate.id] ?? "").trim()}
+                    onClick={async () => {
+                      const text = (cvCommentValues[activePreviewCandidate.id] ?? "").trim();
+                      if (!text) return;
+                      const newComment: Comment = {
+                        id: Math.random().toString(36).substring(2, 9),
+                        text,
+                        created_at: new Date().toISOString(),
+                        author: session?.user?.email ?? "Admin",
+                      };
+                      const updated = [...parseComments(activePreviewCandidate.comments), newComment];
+                      await handleUpdateCvComments(activePreviewCandidate.id, JSON.stringify(updated));
+                      setCvCommentValues(v => ({ ...v, [activePreviewCandidate.id]: "" }));
+                    }}
+                    className="bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm self-end"
+                  >
+                    <Send className="w-3 h-3" /> Add
+                  </button>
+                </div>
+              </div>
+
+              {/* RIGHT HALF: Resume File Viewer Iframe Sandbox */}
+              <div className="w-full md:w-1/2 h-full bg-zinc-100 p-4 flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-zinc-500">Document sandbox</span>
+                  <a
+                    href={activePreviewCandidate.cv_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline text-decoration-none"
+                  >
+                    Open Externally <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+                <iframe
+                  src={activePreviewCandidate.cv_url}
+                  className="w-full flex-1 border border-zinc-200 rounded-2xl bg-white shadow-sm"
+                  title="Document Preview"
+                />
+              </div>
+
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Job Modals overlays ── */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-zinc-950/40 backdrop-blur-md" onClick={closeModal} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative w-full max-w-xl bg-white border border-slate-200/80 rounded-[32px] p-8 sm:p-10 shadow-2xl overflow-y-auto max-h-[90vh] flex flex-col gap-6"
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative w-full max-w-xl bg-white border border-zinc-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-5 overflow-y-auto max-h-[90vh]"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-950 tracking-tight leading-none">
-                    {editingJob ? "Adjust Listing Details" : "Publish New Role"}
-                  </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-1">Configure operational parameters for target screen pool.</p>
+                  <h2 className="text-lg font-bold text-zinc-950">{editingJob ? "Adjust Listing Details" : "Publish New Role"}</h2>
+                  <p className="text-xs text-zinc-400 font-semibold mt-0.5">Configure listings and evaluation parameters.</p>
                 </div>
-                <button onClick={closeModal} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition-all cursor-pointer">
-                  <X className="w-5 h-5" />
+                <button onClick={closeModal} className="p-2 hover:bg-zinc-100 rounded-xl text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Job Title</label>
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Job Title</label>
                   <input
                     value={title}
                     onChange={e => setTitle(e.target.value)}
-                    placeholder="e.g. Lead Technical Architect"
-                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                    placeholder="e.g. Senior Software Architect"
+                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                   />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Department</label>
+                    <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Department</label>
                     <input
                       value={department}
                       onChange={e => setDepartment(e.target.value)}
                       placeholder="e.g. Engineering"
-                      className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                      className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Location</label>
+                    <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Location</label>
                     <input
                       value={location}
                       onChange={e => setLocation(e.target.value)}
-                      placeholder="e.g. London, UK / Hybrid"
-                      className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                      placeholder="e.g. London / Remote"
+                      className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Description (Supports Markdown)</label>
-                  <div className="flex gap-1.5 bg-slate-50 border border-slate-200/50 p-1.5 rounded-xl">
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Role Description (Markdown)</label>
+                  <div className="flex gap-1 bg-zinc-50 border border-zinc-200 p-1.5 rounded-xl self-start">
                     {[
                       { label: "Bold", fn: insertBold },
                       { label: "Heading", fn: insertHeading },
                       { label: "Bullet", fn: insertBullet }
-                    ].map(btn => (
+                    ].map(b => (
                       <button
-                        key={btn.label}
+                        key={b.label}
                         type="button"
-                        onClick={btn.fn}
-                        className="px-3 py-1 bg-white hover:bg-slate-100 text-xs font-bold text-slate-600 border border-slate-200/60 rounded-lg cursor-pointer"
+                        onClick={b.fn}
+                        className="px-2.5 py-1 bg-white hover:bg-zinc-100 border border-zinc-200 text-[10px] font-bold text-zinc-600 rounded-lg cursor-pointer"
                       >
-                        {btn.label}
+                        {b.label}
                       </button>
                     ))}
                   </div>
@@ -1227,23 +1253,23 @@ export default function AdminPage() {
                     ref={descRef}
                     value={description}
                     onChange={e => setDescription(e.target.value)}
-                    rows={6}
-                    placeholder="Provide role prerequisites, compensation parameters, and tasks..."
-                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200 resize-none"
+                    rows={5}
+                    placeholder="Describe role specifications..."
+                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none resize-none"
                   />
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-6 flex gap-3 mt-4">
+              <div className="border-t border-zinc-100 pt-6 flex gap-3 mt-2">
                 <button
                   onClick={closeModal}
-                  className="flex-1 py-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-sm transition-all cursor-pointer"
+                  className="flex-1 py-3 border border-zinc-250 hover:bg-zinc-50 text-zinc-500 rounded-xl font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all cursor-pointer shadow-lg shadow-blue-500/10"
+                  className="flex-1 py-3 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold text-xs shadow-sm cursor-pointer"
                 >
                   {editingJob ? "Save Changes" : "Publish opening"}
                 </button>
@@ -1253,142 +1279,81 @@ export default function AdminPage() {
         )}
       </AnimatePresence>
 
-      {/* ── CV Viewer Sandbox Modal ── */}
-      <AnimatePresence>
-        {cvOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/30 backdrop-blur-md"
-              onClick={() => setCvOpen(false)}
-            />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              className="relative w-full max-w-4xl h-[85vh] bg-white border border-slate-200 rounded-[32px] overflow-hidden flex flex-col shadow-2xl"
-            >
-              <div className="p-4 sm:p-5 border-b border-slate-100 flex justify-between items-center bg-white">
-                <h3 className="text-base font-bold text-slate-950">Candidate CV Sandbox</h3>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={selectedCV}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition-all text-decoration-none"
-                  >
-                    Open Externally <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                  <button onClick={() => setCvOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-700 cursor-pointer">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex-1 bg-slate-100 p-3 sm:p-4">
-                <iframe src={selectedCV} className="w-full h-full border border-slate-200/50 rounded-2xl bg-white" title="Resume Document" />
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ── CV Upload / Modification Modal ── */}
+      {/* ── Independent CV upload modal ── */}
       <AnimatePresence>
         {showCvModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-zinc-950/40 backdrop-blur-md" onClick={closeCvModal} />
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
-              onClick={closeCvModal}
-            />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative w-full max-w-md bg-white border border-slate-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative w-full max-w-sm bg-white border border-zinc-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-5"
             >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-950 tracking-tight leading-none">
-                    {editingCv ? "Modify Candidate Record" : "Index Candidate Profile"}
-                  </h2>
-                  <p className="text-xs text-slate-500 font-medium mt-1">
-                    {editingCv ? "Adjust existing record parameters." : "Index target resume directly into database."}
-                  </p>
-                </div>
-                <button onClick={closeCvModal} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">
-                  <X className="w-4 h-4" />
-                </button>
+              <div>
+                <h2 className="text-lg font-bold text-zinc-950">{editingCv ? "Modify Candidate Profile" : "Index Candidate Profile"}</h2>
+                <p className="text-xs text-zinc-450 font-semibold mt-0.5">Load resume details directly to talent index.</p>
               </div>
 
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Candidate Name <span className="text-rose-500">*</span></label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Candidate Name *</label>
                   <input
                     value={cvName}
                     onChange={e => setCvName(e.target.value)}
                     placeholder="Jane Doe"
-                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Email address</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Email address</label>
                   <input
                     value={cvEmail}
                     onChange={e => setCvEmail(e.target.value)}
                     placeholder="jane@doe.com"
                     type="email"
-                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Phone contact</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Phone contact</label>
                   <input
                     value={cvPhone}
                     onChange={e => setCvPhone(e.target.value)}
                     placeholder="+91 98765 43210"
-                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                    {editingCv ? "Resume File (optional - upload to replace)" : "Resume File (PDF, DOC)"} {!editingCv && <span className="text-rose-500">*</span>}
-                  </label>
-                  <div className="relative border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100/50 p-6 rounded-2xl text-center cursor-pointer hover:border-slate-300 transition-all">
+                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Resume Document *</label>
+                  <div className="relative border border-dashed border-zinc-200 bg-zinc-50 hover:bg-zinc-100 p-5 rounded-2xl text-center cursor-pointer">
                     <input
                       type="file"
                       accept=".pdf,.doc,.docx"
                       onChange={e => { const f = e.target.files?.[0]; if (f) setCvFile(f); }}
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                     />
-                    <Upload className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                    <p className="text-xs font-bold text-slate-700">{cvFile ? cvFile.name : "Select credentials PDF file"}</p>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1">Supports PDF, DOC, DOCX up to 5 MB</p>
+                    <Upload className="w-5 h-5 text-zinc-450 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-zinc-700 truncate">{cvFile ? cvFile.name : "Select PDF resume file"}</p>
+                    <p className="text-[9px] font-semibold text-zinc-400 mt-1">Supports PDF, DOC, DOCX up to 5 MB</p>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-6 flex gap-3 mt-2">
+              <div className="border-t border-zinc-100 pt-6 flex gap-3 mt-2">
                 <button
                   onClick={closeCvModal}
-                  className="flex-1 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                  className="flex-1 py-2.5 border border-zinc-250 hover:bg-zinc-50 text-zinc-500 rounded-xl font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={uploadingCv}
                   onClick={handleSaveCv}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold text-xs shadow-sm cursor-pointer disabled:opacity-50"
                 >
-                  {uploadingCv ? (editingCv ? "Saving..." : "Uploading...") : (editingCv ? "Save Changes" : "Save Profile")}
+                  {uploadingCv ? "Uploading..." : "Save Profile"}
                 </button>
               </div>
             </motion.div>
@@ -1396,7 +1361,7 @@ export default function AdminPage() {
         )}
       </AnimatePresence>
 
-      {/* ── User Add / Provision Modal ── */}
+      {/* ── Supervisor Accounts provisioning modal ── */}
       <AnimatePresence>
         {showUserModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1404,143 +1369,174 @@ export default function AdminPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+              className="absolute inset-0 bg-zinc-950/40 backdrop-blur-md"
               onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }}
             />
-
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="relative w-full max-w-sm bg-white border border-slate-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative w-full max-w-sm bg-white border border-zinc-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
             >
               {createdUser ? (
-                // Access setup live success box
-                <div className="flex flex-col gap-6 text-center items-center">
-                  <div className="w-14 h-14 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shadow-inner">
-                    <CheckCircle2 className="w-6 h-6" />
+                <div className="flex flex-col gap-5 text-center items-center">
+                  <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shadow-inner">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
-                  
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-xl font-bold text-slate-950 leading-none">Supervisor Added</h2>
-                    <p className="text-xs text-slate-500 font-semibold mt-1">Registry key live. Copy access handles below.</p>
+                  <div>
+                    <h2 className="text-base font-bold text-zinc-950">Access Key Granted</h2>
+                    <p className="text-xs text-zinc-400 font-semibold mt-1">Supervisor user account created successfully.</p>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-4 text-left w-full flex flex-col gap-3">
+                  <div className="bg-zinc-50 border border-zinc-150 rounded-2xl p-4 text-left w-full flex flex-col gap-3 text-xs">
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Supervisor Name</span>
-                      <p className="text-xs font-bold text-slate-800">{createdUser.name || "N/A"}</p>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Name</span>
+                      <p className="font-bold text-zinc-800 mt-0.5">{createdUser.name || "N/A"}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Email address</span>
-                      <p className="text-xs font-bold text-slate-800">{createdUser.email}</p>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Handle</span>
+                      <p className="font-bold text-zinc-800 mt-0.5">{createdUser.email}</p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 w-full">
+                  <div className="flex flex-col gap-2 w-full mt-2">
                     <button
                       onClick={() => copyToClipboard(createdUser.email, "email")}
-                      className="w-full py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-xs cursor-pointer transition-all"
+                      className="w-full py-2.5 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 rounded-xl font-bold text-xs cursor-pointer transition-all"
                     >
-                      {copiedField === "email" ? "Copied handle" : "Copy email handle"}
+                      {copiedField === "email" ? "Copied" : "Copy Email Handle"}
                     </button>
                     <div className="flex gap-2 mt-2 w-full">
                       <button
                         onClick={() => setCreatedUser(null)}
-                        className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs cursor-pointer shadow-sm"
+                        className="flex-1 py-2.5 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold text-xs cursor-pointer shadow-sm"
                       >
                         Add Another
                       </button>
                       <button
                         onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }}
-                        className="flex-1 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-xs cursor-pointer"
+                        className="flex-1 py-2.5 border border-zinc-200 hover:bg-zinc-50 text-zinc-500 rounded-xl font-bold text-xs cursor-pointer"
                       >
-                        Exit Registry
+                        Close Desk
                       </button>
                     </div>
                   </div>
                 </div>
               ) : (
-                // Creation Form
                 <>
                   <div className="flex justify-between items-start">
                     <div>
-                      <h2 className="text-xl font-bold text-slate-950 tracking-tight leading-none">Provision Keys</h2>
-                      <p className="text-xs text-slate-500 font-medium mt-1">Setup supervisor login credentials details.</p>
+                      <h2 className="text-lg font-bold text-zinc-950">Provision Keys</h2>
+                      <p className="text-xs text-zinc-455 font-semibold mt-0.5">Create new supervisor credentials.</p>
                     </div>
-                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">
+                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }} className="p-2 hover:bg-zinc-100 text-zinc-450 hover:text-zinc-700 rounded-xl cursor-pointer">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
 
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Full Name</label>
+                      <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Full Name</label>
                       <input
                         value={newUserName}
                         onChange={e => setNewUserName(e.target.value)}
                         placeholder="Jane Doe"
-                        className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                        className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Email address <span className="text-rose-500">*</span></label>
+                      <label className="text-[10px] font-bold text-zinc-455 uppercase tracking-widest">Email address *</label>
                       <input
                         value={newUserEmail}
                         onChange={e => setNewUserEmail(e.target.value)}
                         placeholder="supervisor@example.com"
                         type="email"
-                        className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                        className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Access Key <span className="text-rose-500">*</span></label>
+                      <label className="text-[10px] font-bold text-zinc-455 uppercase tracking-widest">Access Key *</label>
                       <div className="relative">
                         <input
                           value={newUserPass}
                           onChange={e => setNewUserPass(e.target.value)}
                           placeholder="••••••••"
                           type={showPass ? "text" : "password"}
-                          className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200 pr-12"
+                          className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none pr-12"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-zinc-400 hover:text-zinc-600 cursor-pointer"
                         >
                           {showPass ? "HIDE" : "SHOW"}
                         </button>
                       </div>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Verify Access Key <span className="text-rose-500">*</span></label>
+                      <label className="text-[10px] font-bold text-zinc-455 uppercase tracking-widest">Verify Access Key *</label>
                       <input
                         value={newUserConfirm}
                         onChange={e => setNewUserConfirm(e.target.value)}
                         placeholder="••••••••"
                         type={showPass ? "text" : "password"}
-                        className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                        className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
                       />
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-100 pt-6 flex gap-3 mt-2">
+                  <div className="border-t border-zinc-100 pt-6 flex gap-3 mt-2">
                     <button
                       onClick={() => { setShowUserModal(false); resetUserForm(); }}
-                      className="flex-1 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                      className="flex-1 py-2.5 border border-zinc-250 hover:bg-zinc-50 text-zinc-500 rounded-xl font-bold text-xs cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       disabled={savingUser || !newUserEmail.trim() || !newUserPass.trim()}
                       onClick={handleCreateAdminUser}
-                      className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-60"
+                      className="flex-1 py-2.5 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold text-xs shadow-sm cursor-pointer disabled:opacity-60"
                     >
                       {savingUser ? "Provisions..." : "Grant Access"}
                     </button>
                   </div>
                 </>
               )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Fallback Full-Screen Resume Viewer modal */}
+      <AnimatePresence>
+        {cvOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm" onClick={() => setCvOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="relative w-full max-w-4xl h-[85vh] bg-white border border-zinc-200 rounded-[32px] overflow-hidden flex flex-col shadow-2xl"
+            >
+              <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-white">
+                <h3 className="text-base font-bold text-zinc-950">Candidate CV Sandbox</h3>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={selectedCV}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-4 py-2 border border-zinc-200 hover:bg-zinc-50 rounded-xl text-xs font-bold text-zinc-650 hover:text-zinc-900 transition-all text-decoration-none"
+                  >
+                    Open Externally <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button onClick={() => setCvOpen(false)} className="p-2 hover:bg-zinc-100 rounded-xl text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 bg-zinc-100 p-4">
+                <iframe src={selectedCV} className="w-full h-full border border-zinc-200 rounded-2xl bg-white" title="Resume Sandbox" />
+              </div>
             </motion.div>
           </div>
         )}
