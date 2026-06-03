@@ -102,38 +102,32 @@ export default function JobsPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pt-32 sm:pt-40 pb-6 sm:pb-8">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pt-20 sm:pt-24 pb-4">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-3xl"
         >
-          {/* Pill Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-50/50 text-blue-600 text-xs font-bold uppercase tracking-wider mb-5">
-            <Sparkles className="w-3.5 h-3.5" />
-            Careers Portal
-          </div>
-          
           <h1 className="text-[36px] sm:text-[54px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-gradient">
             Shape the Future<br />
             With Antigravity
           </h1>
-          <p className="mt-4 sm:mt-6 text-base sm:text-lg leading-[1.65] text-zinc-500 max-w-xl font-medium">
+          <p className="mt-4 text-base sm:text-lg leading-[1.65] text-zinc-500 max-w-xl font-medium">
             Join a fast-moving, design-obsessed team building the next generation of web infrastructure. Discover open opportunities below.
           </p>
         </motion.div>
       </section>
 
       {/* Search & Filter Bar */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-10">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-6">
         {/* Dynamic Live Stats Bar */}
         {mounted && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="flex flex-wrap items-center gap-3 mb-5 pl-1"
+            className="flex flex-wrap items-center gap-3 mb-4 pl-1"
           >
             {/* Live Database Badge */}
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 shadow-sm">
