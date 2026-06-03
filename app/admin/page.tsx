@@ -7,8 +7,8 @@ import { supabase } from "../../src/lib/supabase";
 import {
   Plus, MapPin, Briefcase, FileText, X, ExternalLink,
   CheckCircle2, Upload, MessageSquare, Send, Users,
-  UserPlus, ArrowRight,
-  Clock, Trash2, Edit2, Sparkles, Copy, Eye, Lock, Search
+  UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
+  Copy, Eye, Lock, Search, LogOut, Shield, ChevronRight
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -37,48 +37,52 @@ function parseComments(raw: string | null | undefined): Comment[] {
   return [{ id: "legacy", text: raw, created_at: new Date().toISOString(), author: "Admin" }];
 }
 
-/* ─── Google Brand colors for departments ─── */
+/* ─── Department theme colors ─── */
 function getDeptStyle(dept: string) {
   const d = dept.toLowerCase();
   if (d.includes("engineer") || d.includes("tech")) {
     return {
-      color: "var(--google-blue, #1a73e8)",
+      color: "#1a73e8",
       bg: "rgba(26, 115, 232, 0.06)",
-      border: "rgba(26, 115, 232, 0.12)",
+      border: "rgba(26, 115, 232, 0.15)",
+      glowClass: "glow-blue"
     };
   }
   if (d.includes("design") || d.includes("creative")) {
     return {
-      color: "var(--google-yellow, #f9ab00)",
+      color: "#f9ab00",
       bg: "rgba(249, 171, 0, 0.06)",
-      border: "rgba(249, 171, 0, 0.12)",
+      border: "rgba(249, 171, 0, 0.15)",
+      glowClass: "glow-yellow"
     };
   }
   if (d.includes("market") || d.includes("growth")) {
     return {
-      color: "var(--google-green, #1e8e3e)",
+      color: "#1e8e3e",
       bg: "rgba(30, 142, 62, 0.06)",
-      border: "rgba(30, 142, 62, 0.12)",
+      border: "rgba(30, 142, 62, 0.15)",
+      glowClass: "glow-green"
     };
   }
   return {
-    color: "var(--google-red, #d93025)",
+    color: "#d93025",
     bg: "rgba(217, 48, 37, 0.06)",
-    border: "rgba(217, 48, 37, 0.12)",
+    border: "rgba(217, 48, 37, 0.15)",
+    glowClass: "glow-red"
   };
 }
 
-/* ─── Status badge helper ─── */
+/* ─── Status badge styling ─── */
 function getStatusStyle(status: string) {
   switch (status) {
     case "Called":
-      return { color: "#1e8e3e", bg: "rgba(30, 142, 62, 0.06)", border: "rgba(30, 142, 62, 0.12)" };
+      return { color: "#1e8e3e", bg: "rgba(30, 142, 62, 0.08)", border: "rgba(30, 142, 62, 0.18)" };
     case "Interviewing":
-      return { color: "#1a73e8", bg: "rgba(26, 115, 232, 0.06)", border: "rgba(26, 115, 232, 0.12)" };
+      return { color: "#1a73e8", bg: "rgba(26, 115, 232, 0.08)", border: "rgba(26, 115, 232, 0.18)" };
     case "Rejected":
-      return { color: "#d93025", bg: "rgba(217, 48, 37, 0.06)", border: "rgba(217, 48, 37, 0.12)" };
+      return { color: "#d93025", bg: "rgba(217, 48, 37, 0.08)", border: "rgba(217, 48, 37, 0.18)" };
     default:
-      return { color: "#5f6368", bg: "var(--neutral-100)", border: "rgba(0, 0, 0, 0.06)" };
+      return { color: "#5f6368", bg: "rgba(95, 99, 104, 0.08)", border: "rgba(95, 99, 104, 0.15)" };
   }
 }
 
@@ -90,19 +94,19 @@ export default function AdminPage() {
     setMounted(true);
   }, []);
 
-  /* Jobs */
-  const [jobs, setJobs]               = useState<Job[]>([]);
-  const [showModal, setShowModal]     = useState(false);
-  const [editingJob, setEditingJob]   = useState<Job | null>(null);
+  /* Jobs state */
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
 
-  /* Job form */
-  const descRef                        = useRef<HTMLTextAreaElement>(null);
-  const [title, setTitle]             = useState("");
-  const [department, setDepartment]   = useState("");
-  const [location, setLocation]       = useState("");
+  /* Job form state */
+  const descRef = useRef<HTMLTextAreaElement>(null);
+  const [title, setTitle] = useState("");
+  const [department, setDepartment] = useState("");
+  const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
 
-  /* Overview Stats */
+  /* Overview Stats state */
   const [stats, setStats] = useState({
     totalJobs: 0,
     totalCVs: 0,
@@ -110,56 +114,53 @@ export default function AdminPage() {
     pendingApps: 0
   });
 
-  /* CV Database */
-  const [cvs, setCvs]                   = useState<CVRecord[]>([]);
-  const [cvFilter, setCvFilter]         = useState("All");
-  const [cvSearch, setCvSearch]         = useState("");
-  const [editingCv, setEditingCv]       = useState<CVRecord | null>(null);
-  const [showCvModal, setShowCvModal]   = useState(false);
-  const [uploadingCv, setUploadingCv]   = useState(false);
-  const [cvName, setCvName]             = useState("");
-  const [cvEmail, setCvEmail]           = useState("");
-  const [cvPhone, setCvPhone]           = useState("");
-  const [cvFile, setCvFile]             = useState<File | null>(null);
+  /* CV Database state */
+  const [cvs, setCvs] = useState<CVRecord[]>([]);
+  const [cvFilter, setCvFilter] = useState("All");
+  const [cvSearch, setCvSearch] = useState("");
+  const [editingCv, setEditingCv] = useState<CVRecord | null>(null);
+  const [showCvModal, setShowCvModal] = useState(false);
+  const [uploadingCv, setUploadingCv] = useState(false);
+  const [cvName, setCvName] = useState("");
+  const [cvEmail, setCvEmail] = useState("");
+  const [cvPhone, setCvPhone] = useState("");
+  const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvCommentValues, setCvCommentValues] = useState<Record<string, string>>({});
   const [expandedCvComments, setExpandedCvComments] = useState<Record<string, boolean>>({});
 
-  /* CV Viewer */
-  const [selectedCV, setSelectedCV]   = useState("");
-  const [cvOpen, setCvOpen]           = useState(false);
+  /* CV Viewer state */
+  const [selectedCV, setSelectedCV] = useState("");
+  const [cvOpen, setCvOpen] = useState(false);
 
-  /* Admin Users */
+  /* Admin Users state */
   interface AdminUser { id: string; email: string; name: string | null; created_at: string; last_sign_in_at?: string; }
-  const [adminUsers, setAdminUsers]         = useState<AdminUser[]>([]);
-  const [showUserModal, setShowUserModal]   = useState(false);
-  const [newUserName, setNewUserName]       = useState("");
-  const [newUserEmail, setNewUserEmail]     = useState("");
-  const [newUserPass, setNewUserPass]       = useState("");
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPass, setNewUserPass] = useState("");
   const [newUserConfirm, setNewUserConfirm] = useState("");
-  const [showPass, setShowPass]             = useState(false);
-  const [savingUser, setSavingUser]         = useState(false);
-  const [usersLoaded, setUsersLoaded]       = useState(false);
-  const [createdUser, setCreatedUser]       = useState<AdminUser | null>(null);
-  const [copiedField, setCopiedField]       = useState<string | null>(null);
+  const [showPass, setShowPass] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
+  const [usersLoaded, setUsersLoaded] = useState(false);
+  const [createdUser, setCreatedUser] = useState<AdminUser | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  /* Tabs */
-  const [activeTab, setActiveTab]       = useState<"jobs" | "cvs" | "users">("jobs");
+  /* Tabs state */
+  const [activeTab, setActiveTab] = useState<"jobs" | "cvs" | "users">("jobs");
 
-  /* Auth */
-  const [session, setSession]           = useState<Session | null>(null);
-  const [authLoading, setAuthLoading]   = useState(true);
-  const [authEmail, setAuthEmail]       = useState("");
+  /* Auth state */
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
-  const [authError, setAuthError]       = useState("");
+  const [authError, setAuthError] = useState("");
   const [loginSuccess, setLoginSuccess] = useState(false);
 
   /* ── Effects ── */
   useEffect(() => {
-    // getSession() may throw AuthApiError if a stale refresh token is stored.
-    // We catch and treat it as "no session" so the login form is shown cleanly.
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        // Stale token — Supabase already signed out internally; just clear loading.
         setSession(null);
         setAuthLoading(false);
         return;
@@ -177,21 +178,24 @@ export default function AdminPage() {
         loadJobs();
         loadStats();
       } else {
-        // Signed out (including token refresh failure) — stop spinner if still loading
         setAuthLoading(false);
       }
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (activeTab === "cvs") {
-      loadCvs(); 
+      loadCvs();
       loadStats();
     }
   }, [activeTab]);
+
   useEffect(() => {
-    if (activeTab === "users" && !usersLoaded) { loadAdminUsers(); setUsersLoaded(true); }
+    if (activeTab === "users" && !usersLoaded) {
+      loadAdminUsers();
+      setUsersLoaded(true);
+    }
   }, [activeTab]);
 
   /* ── Data loaders ── */
@@ -222,7 +226,7 @@ export default function AdminPage() {
       const { count: cvCount } = await supabase.from("cv_database").select("*", { count: "exact", head: true });
       const { count: appCount } = await supabase.from("applications").select("*", { count: "exact", head: true });
       const { count: pendingCount } = await supabase.from("applications").select("*", { count: "exact", head: true }).eq("status", "Pending");
-      
+
       setStats({
         totalJobs: jobCount ?? 0,
         totalCVs: cvCount ?? 0,
@@ -255,7 +259,7 @@ export default function AdminPage() {
       const { error } = await supabase.from("jobs").insert([{ title, department, location, description }]);
       if (error) { alert(error.message); return; }
     }
-    closeModal(); 
+    closeModal();
     loadJobs();
     loadStats();
   }
@@ -304,13 +308,13 @@ export default function AdminPage() {
   }
 
   /* ── CV Database ── */
-  function closeCvModal() { 
-    setShowCvModal(false); 
-    setEditingCv(null); 
-    setCvName(""); 
-    setCvEmail(""); 
-    setCvPhone(""); 
-    setCvFile(null); 
+  function closeCvModal() {
+    setShowCvModal(false);
+    setEditingCv(null);
+    setCvName("");
+    setCvEmail("");
+    setCvPhone("");
+    setCvFile(null);
   }
 
   async function handleSaveCv() {
@@ -319,7 +323,7 @@ export default function AdminPage() {
     try {
       setUploadingCv(true);
       let cvUrl = editingCv ? editingCv.cv_url : "";
-      
+
       if (cvFile) {
         const fileName = `${Date.now()}-${cvFile.name}`;
         const { error: uploadErr } = await supabase.storage.from("resumes").upload(fileName, cvFile);
@@ -327,7 +331,7 @@ export default function AdminPage() {
         const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(fileName);
         cvUrl = publicUrl;
       }
-      
+
       if (editingCv) {
         const { error } = await supabase
           .from("cv_database")
@@ -340,7 +344,7 @@ export default function AdminPage() {
         ]);
         if (error) { alert(error.message); return; }
       }
-      closeCvModal(); 
+      closeCvModal();
       loadCvs();
       loadStats();
     } catch { alert("Something went wrong saving the profile."); }
@@ -423,42 +427,40 @@ export default function AdminPage() {
   }
   async function handleLogout() { await supabase.auth.signOut(); }
 
-  /* ── Auth screens ── */
+  /* ── Auth screen rendering ── */
   if ((!mounted || authLoading) && !loginSuccess) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
         <AnimatedBackground />
-        <div className="w-8 h-8 border-2 border-[var(--google-blue)]/30 border-t-[var(--google-blue)] rounded-full animate-spin relative z-10" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
+          <p className="text-sm font-semibold text-slate-500 tracking-wide animate-pulse-slow">Loading Supervisor Space...</p>
+        </div>
       </main>
     );
   }
 
   if (loginSuccess) {
     return (
-      <main style={{ minHeight: "100vh", backgroundColor: "#F8F9FF", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", color: "var(--neutral-900)" }}>
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
         <AnimatedBackground />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, border: "1px solid rgba(0,0,0,0.08)", borderRadius: 24, padding: "52px 40px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", position: "relative", zIndex: 10 }}
+          className="flex flex-col items-center gap-6 border border-white/60 rounded-[32px] p-12 bg-white/70 backdrop-blur-2xl shadow-xl shadow-blue-500/5 relative z-10 max-w-sm text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-            style={{ width: 56, height: 56, background: "rgba(30,142,62,0.08)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(30,142,62,0.2)" }}
-            className="flex items-center justify-center"
+            className="w-16 h-16 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shadow-inner"
           >
-            <CheckCircle2 style={{ width: 26, height: 26, color: "var(--google-green, #1e8e3e)" }} />
+            <CheckCircle2 className="w-8 h-8" />
           </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif' }}
-          >
-            Authorized Session
-          </motion.h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Access Granted</h2>
+            <p className="text-sm text-slate-500 font-medium">Session authorized. Redirecting you to console desk...</p>
+          </div>
         </motion.div>
       </main>
     );
@@ -466,85 +468,67 @@ export default function AdminPage() {
 
   if (!session) {
     return (
-      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--neutral-900)", padding: "16px" }}>
+      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden p-4">
         <AnimatedBackground />
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: "100%", maxWidth: 410, border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 24, padding: "48px 36px", background: "rgba(255, 255, 255, 0.8)", backdropFilter: "blur(20px)", boxShadow: "0 8px 30px rgba(0,0,0,0.03)", position: "relative", zIndex: 10 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-md border border-white/60 rounded-[32px] p-10 sm:p-12 bg-white/70 backdrop-blur-3xl shadow-xl shadow-slate-900/5 relative z-10"
         >
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
-              <Lock style={{ width: 18, height: 18, color: "var(--google-blue)" }} />
+          <div className="flex flex-col gap-2 mb-8">
+            <div className="w-12 h-12 rounded-2xl border border-blue-100 bg-blue-50 flex items-center justify-center text-blue-600 mb-2 shadow-sm">
+              <Lock className="w-5 h-5" />
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--neutral-900)", marginBottom: 6, fontFamily: '"Google Sans", sans-serif' }}>
-              <KineticText text="Recruiter Console" />
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 leading-tight">
+              <KineticText text="Recruiter Desk" />
             </h1>
-            <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 500 }}>Sign in to manage your recruitment workspaces</p>
+            <p className="text-[14px] text-slate-500 font-medium">Sign in to manage openings, candidates, and evaluations.</p>
           </div>
 
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <label className="google-form-label">Email address</label>
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
               <input
                 type="email"
                 value={authEmail}
                 onChange={e => setAuthEmail(e.target.value)}
                 required
-                className="google-form-input"
-                placeholder="admin@example.com"
+                className="google-form-input focus:border-blue-600 focus:shadow-md transition-all rounded-xl p-3 border-slate-200"
+                placeholder="recruiter@company.com"
               />
             </div>
 
-            <div>
-              <label className="google-form-label">Password</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password</label>
               <input
                 type="password"
                 value={authPassword}
                 onChange={e => setAuthPassword(e.target.value)}
                 required
-                className="google-form-input"
+                className="google-form-input focus:border-blue-600 focus:shadow-md transition-all rounded-xl p-3 border-slate-200"
                 placeholder="••••••••"
               />
             </div>
 
             {authError && (
-              <motion.p
-                initial={{ opacity: 0, y: -4 }}
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
-                style={{ fontSize: 13, color: "var(--google-red)", background: "rgba(217,48,37,0.06)", border: "1px solid rgba(217,48,37,0.12)", borderRadius: 10, padding: "10px 14px", textAlign: "center", fontWeight: 500 }}
+                className="text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3 text-center"
               >
                 {authError}
-              </motion.p>
+              </motion.div>
             )}
 
             <button
               type="submit"
               disabled={authLoading}
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "12px 24px",
-                borderRadius: 24,
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: authLoading ? "not-allowed" : "pointer",
-                border: "none",
-                color: "#ffffff",
-                background: "var(--google-blue, #1a73e8)",
-                opacity: authLoading ? 0.7 : 1,
-                boxShadow: "0 2px 4px rgba(26, 115, 232, 0.15)",
-                marginTop: 8,
-                transition: "all 0.2s"
-              }}
+              className="w-full justify-center flex items-center gap-2 py-3 px-6 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-70 disabled:cursor-not-allowed mt-3"
             >
               {authLoading ? (
-                <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} />
-              ) : "Access Dashboard"}
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : "Authenticate Access"}
             </button>
           </form>
         </motion.div>
@@ -552,75 +536,39 @@ export default function AdminPage() {
     );
   }
 
-  /* ── Main Admin UI ── */
-  const isRecruiter = 
-    session?.user?.app_metadata?.role === "admin" || 
+  const isRecruiter =
+    session?.user?.app_metadata?.role === "admin" ||
     session?.user?.user_metadata?.role === "admin" ||
     session?.user?.email === "williammark3312@gmail.com";
 
   if (session && !isRecruiter) {
     return (
-      <main style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--neutral-900)", padding: "16px" }}>
+      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden p-4">
         <AnimatedBackground />
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: "100%", maxWidth: 460, border: "1px solid rgba(217, 48, 37, 0.15)", borderRadius: 24, padding: "48px 36px", background: "rgba(255, 255, 255, 0.85)", backdropFilter: "blur(20px)", boxShadow: "0 8px 30px rgba(0,0,0,0.03)", position: "relative", zIndex: 10, textAlign: "center" }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-md border border-rose-100 rounded-[32px] p-10 sm:p-12 bg-white/80 backdrop-blur-3xl shadow-xl shadow-rose-950/5 relative z-10 text-center flex flex-col items-center"
         >
-          <div style={{ marginBottom: 24, display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(217, 48, 37, 0.08)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(217, 48, 37, 0.2)", marginBottom: 20 }}>
-              <Lock style={{ width: 22, height: 22, color: "var(--google-red, #d93025)" }} />
-            </div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--neutral-900)", marginBottom: 8, fontFamily: '"Google Sans", sans-serif', letterSpacing: "-0.02em" }}>
-              Access Restricted
-            </h1>
-            <p style={{ fontSize: 14, color: "var(--neutral-600)", fontWeight: 500, lineHeight: 1.6 }}>
-              You are signed in as <strong style={{ color: "var(--google-blue)" }}>{session.user.email}</strong> (Candidate).
-              Only authorized recruiter accounts have permission to access the Recruiter Console.
-            </p>
+          <div className="w-14 h-14 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center text-rose-600 mb-6 shadow-inner animate-pulse-slow">
+            <Shield className="w-6 h-6" />
           </div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-3">Access Denied</h1>
+          <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8">
+            You are signed in as <span className="font-semibold text-blue-600">{session.user.email}</span>. Only supervisor accounts are authorized to enter this portal.
+          </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3 w-full">
             <button
               onClick={handleLogout}
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "12px 24px",
-                borderRadius: 24,
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: "pointer",
-                border: "none",
-                color: "#ffffff",
-                background: "var(--google-red, #d93025)",
-                boxShadow: "0 2px 4px rgba(217, 48, 37, 0.15)",
-                transition: "all 0.2s"
-              }}
+              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-rose-500/10"
             >
-              Sign Out & Recruiter Login
+              Sign Out & Relogin
             </button>
             <button
               onClick={() => router.push("/")}
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                display: "flex",
-                alignItems: "center",
-                padding: "12px 24px",
-                borderRadius: 24,
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: "pointer",
-                border: "1px solid rgba(0,0,0,0.1)",
-                color: "var(--neutral-700)",
-                background: "transparent",
-                transition: "all 0.2s"
-              }}
+              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer"
             >
               Back to Careers Page
             </button>
@@ -630,890 +578,816 @@ export default function AdminPage() {
     );
   }
 
+  /* ── Main Dashboard Panel UI ── */
   return (
-    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#F8F9FF", color: "var(--neutral-900)", position: "relative" }}>
+    <main className="min-h-screen bg-[#F8F9FF] text-slate-800 relative z-10 flex flex-col lg:flex-row overflow-hidden">
       <AnimatedBackground />
-      <Header session={session} handleLogout={handleLogout} />
 
-      <div style={{ position: "relative", zIndex: 10, flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "clamp(80px, 12vw, 110px) clamp(12px, 3vw, 24px) 80px" }}>
-        
-        {/* Title Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 36 }}
-        >
-          <div style={{ display: "inline-flex", alignSelf: "flex-start", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--google-blue, #1a73e8)", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 12 }}>
-            Control Console
+      {/* ── Desktop Sidebar ── */}
+      <aside className="w-80 sidebar-glass hidden lg:flex flex-col justify-between p-6 fixed h-screen z-20">
+        <div className="flex flex-col gap-8">
+          {/* Logo Section */}
+          <div className="flex items-center gap-3 px-2 py-1 cursor-pointer" onClick={() => router.push("/jobs")}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1a73e8] to-[#2563EB] flex items-center justify-center shadow-md shadow-blue-500/10">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-slate-950 tracking-tight leading-none">Antigravity</h1>
+              <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Recruiter Desk</span>
+            </div>
           </div>
-          <h1 className="text-gradient" style={{ fontSize: "clamp(26px, 3.5vw, 38px)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.1, fontFamily: "var(--font-sans), sans-serif" }}>
-            Supervisor Control Desk
-          </h1>
-          <p style={{ fontSize: 13.5, color: "var(--neutral-500)", fontWeight: 500 }}>
-            Session active: <span style={{ color: "var(--neutral-800)", fontWeight: 600 }}>{session?.user?.email}</span>
-          </p>
-        </motion.div>
 
-        {/* Tab Navigation */}
-        <div style={{ borderBottom: "1px solid rgba(0, 0, 0, 0.08)", marginBottom: 36, display: "flex", gap: 8, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+          {/* User Widget */}
+          <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-white/80 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+              {session?.user?.email?.[0].toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Admin</p>
+              <p className="text-sm font-semibold text-slate-800 truncate" title={session?.user?.email}>{session?.user?.email}</p>
+            </div>
+          </div>
+
+          {/* Tab Navigation Menu */}
+          <nav className="flex flex-col gap-1.5">
+            {([
+              { key: "jobs", label: "Openings & Reviews", icon: <Briefcase className="w-4 h-4" />, count: stats.totalJobs },
+              { key: "cvs", label: "Recruitment Database", icon: <FileText className="w-4 h-4" />, count: stats.totalCVs },
+              { key: "users", label: "Supervisor Accounts", icon: <Users className="w-4 h-4" />, count: adminUsers.length },
+            ] as const).map(t => {
+              const isActive = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveTab(t.key)}
+                  className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-[13.5px] font-bold transition-all relative overflow-hidden cursor-pointer ${
+                    isActive
+                      ? "text-blue-600 bg-blue-50/70 border border-blue-100/60 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950 hover:bg-slate-100/50 border border-transparent"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 z-10">
+                    {t.icon}
+                    <span>{t.label}</span>
+                  </div>
+                  {t.count !== undefined && (
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full z-10 transition-colors ${
+                      isActive ? "bg-blue-600 text-white" : "bg-slate-200/70 text-slate-600"
+                    }`}>
+                      {t.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-[13.5px] font-bold text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out Session</span>
+          </button>
+          <div className="text-[11px] text-slate-400 font-medium px-4">
+            © {new Date().getFullYear()} Google Antigravity
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Header component for mobile navigation (hidden on desktop sidebar) ── */}
+      <div className="lg:hidden w-full relative z-30">
+        <Header session={session} handleLogout={handleLogout} />
+        {/* Mobile Tab row */}
+        <div className="bg-white/70 backdrop-blur-md border-b border-slate-200/50 px-4 py-2 flex gap-1 overflow-x-auto">
           {([
-            { key: "jobs", label: "Openings & Reviews", icon: <Briefcase style={{ width: 14, height: 14 }} /> },
-            { key: "cvs",  label: "Recruitment Database",  icon: <FileText style={{ width: 14, height: 14 }} /> },
-            { key: "users",label: "Supervisor Accounts",   icon: <Users style={{ width: 14, height: 14 }} /> },
+            { key: "jobs", label: "Openings", icon: <Briefcase className="w-3.5 h-3.5" /> },
+            { key: "cvs", label: "Database", icon: <FileText className="w-3.5 h-3.5" /> },
+            { key: "users", label: "Supervisors", icon: <Users className="w-3.5 h-3.5" /> },
           ] as const).map(t => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)}
-              style={{
-                padding: "10px 10px",
-                fontSize: 12.5,
-                fontWeight: 600,
-                cursor: "pointer",
-                border: "none",
-                background: "none",
-                color: activeTab === t.key ? "var(--google-blue, #1a73e8)" : "var(--neutral-500)",
-                borderBottom: activeTab === t.key ? "3px solid var(--google-blue)" : "3px solid transparent",
-                marginBottom: -1,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                transition: "all 0.2s",
-                fontFamily: "inherit",
-                whiteSpace: "nowrap"
-              }}
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer ${
+                activeTab === t.key
+                  ? "bg-blue-600 text-white shadow-sm shadow-blue-500/10"
+                  : "text-slate-500 bg-slate-100 hover:bg-slate-200"
+              }`}
             >
-              {t.icon} {t.label}
+              {t.icon}
+              {t.label}
             </button>
           ))}
         </div>
-
-        {/* ── Jobs Tab ── */}
-        {activeTab === "jobs" && (
-          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-            
-            {/* Stats Row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))", gap: 16, marginBottom: 40 }}>
-              {[
-                { label: "Active Openings", value: stats.totalJobs, icon: <Briefcase style={{ width: 18, height: 18, color: "var(--google-blue)" }} />, color: "rgba(26, 115, 232, 0.08)" },
-                { label: "Total Candidate Applications", value: stats.totalApps, icon: <Users style={{ width: 18, height: 18, color: "var(--google-green)" }} />, color: "rgba(30, 142, 62, 0.08)" },
-                { label: "Pending Evaluations", value: stats.pendingApps, icon: <Clock style={{ width: 18, height: 18, color: "var(--google-yellow)" }} />, color: "rgba(249, 171, 0, 0.08)" },
-                { label: "CV Talent Repository", value: stats.totalCVs, icon: <FileText style={{ width: 18, height: 18, color: "var(--google-red)" }} />, color: "rgba(217, 48, 37, 0.08)" }
-              ].map((s, idx) => (
-                <motion.div
-                  key={s.label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: idx * 0.04 }}
-                  style={{
-                    padding: "24px 20px",
-                    borderRadius: 20,
-                    background: "rgba(255, 255, 255, 0.75)",
-                    backdropFilter: "blur(20px)",
-                    border: "1px solid rgba(0,0,0,0.06)",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.01)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    gap: 16
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--neutral-500)" }}>{s.label}</span>
-                    <div style={{ width: 34, height: 34, borderRadius: 10, background: s.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {s.icon}
-                    </div>
-                  </div>
-                  <h3 style={{ fontSize: 28, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif', margin: 0, letterSpacing: "-0.015em" }}>{s.value}</h3>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* List Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
-              <div>
-                <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif' }}>Active Listings</h2>
-                <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Select a job card to evaluate its real-time applicants panel.</p>
-              </div>
-              <button
-                onClick={openCreate}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "10px 18px",
-                  borderRadius: 20,
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  border: "none",
-                  color: "#ffffff",
-                  background: "var(--google-blue, #1a73e8)",
-                  boxShadow: "0 2px 4px rgba(26, 115, 232, 0.15)",
-                  transition: "all 0.2s"
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 10px rgba(26, 115, 232, 0.2)"}
-                onMouseLeave={(e) => e.currentTarget.style.boxShadow = "0 2px 4px rgba(26, 115, 232, 0.15)"}
-              >
-                <Plus style={{ width: 15, height: 15 }} /> Create Job Listing
-              </button>
-            </div>
-
-            {jobs.length === 0 ? (
-              <div style={{ padding: "60px 40px", borderRadius: 24, border: "1px dashed rgba(0,0,0,0.1)", textAlign: "center", background: "rgba(255,255,255,0.6)" }}>
-                <p style={{ fontSize: 15, color: "var(--neutral-500)", fontWeight: 500 }}>No active openings published. Add one to start recruiting.</p>
-              </div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 330px), 1fr))", gap: 16 }}>
-                {jobs.map((job, i) => {
-                  const styleInfo = getDeptStyle(job.department);
-                  return (
-                    <motion.div 
-                      key={job.id} 
-                      initial={{ opacity: 0, y: 16 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      transition={{ duration: 0.35, delay: i * 0.04 }}
-                    >
-                      <div
-                        style={{
-                          padding: "24px",
-                          borderRadius: 24,
-                          border: "1px solid rgba(0, 0, 0, 0.05)",
-                          background: "rgba(255,255,255,0.75)",
-                          backdropFilter: "blur(20px)",
-                          boxShadow: "0 4px 20px rgba(0,0,0,0.01)",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          gap: 20,
-                          height: "100%",
-                          position: "relative"
-                        }}
-                      >
-                        <div>
-                          {/* Upper Card: Badge + options */}
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                            <span style={{ fontSize: 11, fontWeight: 600, color: styleInfo.color, backgroundColor: styleInfo.bg, border: `1px solid ${styleInfo.border}`, padding: "4px 10px", borderRadius: 10 }}>
-                              {job.department}
-                            </span>
-                            <div style={{ display: "flex", gap: 6 }}>
-                              <button 
-                                onClick={() => openEdit(job)}
-                                style={{ border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff", color: "var(--neutral-600)", cursor: "pointer", display: "inline-flex", padding: 6, borderRadius: 8, transition: "color 0.2s" }}
-                                onMouseEnter={(e) => e.currentTarget.style.color = "var(--google-blue)"}
-                                onMouseLeave={(e) => e.currentTarget.style.color = "var(--neutral-600)"}
-                              >
-                                <Edit2 style={{ width: 13, height: 13 }} />
-                              </button>
-                              <button 
-                                onClick={() => handleDelete(job.id)}
-                                style={{ border: "1px solid rgba(217,48,37,0.12)", background: "rgba(217,48,37,0.04)", color: "var(--google-red)", cursor: "pointer", display: "inline-flex", padding: 6, borderRadius: 8, transition: "background 0.2s" }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(217,48,37,0.08)"}
-                                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(217,48,37,0.04)"}
-                              >
-                                <Trash2 style={{ width: 13, height: 13 }} />
-                              </button>
-                            </div>
-                          </div>
-                          
-                          <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--neutral-900)", marginBottom: 8, lineHeight: 1.25, fontFamily: '"Google Sans", sans-serif' }}>
-                            {job.title}
-                          </h2>
-                          
-                          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--neutral-500)", fontWeight: 500, marginBottom: 12 }}>
-                            <MapPin style={{ width: 13, height: 13, color: "var(--neutral-400)" }} />
-                            {job.location}
-                          </div>
-                          
-                          <p style={{ fontSize: 13, color: "var(--neutral-600)", lineHeight: 1.55, margin: 0 }}>
-                            {job.description.replace(/#{1,3} |[*_~`•]/g, "").slice(0, 95)}
-                            {job.description.length > 95 ? "..." : ""}
-                          </p>
-                        </div>
-                        
-                        <div style={{ borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 14 }}>
-                          <button
-                            onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                            style={{
-                              width: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: 6,
-                              padding: "10px",
-                              borderRadius: 12,
-                              fontWeight: 600,
-                              fontSize: 13,
-                              cursor: "pointer",
-                              border: "none",
-                              color: "#ffffff",
-                              background: "var(--google-blue, #1a73e8)",
-                              transition: "all 0.2s"
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.95"}
-                            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-                          >
-                            Review Submissions <ArrowRight style={{ width: 14, height: 14 }} />
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </motion.section>
-        )}
-
-        {/* ── CV Database Tab ── */}
-        {activeTab === "cvs" && (
-          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap", marginBottom: 28 }}>
-              <div>
-                <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif' }}>Talent Index</h2>
-                <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Update active candidate status pathways, delete indexes, or write remarks.</p>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <div style={{ position: "relative", minWidth: 200 }}>
-                  <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, color: "var(--neutral-400)", pointerEvents: "none" }} />
-                  <input
-                    type="text"
-                    placeholder="Search candidates..."
-                    value={cvSearch}
-                    onChange={e => setCvSearch(e.target.value)}
-                    style={{
-                      width: "100%",
-                      paddingLeft: 34,
-                      paddingRight: 12,
-                      paddingTop: 8,
-                      paddingBottom: 8,
-                      borderRadius: 14,
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      background: "#ffffff",
-                      fontSize: 13,
-                      color: "var(--neutral-900)",
-                      outline: "none",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.01)"
-                    }}
-                  />
-                </div>
-                <select 
-                  value={cvFilter} 
-                  onChange={e => setCvFilter(e.target.value)}
-                  style={{
-                    borderRadius: 14,
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    background: "#ffffff",
-                    padding: "8px 14px",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--neutral-700)",
-                    outline: "none",
-                    cursor: "pointer",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.01)"
-                  }}
-                >
-                  <option value="All">All Statuses</option>
-                  <option value="Not Called">Not Called</option>
-                  <option value="Called">Called</option>
-                  <option value="Interviewing">Interviewing</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-                <button
-                  onClick={() => setShowCvModal(true)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "9px 16px",
-                    borderRadius: 20,
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    border: "none",
-                    color: "#ffffff",
-                    background: "var(--google-blue, #1a73e8)",
-                    boxShadow: "0 2px 4px rgba(26, 115, 232, 0.15)"
-                  }}
-                >
-                  <Upload style={{ width: 14, height: 14 }} /> Upload CV
-                </button>
-              </div>
-            </div>
-
-            {cvs.length === 0 ? (
-              <div style={{ padding: "60px 40px", borderRadius: 24, border: "1px dashed rgba(0,0,0,0.1)", textAlign: "center", background: "rgba(255,255,255,0.6)" }}>
-                <p style={{ fontSize: 15, color: "var(--neutral-500)", fontWeight: 500 }}>No CV records currently loaded in index.</p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {cvs.filter(c => {
-                  const matchesFilter = cvFilter === "All" || c.status === cvFilter;
-                  const matchesSearch = !cvSearch.trim() || 
-                    c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
-                    (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase())) ||
-                    (c.phone && c.phone.toLowerCase().includes(cvSearch.toLowerCase()));
-                  return matchesFilter && matchesSearch;
-                }).map((cv, i) => {
-                  const cvComments = parseComments(cv.comments);
-                  const colors = [
-                    "linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)",
-                    "linear-gradient(135deg, #34a853 0%, #1e8e3e 100%)",
-                    "linear-gradient(135deg, #f9ab00 0%, #f4b400 100%)",
-                    "linear-gradient(135deg, #ea4335 0%, #d93025 100%)"
-                  ];
-                  const colorIndex = cv.name.charCodeAt(0) % colors.length;
-                  const gradient = colors[colorIndex];
-                  const initials = cv.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-                  const statusStyle = getStatusStyle(cv.status);
-
-                  return (
-                    <motion.div 
-                      key={cv.id} 
-                      initial={{ opacity: 0, y: 12 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      transition={{ delay: i * 0.03 }}
-                      style={{
-                        borderRadius: 24,
-                        border: "1px solid rgba(0,0,0,0.06)",
-                        background: "rgba(255,255,255,0.75)",
-                        backdropFilter: "blur(20px)",
-                        overflow: "hidden",
-                        boxShadow: "0 2px 12px rgba(0,0,0,0.01)"
-                      }}
-                    >
-                      {/* CV Primary Row */}
-                      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, padding: "20px 24px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-                          <div style={{ width: 44, height: 44, borderRadius: "50%", background: gradient, display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: 600, fontSize: 14, flexShrink: 0 }}>
-                            {initials}
-                          </div>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
-                              <h3 style={{ fontSize: 16.5, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>{cv.name}</h3>
-                              <span style={{ fontSize: 11, fontWeight: 600, color: statusStyle.color, backgroundColor: statusStyle.bg, border: `1px solid ${statusStyle.border}`, padding: "3px 9px", borderRadius: 8 }}>
-                                {cv.status}
-                              </span>
-                            </div>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 14, fontSize: 12.5, color: "var(--neutral-500)", fontWeight: 500 }}>
-                              {cv.email && <span>{cv.email}</span>}
-                              {cv.phone && <span>{cv.phone}</span>}
-                              <span style={{ color: "var(--neutral-400)" }}>• {new Date(cv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                          <select 
-                            value={cv.status} 
-                            onChange={e => handleCvStatus(cv.id, e.target.value)}
-                            style={{
-                              borderRadius: 12,
-                              border: "1px solid rgba(0,0,0,0.08)",
-                              background: "#ffffff",
-                              padding: "6px 12px",
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--neutral-700)",
-                              outline: "none",
-                              cursor: "pointer"
-                            }}
-                          >
-                            <option value="Not Called">Not Called</option>
-                            <option value="Called">Called</option>
-                            <option value="Interviewing">Interviewing</option>
-                            <option value="Rejected">Rejected</option>
-                          </select>
-                           <button 
-                            onClick={() => { 
-                              setEditingCv(cv); 
-                              setCvName(cv.name); 
-                              setCvEmail(cv.email || ""); 
-                              setCvPhone(cv.phone || ""); 
-                              setShowCvModal(true); 
-                            }}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 6,
-                              padding: "7px 14px",
-                              borderRadius: 12,
-                              border: "1px solid rgba(0, 0, 0, 0.08)",
-                              background: "#ffffff",
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--neutral-700)",
-                              cursor: "pointer",
-                              transition: "all 0.2s"
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = "var(--neutral-50)"}
-                            onMouseLeave={(e) => e.currentTarget.style.background = "#ffffff"}
-                          >
-                            <Edit2 style={{ width: 14, height: 14 }} /> Edit
-                          </button>
-                          <button 
-                            onClick={() => { setSelectedCV(cv.cv_url); setCvOpen(true); }}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 6,
-                              padding: "7px 14px",
-                              borderRadius: 12,
-                              border: "1px solid rgba(0, 0, 0, 0.08)",
-                              background: "#ffffff",
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--neutral-700)",
-                              cursor: "pointer",
-                              transition: "all 0.2s"
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = "var(--neutral-50)"}
-                            onMouseLeave={(e) => e.currentTarget.style.background = "#ffffff"}
-                          >
-                            <Eye style={{ width: 14, height: 14 }} /> View
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteCv(cv.id)}
-                            style={{
-                              padding: "7px 14px",
-                              borderRadius: 12,
-                              border: "1px solid rgba(217,48,37,0.12)",
-                              background: "rgba(217,48,37,0.04)",
-                              color: "var(--google-red)",
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              cursor: "pointer"
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Recruiter Remarks Box */}
-                      <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(0,0,0,0.05)", background: "rgba(0,0,0,0.005)" }}>
-                        <div
-                          onClick={() => setExpandedCvComments(v => ({ ...v, [cv.id]: !v[cv.id] }))}
-                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: "var(--neutral-500)" }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600 }}>
-                            <MessageSquare style={{ width: 14, height: 14, color: "var(--google-blue)" }} />
-                            <span>Recruiter Remarks</span>
-                            {cvComments.length > 0 && (
-                              <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(0,0,0,0.06)", color: "var(--neutral-700)", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 8, padding: "2px 6px" }}>{cvComments.length}</span>
-                            )}
-                          </div>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--google-blue)", cursor: "pointer" }}>
-                            {expandedCvComments[cv.id] ? "Collapse Remarks" : "Expand Remarks"}
-                          </span>
-                        </div>
-
-                        <AnimatePresence>
-                          {expandedCvComments[cv.id] && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.2 }}
-                              style={{ overflow: "hidden" }}
-                            >
-                              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                                {cvComments.length > 0 && (
-                                  <div style={{ maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingRight: 6 }}>
-                                    {cvComments.map(comment => (
-                                      <div key={comment.id} style={{ position: "relative", padding: "12px", border: "1px solid rgba(0,0,0,0.05)", background: "#ffffff", borderRadius: 12, fontSize: 12.5 }} className="group">
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                          <span style={{ fontWeight: 600, color: "var(--google-blue)" }}>{comment.author.split("@")[0]}</span>
-                                          <span style={{ fontSize: 11, color: "var(--neutral-400)" }}>{new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-                                        </div>
-                                        <p style={{ color: "var(--neutral-700)", margin: 0, lineHeight: 1.5 }}>{comment.text}</p>
-                                        <button
-                                          onClick={async () => {
-                                            if (confirm("Delete this comment?")) {
-                                              const updated = cvComments.filter(c => c.id !== comment.id);
-                                              await handleUpdateCvComments(cv.id, JSON.stringify(updated));
-                                            }
-                                          }}
-                                          style={{ position: "absolute", top: 10, right: 10, border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex", alignItems: "center" }}
-                                        >
-                                          <X style={{ width: 12, height: 12 }} />
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                                  <textarea
-                                    placeholder="Append recruiter note..."
-                                    value={cvCommentValues[cv.id] ?? ""}
-                                    onChange={e => setCvCommentValues(v => ({ ...v, [cv.id]: e.target.value }))}
-                                    rows={1}
-                                    style={{
-                                      flex: 1,
-                                      borderRadius: 12,
-                                      border: "1px solid rgba(0,0,0,0.08)",
-                                      background: "#ffffff",
-                                      padding: "10px 14px",
-                                      fontSize: 12.5,
-                                      color: "var(--neutral-900)",
-                                      outline: "none",
-                                      resize: "none",
-                                      fontFamily: "inherit"
-                                    }}
-                                  />
-                                  <button
-                                    disabled={!(cvCommentValues[cv.id] ?? "").trim()}
-                                    onClick={async () => {
-                                      const text = (cvCommentValues[cv.id] ?? "").trim();
-                                      if (!text) return;
-                                      const newComment: Comment = {
-                                        id: Math.random().toString(36).substring(2, 9),
-                                        text,
-                                        created_at: new Date().toISOString(),
-                                        author: session?.user?.email ?? "Admin",
-                                      };
-                                      const updated = [...cvComments, newComment];
-                                      await handleUpdateCvComments(cv.id, JSON.stringify(updated));
-                                      setCvCommentValues(v => ({ ...v, [cv.id]: "" }));
-                                    }}
-                                    style={{
-                                      padding: "8px 16px",
-                                      borderRadius: 12,
-                                      fontWeight: 600,
-                                      fontSize: 12,
-                                      cursor: "pointer",
-                                      border: "none",
-                                      color: "#ffffff",
-                                      background: "var(--google-blue, #1a73e8)",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 4,
-                                      alignSelf: "flex-end"
-                                    }}
-                                  >
-                                    <Send style={{ width: 12, height: 12 }} /> Add
-                                  </button>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </motion.section>
-        )}
-
-        {/* ── Users Tab ── */}
-        {activeTab === "users" && (
-          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
-              <div>
-                <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", fontFamily: '"Google Sans", sans-serif' }}>Authorized Administrators</h2>
-                <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Provision supervising keys or revoke control access credentials.</p>
-              </div>
-              <button onClick={() => setShowUserModal(true)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "10px 18px",
-                  borderRadius: 20,
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  border: "none",
-                  color: "#ffffff",
-                  background: "var(--google-blue, #1a73e8)",
-                  boxShadow: "0 2px 4px rgba(26, 115, 232, 0.15)"
-                }}>
-                <UserPlus style={{ width: 14, height: 14 }} /> Provision Account
-              </button>
-            </div>
-
-            {adminUsers.length === 0 ? (
-              <div style={{ padding: "60px 40px", borderRadius: 24, border: "1px dashed rgba(0,0,0,0.1)", textAlign: "center", background: "rgba(255,255,255,0.6)" }}>
-                <h3 style={{ fontSize: 16, fontStyle: "italic", color: "var(--neutral-500)", margin: 0 }}>Gathering supervisory registry...</h3>
-              </div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 290px), 1fr))", gap: 16 }}>
-                {adminUsers.map((u, i) => {
-                  const initials = (u.name ?? u.email ?? "?")[0].toUpperCase();
-                  const colors = [
-                    "linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)",
-                    "linear-gradient(135deg, #34a853 0%, #1e8e3e 100%)",
-                    "linear-gradient(135deg, #f9ab00 0%, #f4b400 100%)"
-                  ];
-                  const gradient = colors[u.email.charCodeAt(0) % colors.length];
-
-                  return (
-                    <motion.div 
-                      key={u.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      style={{
-                        padding: "20px 24px",
-                        borderRadius: 24,
-                        border: "1px solid rgba(0,0,0,0.06)",
-                        background: "rgba(255,255,255,0.75)",
-                        backdropFilter: "blur(20px)",
-                        boxShadow: "0 2px 12px rgba(0,0,0,0.01)",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 16,
-                        position: "relative"
-                      }}
-                      className="group"
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 42, height: 42, borderRadius: "50%", background: gradient, display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: 600, fontSize: 14, flexShrink: 0 }} className="flex items-center justify-center">
-                          {initials}
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--neutral-900)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name ?? <span style={{ fontStyle: "italic", color: "var(--neutral-400)" }}>Unnamed supervisor</span>}</p>
-                          <p style={{ fontSize: 12.5, color: "var(--neutral-500)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</p>
-                        </div>
-                      </div>
-
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--neutral-500)", borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 12 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between" }} className="flex justify-between">
-                          <span>Created date:</span>
-                          <span style={{ fontWeight: 600, color: "var(--neutral-800)" }}>
-                            {new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                          </span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between" }} className="flex justify-between">
-                          <span>Last login:</span>
-                          <span style={{ fontWeight: 600, color: "var(--neutral-800)" }}>
-                            {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <button 
-                        onClick={() => handleDeleteAdminUser(u.id)}
-                        style={{
-                          position: "absolute",
-                          top: 18,
-                          right: 18,
-                          border: "none",
-                          background: "none",
-                          color: "var(--neutral-400)",
-                          cursor: "pointer",
-                          transition: "color 0.2s"
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = "var(--google-red)"}
-                        onMouseLeave={(e) => e.currentTarget.style.color = "var(--neutral-400)"}
-                      >
-                        <Trash2 style={{ width: 14, height: 14 }} />
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </motion.section>
-        )}
       </div>
 
-      {/* ── Job Modal (Create/Edit) ── */}
+      {/* ── Main Content Dashboard ── */}
+      <div className="flex-1 lg:ml-80 min-h-screen flex flex-col p-4 sm:p-8 lg:p-10 relative z-10 pt-20 lg:pt-10 overflow-y-auto">
+        <div className="max-w-5xl w-full mx-auto flex flex-col gap-8 flex-grow pb-16">
+          
+          {/* Header Panel */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/40 pb-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest">
+                <span>Supervisor Space</span>
+                <ChevronRight className="w-3 h-3 text-slate-400" />
+                <span className="text-slate-500 font-semibold lowercase">
+                  {activeTab === "jobs" ? "listings & submissions" : activeTab === "cvs" ? "cv index database" : "admin controls"}
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                {activeTab === "jobs" ? "Job Openings Desk" : activeTab === "cvs" ? "Talent database Index" : "Supervisory Credentials"}
+              </h1>
+            </div>
+
+            {/* Quick Action Button for active view */}
+            {activeTab === "jobs" && (
+              <button
+                onClick={openCreate}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-lg shadow-blue-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4" /> Create Opening
+              </button>
+            )}
+            {activeTab === "cvs" && (
+              <button
+                onClick={() => setShowCvModal(true)}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-lg shadow-blue-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Upload className="w-4 h-4" /> Upload candidate CV
+              </button>
+            )}
+            {activeTab === "users" && (
+              <button
+                onClick={() => setShowUserModal(true)}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-lg shadow-blue-500/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <UserPlus className="w-4 h-4" /> Provision Account
+              </button>
+            )}
+          </div>
+
+          {/* ── Jobs Tab ── */}
+          {activeTab === "jobs" && (
+            <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {[
+                  { label: "Active Listings", value: stats.totalJobs, icon: <Briefcase className="w-5 h-5 text-blue-600" />, bg: "bg-blue-50 border-blue-100/50" },
+                  { label: "Applications", value: stats.totalApps, icon: <Users className="w-5 h-5 text-emerald-600" />, bg: "bg-emerald-50 border-emerald-100/50" },
+                  { label: "Pending Screening", value: stats.pendingApps, icon: <Clock className="w-5 h-5 text-amber-600" />, bg: "bg-amber-50 border-amber-100/50" },
+                  { label: "CV Repository", value: stats.totalCVs, icon: <FileText className="w-5 h-5 text-rose-600" />, bg: "bg-rose-50 border-rose-100/50" }
+                ].map((s, idx) => (
+                  <div
+                    key={s.label}
+                    className={`p-5 rounded-2xl border ${s.bg} bg-white/60 backdrop-blur-md shadow-sm flex flex-col justify-between gap-4`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</span>
+                      <div className="p-2 rounded-xl bg-white/80 shadow-inner flex items-center justify-center">
+                        {s.icon}
+                      </div>
+                    </div>
+                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-none">{s.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Jobs Cards Grid */}
+              {jobs.length === 0 ? (
+                <div className="p-16 border border-dashed border-slate-200 bg-white/40 backdrop-blur-md rounded-3xl text-center">
+                  <Briefcase className="w-10 h-10 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500 font-medium">No published roles found. Click "Create Opening" to start recruiting.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {jobs.map((job) => {
+                    const styleInfo = getDeptStyle(job.department);
+                    return (
+                      <motion.div
+                        key={job.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        className="dashboard-card rounded-3xl p-6 flex flex-col justify-between gap-6 border-slate-200/50 relative overflow-hidden"
+                      >
+                        {/* Shadow Gradient Accent */}
+                        <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-transparent to-transparent opacity-10 rounded-bl-full pointer-events-none ${styleInfo.color}`} />
+
+                        <div className="flex flex-col gap-4">
+                          <div className="flex justify-between items-start gap-4">
+                            <span
+                              style={{ color: styleInfo.color, backgroundColor: styleInfo.bg, borderColor: styleInfo.border }}
+                              className="text-[10px] font-extrabold px-3 py-1 rounded-full border tracking-wide uppercase"
+                            >
+                              {job.department}
+                            </span>
+                            
+                            {/* Card CRUD Options */}
+                            <div className="flex gap-1.5">
+                              <button
+                                onClick={() => openEdit(job)}
+                                className="p-2 border border-slate-200/60 bg-white hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl transition-all cursor-pointer hover:scale-105"
+                                title="Edit Job Opening"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(job.id)}
+                                className="p-2 border border-rose-100 bg-rose-50/50 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-xl transition-all cursor-pointer hover:scale-105"
+                                title="Delete Job Opening"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-1">
+                            <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-snug group-hover:text-blue-600 transition-colors">
+                              {job.title}
+                            </h2>
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                              {job.location}
+                            </div>
+                          </div>
+
+                          <p className="text-[13px] text-slate-500 leading-relaxed truncate-3-lines">
+                            {job.description.replace(/#{1,3} |[*_~`•]/g, "").slice(0, 110)}
+                            {job.description.length > 110 ? "..." : ""}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer hover:shadow-md hover:shadow-blue-500/5 active:scale-[0.98]"
+                        >
+                          Review Candidate Pool <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.section>
+          )}
+
+          {/* ── CV Database Tab ── */}
+          {activeTab === "cvs" && (
+            <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex flex-col gap-6">
+              
+              {/* Search & Filter Toolbar */}
+              <div className="bg-white/70 backdrop-blur-md rounded-2xl p-4 border border-slate-200/50 shadow-sm flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search talent registry (name, email, phone)..."
+                    value={cvSearch}
+                    onChange={e => setCvSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200/80 bg-white/90 text-sm focus:outline-none focus:border-blue-600 focus:shadow-inner transition-all text-slate-800"
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <select
+                    value={cvFilter}
+                    onChange={e => setCvFilter(e.target.value)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white/90 text-xs font-bold text-slate-600 focus:outline-none focus:border-blue-600 cursor-pointer"
+                  >
+                    <option value="All">All Pathways</option>
+                    <option value="Not Called">Not Called</option>
+                    <option value="Called">Called</option>
+                    <option value="Interviewing">Interviewing</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* CV Lists */}
+              {cvs.length === 0 ? (
+                <div className="p-16 border border-dashed border-slate-200 bg-white/40 backdrop-blur-md rounded-3xl text-center">
+                  <FileText className="w-10 h-10 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500 font-medium">No CV files archived. Select "Upload candidate CV" to append.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {cvs.filter(c => {
+                    const matchesFilter = cvFilter === "All" || c.status === cvFilter;
+                    const matchesSearch = !cvSearch.trim() ||
+                      c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
+                      (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase())) ||
+                      (c.phone && c.phone.toLowerCase().includes(cvSearch.toLowerCase()));
+                    return matchesFilter && matchesSearch;
+                  }).map((cv) => {
+                    const cvComments = parseComments(cv.comments);
+                    const colors = [
+                      "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                      "linear-gradient(135deg, #10b981 0%, #047857 100%)",
+                      "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
+                      "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)"
+                    ];
+                    const colorIndex = cv.name.charCodeAt(0) % colors.length;
+                    const gradient = colors[colorIndex];
+                    const initials = cv.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+                    const statusStyle = getStatusStyle(cv.status);
+
+                    return (
+                      <motion.div
+                        key={cv.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="bg-white/60 border border-slate-200/50 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-md"
+                      >
+                        {/* Upper primary info */}
+                        <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100">
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div
+                              style={{ background: gradient }}
+                              className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-slate-900/5 flex-shrink-0"
+                            >
+                              {initials}
+                            </div>
+                            <div className="min-w-0 flex flex-col gap-1">
+                              <div className="flex items-center gap-2.5 flex-wrap">
+                                <h3 className="text-base font-bold text-slate-950 truncate leading-none">{cv.name}</h3>
+                                <span
+                                  style={{ color: statusStyle.color, backgroundColor: statusStyle.bg, borderColor: statusStyle.border }}
+                                  className="text-[10px] font-bold px-2 py-0.5 border rounded-lg whitespace-nowrap"
+                                >
+                                  {cv.status}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2.5 flex-wrap text-xs text-slate-400 font-semibold">
+                                {cv.email && <span className="truncate">{cv.email}</span>}
+                                {cv.phone && <span>• {cv.phone}</span>}
+                                <span>• Indexed {new Date(cv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Interactive status selectors */}
+                          <div className="flex items-center gap-2 self-stretch md:self-auto justify-end flex-wrap">
+                            <select
+                              value={cv.status}
+                              onChange={e => handleCvStatus(cv.id, e.target.value)}
+                              className="px-3 py-2 rounded-xl border border-slate-200/80 bg-white text-xs font-bold text-slate-600 focus:outline-none cursor-pointer"
+                            >
+                              <option value="Not Called">Not Called</option>
+                              <option value="Called">Called</option>
+                              <option value="Interviewing">Interviewing</option>
+                              <option value="Rejected">Rejected</option>
+                            </select>
+
+                            <button
+                              onClick={() => {
+                                setEditingCv(cv);
+                                setCvName(cv.name);
+                                setCvEmail(cv.email || "");
+                                setCvPhone(cv.phone || "");
+                                setShowCvModal(true);
+                              }}
+                              className="p-2 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl transition-all cursor-pointer"
+                              title="Edit candidate profile"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => { setSelectedCV(cv.cv_url); setCvOpen(true); }}
+                              className="p-2 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl transition-all cursor-pointer"
+                              title="View Document sandbox"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCv(cv.id)}
+                              className="p-2 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700 rounded-xl transition-all cursor-pointer"
+                              title="Delete index file"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Recruiter Remarks */}
+                        <div className="bg-slate-50/50 p-4 border-t border-slate-100">
+                          <div
+                            onClick={() => setExpandedCvComments(v => ({ ...v, [cv.id]: !v[cv.id] }))}
+                            className="flex justify-between items-center cursor-pointer text-slate-500"
+                          >
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide">
+                              <MessageSquare className="w-4 h-4 text-blue-500" />
+                              <span>Recruiter Remarks</span>
+                              {cvComments.length > 0 && (
+                                <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{cvComments.length}</span>
+                              )}
+                            </div>
+                            <span className="text-xs font-bold text-blue-600 hover:underline">
+                              {expandedCvComments[cv.id] ? "Collapse comments" : "Expand comments"}
+                            </span>
+                          </div>
+
+                          <AnimatePresence>
+                            {expandedCvComments[cv.id] && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden mt-4"
+                              >
+                                <div className="flex flex-col gap-4">
+                                  {cvComments.length > 0 && (
+                                    <div className="max-h-48 overflow-y-auto flex flex-col gap-3 pr-2">
+                                      {cvComments.map(comment => (
+                                        <div key={comment.id} className="comment-bubble p-3 rounded-2xl relative flex flex-col gap-1">
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-xs font-bold text-blue-600">{comment.author.split("@")[0]}</span>
+                                            <span className="text-[10px] font-bold text-slate-400">
+                                              {new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                            </span>
+                                          </div>
+                                          <p className="text-[12.5px] text-slate-700 leading-relaxed pr-6">{comment.text}</p>
+                                          
+                                          <button
+                                            onClick={async (e) => {
+                                              e.stopPropagation();
+                                              if (confirm("Delete this comment?")) {
+                                                const updated = cvComments.filter(c => c.id !== comment.id);
+                                                await handleUpdateCvComments(cv.id, JSON.stringify(updated));
+                                              }
+                                            }}
+                                            className="absolute top-2 right-2 border-none bg-none text-slate-300 hover:text-rose-500 cursor-pointer"
+                                          >
+                                            <X className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  <div className="flex gap-2">
+                                    <textarea
+                                      placeholder="Add evaluation note..."
+                                      value={cvCommentValues[cv.id] ?? ""}
+                                      onChange={e => setCvCommentValues(v => ({ ...v, [cv.id]: e.target.value }))}
+                                      rows={1}
+                                      className="flex-1 rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 bg-white resize-none"
+                                    />
+                                    <button
+                                      disabled={!(cvCommentValues[cv.id] ?? "").trim()}
+                                      onClick={async () => {
+                                        const text = (cvCommentValues[cv.id] ?? "").trim();
+                                        if (!text) return;
+                                        const newComment: Comment = {
+                                          id: Math.random().toString(36).substring(2, 9),
+                                          text,
+                                          created_at: new Date().toISOString(),
+                                          author: session?.user?.email ?? "Admin",
+                                        };
+                                        const updated = [...cvComments, newComment];
+                                        await handleUpdateCvComments(cv.id, JSON.stringify(updated));
+                                        setCvCommentValues(v => ({ ...v, [cv.id]: "" }));
+                                      }}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer self-end shadow-sm"
+                                    >
+                                      <Send className="w-3 h-3" /> Add
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.section>
+          )}
+
+          {/* ── Users Tab ── */}
+          {activeTab === "users" && (
+            <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex flex-col gap-6">
+              {adminUsers.length === 0 ? (
+                <div className="p-16 border border-dashed border-slate-200 bg-white/40 backdrop-blur-md rounded-3xl text-center">
+                  <Users className="w-10 h-10 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500 font-medium">Gathering administrative accounts details...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {adminUsers.map((u) => {
+                    const initials = (u.name ?? u.email ?? "?")[0].toUpperCase();
+                    const colors = [
+                      "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                      "linear-gradient(135deg, #10b981 0%, #047857 100%)",
+                      "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)"
+                    ];
+                    const gradient = colors[u.email.charCodeAt(0) % colors.length];
+
+                    return (
+                      <motion.div
+                        key={u.id}
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white/60 border border-slate-200/50 rounded-3xl p-5 flex flex-col justify-between gap-5 relative overflow-hidden backdrop-blur-md shadow-sm"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            style={{ background: gradient }}
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-slate-900/5 flex-shrink-0"
+                          >
+                            {initials}
+                          </div>
+                          <div className="min-w-0 flex flex-col gap-0.5">
+                            <p className="text-base font-bold text-slate-900 truncate leading-none">
+                              {u.name ?? <span className="italic text-slate-400 font-medium">Unnamed Supervisor</span>}
+                            </p>
+                            <p className="text-xs font-semibold text-slate-400 truncate">{u.email}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-500">
+                          <div className="flex justify-between">
+                            <span>Key Provisioned:</span>
+                            <span className="text-slate-800">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Last Sign-In:</span>
+                            <span className="text-slate-800">
+                              {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Revoke administrator access key */}
+                        <button
+                          onClick={() => handleDeleteAdminUser(u.id)}
+                          className="absolute top-4 right-4 p-2 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700 rounded-xl transition-all cursor-pointer"
+                          title="Revoke supervisory rights"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.section>
+          )}
+        </div>
+      </div>
+
+      {/* ── Job Creation/Modification Modal ── */}
       <AnimatePresence>
         {showModal && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 99, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.25)", backdropFilter: "blur(8px)" }} onClick={closeModal} />
-            <motion.div initial={{ opacity: 0, scale: 0.98, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              style={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 600,
-                borderRadius: 24,
-                background: "#ffffff",
-                border: "1px solid rgba(0,0,0,0.08)",
-                padding: "36px",
-                maxHeight: "90vh",
-                overflowY: "auto",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.05)"
-              }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+              onClick={closeModal}
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              className="relative w-full max-w-xl bg-white border border-slate-200/80 rounded-[32px] p-8 sm:p-10 shadow-2xl overflow-y-auto max-h-[90vh] flex flex-col gap-6"
+            >
+              <div className="flex justify-between items-start">
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>{editingJob ? "Modify Listing Details" : "Publish New Role"}</h2>
-                  <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>{editingJob ? "Adjust publication and job role descriptions." : "Configure operational parameters for candidate screening."}</p>
+                  <h2 className="text-xl font-bold text-slate-950 tracking-tight leading-none">
+                    {editingJob ? "Adjust Listing Details" : "Publish New Role"}
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium mt-1">Configure operational parameters for target screen pool.</p>
                 </div>
-                <button onClick={closeModal} style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer" }}>
-                  <X style={{ width: 20, height: 20 }} />
+                <button onClick={closeModal} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition-all cursor-pointer">
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                <div>
-                  <label className="google-form-label">Job Title</label>
-                  <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Senior Software Engineer" className="google-form-input" />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Job Title</label>
+                  <input
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder="e.g. Lead Technical Architect"
+                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                  />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <div>
-                    <label className="google-form-label">Department</label>
-                    <input value={department} onChange={e => setDepartment(e.target.value)} placeholder="e.g. Engineering" className="google-form-input" />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Department</label>
+                    <input
+                      value={department}
+                      onChange={e => setDepartment(e.target.value)}
+                      placeholder="e.g. Engineering"
+                      className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                    />
                   </div>
-                  <div>
-                    <label className="google-form-label">Location</label>
-                    <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Bangalore / Remote" className="google-form-input" />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Location</label>
+                    <input
+                      value={location}
+                      onChange={e => setLocation(e.target.value)}
+                      placeholder="e.g. London, UK / Hybrid"
+                      className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                    />
                   </div>
                 </div>
-                <div>
-                  <label className="google-form-label">Description (Supports Markdown)</label>
-                  <div style={{ display: "flex", gap: 6, marginBottom: 10, background: "var(--neutral-100)", border: "1px solid rgba(0,0,0,0.06)", padding: "4px", borderRadius: 12 }}>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Description (Supports Markdown)</label>
+                  <div className="flex gap-1.5 bg-slate-50 border border-slate-200/50 p-1.5 rounded-xl">
                     {[
-                      { label: "Bold",    fn: insertBold },
+                      { label: "Bold", fn: insertBold },
                       { label: "Heading", fn: insertHeading },
-                      { label: "Bullet",  fn: insertBullet },
-                    ].map(b => (
-                      <button key={b.label} type="button" onClick={b.fn}
-                        style={{
-                          borderRadius: 8,
-                          border: "none",
-                          background: "#ffffff",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: "var(--neutral-700)",
-                          boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
-                          cursor: "pointer",
-                          padding: "6px 12px"
-                        }}>
-                        {b.label}
+                      { label: "Bullet", fn: insertBullet }
+                    ].map(btn => (
+                      <button
+                        key={btn.label}
+                        type="button"
+                        onClick={btn.fn}
+                        className="px-3 py-1 bg-white hover:bg-slate-100 text-xs font-bold text-slate-600 border border-slate-200/60 rounded-lg cursor-pointer"
+                      >
+                        {btn.label}
                       </button>
                     ))}
                   </div>
-                  <textarea ref={descRef} value={description} onChange={e => setDescription(e.target.value)}
-                    placeholder="Provide responsibilities, requirements, and information using markdown format..." rows={6} className="google-form-input" style={{ resize: "none", fontFamily: "inherit" }} />
+                  <textarea
+                    ref={descRef}
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    rows={6}
+                    placeholder="Provide role prerequisites, compensation parameters, and tasks..."
+                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200 resize-none"
+                  />
                 </div>
               </div>
 
-              <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
-                <button onClick={closeModal} style={{ flex: 1, padding: "11px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", fontSize: 13.5, fontWeight: 600, color: "var(--neutral-600)", cursor: "pointer" }}>Cancel</button>
-                <button onClick={handleSave} style={{ flex: 1, padding: "11px", borderRadius: 20, border: "none", background: "var(--google-blue, #1a73e8)", color: "#ffffff", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>{editingJob ? "Save Changes" : "Publish opening"}</button>
+              <div className="border-t border-slate-100 pt-6 flex gap-3 mt-4">
+                <button
+                  onClick={closeModal}
+                  className="flex-1 py-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-sm transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all cursor-pointer shadow-lg shadow-blue-500/10"
+                >
+                  {editingJob ? "Save Changes" : "Publish opening"}
+                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* ── CV Viewer Modal ── */}
+      {/* ── CV Viewer Sandbox Modal ── */}
       <AnimatePresence>
         {cvOpen && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 99, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.2)", backdropFilter: "blur(8px)" }} onClick={() => setCvOpen(false)} />
-            <motion.div initial={{ opacity: 0, scale: 0.98, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              style={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 820,
-                height: "85vh",
-                borderRadius: 24,
-                background: "#ffffff",
-                border: "1px solid rgba(0,0,0,0.08)",
-                overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.05)"
-              }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 20, paddingRight: 20, paddingTop: 14, paddingBottom: 14, borderBottom: "1px solid rgba(0,0,0,0.05)", background: "#ffffff", padding: "14px 20px" }}>
-                <h3 style={{ fontSize: 14.5, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>Resume Sandbox</h3>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <a href={selectedCV} target="_blank" rel="noopener noreferrer"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      borderRadius: 12,
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      background: "#ffffff",
-                      color: "var(--neutral-700)",
-                      padding: "6px 12px",
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      textDecoration: "none"
-                    }}>
-                    External view <ExternalLink style={{ width: 13, height: 13 }} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/30 backdrop-blur-md"
+              onClick={() => setCvOpen(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="relative w-full max-w-4xl h-[85vh] bg-white border border-slate-200 rounded-[32px] overflow-hidden flex flex-col shadow-2xl"
+            >
+              <div className="p-4 sm:p-5 border-b border-slate-100 flex justify-between items-center bg-white">
+                <h3 className="text-base font-bold text-slate-950">Candidate CV Sandbox</h3>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={selectedCV}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition-all text-decoration-none"
+                  >
+                    Open Externally <ExternalLink className="w-3.5 h-3.5" />
                   </a>
-                  <button onClick={() => setCvOpen(false)} style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex" }}>
-                    <X style={{ width: 18, height: 18 }} />
+                  <button onClick={() => setCvOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              <div style={{ flex: 1, background: "#f8f9ff", padding: 12 }}>
-                <iframe src={selectedCV} style={{ width: "100%", height: "100%", borderRadius: 16, border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff" }} title="Resume" />
+              
+              <div className="flex-1 bg-slate-100 p-3 sm:p-4">
+                <iframe src={selectedCV} className="w-full h-full border border-slate-200/50 rounded-2xl bg-white" title="Resume Document" />
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* ── CV Upload Modal ── */}
+      {/* ── CV Upload / Modification Modal ── */}
       <AnimatePresence>
         {showCvModal && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 99, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.2)", backdropFilter: "blur(8px)" }} onClick={closeCvModal} />
-            <motion.div initial={{ opacity: 0, scale: 0.98, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              style={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 440,
-                borderRadius: 24,
-                background: "#ffffff",
-                border: "1px solid rgba(0,0,0,0.08)",
-                padding: "32px",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.05)"
-              }}>
-               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+              onClick={closeCvModal}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              className="relative w-full max-w-md bg-white border border-slate-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
+            >
+              <div className="flex justify-between items-start">
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>
-                    {editingCv ? "Edit Candidate Profile" : "Load Candidate profile"}
+                  <h2 className="text-xl font-bold text-slate-950 tracking-tight leading-none">
+                    {editingCv ? "Modify Candidate Record" : "Index Candidate Profile"}
                   </h2>
-                  <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>
-                    {editingCv ? "Modify existing candidate record details in the talent pipeline." : "Index a target resume directly into the primary pipeline."}
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    {editingCv ? "Adjust existing record parameters." : "Index target resume directly into database."}
                   </p>
                 </div>
-                <button onClick={closeCvModal} style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer" }}>
-                  <X style={{ width: 18, height: 18 }} />
+                <button onClick={closeCvModal} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div>
-                  <label className="google-form-label">Full Name <span style={{ color: "var(--google-red)" }}>*</span></label>
-                  <input value={cvName} onChange={e => setCvName(e.target.value)} placeholder="Jane Doe" className="google-form-input" />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Candidate Name <span className="text-rose-500">*</span></label>
+                  <input
+                    value={cvName}
+                    onChange={e => setCvName(e.target.value)}
+                    placeholder="Jane Doe"
+                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                  />
                 </div>
-                <div>
-                  <label className="google-form-label">Email address</label>
-                  <input value={cvEmail} onChange={e => setCvEmail(e.target.value)} placeholder="jane@example.com" type="email" className="google-form-input" />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Email address</label>
+                  <input
+                    value={cvEmail}
+                    onChange={e => setCvEmail(e.target.value)}
+                    placeholder="jane@doe.com"
+                    type="email"
+                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                  />
                 </div>
-                <div>
-                  <label className="google-form-label">Phone contact</label>
-                  <input value={cvPhone} onChange={e => setCvPhone(e.target.value)} placeholder="+91 9876543210" className="google-form-input" />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Phone contact</label>
+                  <input
+                    value={cvPhone}
+                    onChange={e => setCvPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                  />
                 </div>
-                <div>
-                  <label className="google-form-label">
-                    {editingCv ? "Resume file (optional - upload to replace)" : "Resume file (PDF, DOC)"} {!editingCv && <span style={{ color: "var(--google-red)" }}>*</span>}
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                    {editingCv ? "Resume File (optional - upload to replace)" : "Resume File (PDF, DOC)"} {!editingCv && <span className="text-rose-500">*</span>}
                   </label>
-                  <div style={{ position: "relative", borderRadius: 12, border: "2px dashed rgba(0,0,0,0.1)", background: "rgba(0,0,0,0.005)", padding: "24px 16px", textAlign: "center", cursor: "pointer" }} className="hover-dashed-border">
-                    <input type="file" accept=".pdf,.doc,.docx"
+                  <div className="relative border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100/50 p-6 rounded-2xl text-center cursor-pointer hover:border-slate-300 transition-all">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
                       onChange={e => { const f = e.target.files?.[0]; if (f) setCvFile(f); }}
-                      style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                    <Upload style={{ width: 22, height: 22, color: "var(--neutral-400)", margin: "0 auto 8px" }} />
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--neutral-800)", margin: "0 0 4px" }}>{cvFile ? cvFile.name : "Select credentials file"}</p>
-                    <p style={{ fontSize: 11, color: "var(--neutral-400)", margin: 0 }}>Supports PDF, DOC, DOCX up to 5 MB</p>
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                    <Upload className="w-6 h-6 text-slate-400 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-slate-700">{cvFile ? cvFile.name : "Select credentials PDF file"}</p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1">Supports PDF, DOC, DOCX up to 5 MB</p>
                   </div>
                 </div>
               </div>
 
-              <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
-                <button onClick={closeCvModal} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", fontSize: 13, fontWeight: 600, color: "var(--neutral-600)", cursor: "pointer" }}>Cancel</button>
-                <button disabled={uploadingCv} onClick={handleSaveCv} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "none", background: "var(--google-blue, #1a73e8)", color: "#ffffff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: uploadingCv ? 0.7 : 1 }}>
+              <div className="border-t border-slate-100 pt-6 flex gap-3 mt-2">
+                <button
+                  onClick={closeCvModal}
+                  className="flex-1 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={uploadingCv}
+                  onClick={handleSaveCv}
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-50"
+                >
                   {uploadingCv ? (editingCv ? "Saving..." : "Uploading...") : (editingCv ? "Save Changes" : "Save Profile")}
                 </button>
               </div>
@@ -1522,95 +1396,64 @@ export default function AdminPage() {
         )}
       </AnimatePresence>
 
-      {/* ── User Add Modal ── */}
+      {/* ── User Add / Provision Modal ── */}
       <AnimatePresence>
         {showUserModal && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 99, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.2)", backdropFilter: "blur(8px)" }}
-              onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+              onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              style={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 400,
-                borderRadius: 24,
-                background: "#ffffff",
-                border: "1px solid rgba(0,0,0,0.08)",
-                padding: "32px",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.05)"
-              }}>
-              
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              className="relative w-full max-w-sm bg-white border border-slate-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
+            >
               {createdUser ? (
-                // Success Credentials Screen
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ width: 52, height: 52, background: "rgba(30,142,62,0.08)", border: "1px solid rgba(30,142,62,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }} className="flex items-center justify-center">
-                    <CheckCircle2 style={{ width: 24, height: 24, color: "var(--google-green)" }} />
+                // Access setup live success box
+                <div className="flex flex-col gap-6 text-center items-center">
+                  <div className="w-14 h-14 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shadow-inner">
+                    <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <h2 style={{ fontSize: 19, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>Supervisor Added</h2>
-                  <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, marginBottom: 20 }}>The supervising registry credentials are live.</p>
                   
-                  <div style={{ background: "var(--neutral-100)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 16, padding: "18px", textAlign: "left", marginBottom: 20 }}>
-                    <div style={{ marginBottom: 12 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--neutral-400)", letterSpacing: "0.05em" }}>Name</span>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--neutral-800)", margin: "2px 0 0" }}>{createdUser.name || "N/A"}</p>
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-xl font-bold text-slate-950 leading-none">Supervisor Added</h2>
+                    <p className="text-xs text-slate-500 font-semibold mt-1">Registry key live. Copy access handles below.</p>
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-4 text-left w-full flex flex-col gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Supervisor Name</span>
+                      <p className="text-xs font-bold text-slate-800">{createdUser.name || "N/A"}</p>
                     </div>
                     <div>
-                      <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--neutral-400)", letterSpacing: "0.05em" }}>Email address</span>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: "var(--neutral-800)", margin: "2px 0 0" }}>{createdUser.email}</p>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Email address</span>
+                      <p className="text-xs font-bold text-slate-800">{createdUser.email}</p>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div className="flex flex-col gap-2 w-full">
                     <button
                       onClick={() => copyToClipboard(createdUser.email, "email")}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        borderRadius: 12,
-                        border: "1px solid rgba(0,0,0,0.08)",
-                        background: "#ffffff",
-                        color: "var(--neutral-700)",
-                        fontWeight: 600,
-                        fontSize: 13,
-                        cursor: "pointer"
-                      }}
+                      className="w-full py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-xs cursor-pointer transition-all"
                     >
-                      {copiedField === "email" ? "Copied address" : "Copy email handle"}
+                      {copiedField === "email" ? "Copied handle" : "Copy email handle"}
                     </button>
-                    <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                    <div className="flex gap-2 mt-2 w-full">
                       <button
                         onClick={() => setCreatedUser(null)}
-                        style={{
-                          flex: 1,
-                          padding: "11px",
-                          borderRadius: 12,
-                          border: "none",
-                          background: "var(--google-blue, #1a73e8)",
-                          color: "#ffffff",
-                          fontWeight: 600,
-                          fontSize: 13,
-                          cursor: "pointer"
-                        }}
+                        className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs cursor-pointer shadow-sm"
                       >
                         Add Another
                       </button>
                       <button
                         onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }}
-                        style={{
-                          flex: 1,
-                          padding: "11px",
-                          borderRadius: 12,
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          background: "#ffffff",
-                          color: "var(--neutral-600)",
-                          fontWeight: 600,
-                          fontSize: 13,
-                          cursor: "pointer"
-                        }}
+                        className="flex-1 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-xs cursor-pointer"
                       >
                         Exit Registry
                       </button>
@@ -1620,48 +1463,79 @@ export default function AdminPage() {
               ) : (
                 // Creation Form
                 <>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                  <div className="flex justify-between items-start">
                     <div>
-                      <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--neutral-900)", margin: 0, fontFamily: '"Google Sans", sans-serif' }}>Provision Keys</h2>
-                      <p style={{ fontSize: 13, color: "var(--neutral-500)", marginTop: 4, fontWeight: 500 }}>Setup supervisor login credentials details.</p>
+                      <h2 className="text-xl font-bold text-slate-950 tracking-tight leading-none">Provision Keys</h2>
+                      <p className="text-xs text-slate-500 font-medium mt-1">Setup supervisor login credentials details.</p>
                     </div>
-                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }} style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer" }}>
-                      <X style={{ width: 18, height: 18 }} />
+                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    <div>
-                      <label className="google-form-label">Full Name</label>
-                      <input value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Jane Doe" className="google-form-input" />
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Full Name</label>
+                      <input
+                        value={newUserName}
+                        onChange={e => setNewUserName(e.target.value)}
+                        placeholder="Jane Doe"
+                        className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                      />
                     </div>
-                    <div>
-                      <label className="google-form-label">Email address <span style={{ color: "var(--google-red)" }}>*</span></label>
-                      <input value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} placeholder="supervisor@example.com" type="email" className="google-form-input" />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Email address <span className="text-rose-500">*</span></label>
+                      <input
+                        value={newUserEmail}
+                        onChange={e => setNewUserEmail(e.target.value)}
+                        placeholder="supervisor@example.com"
+                        type="email"
+                        className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                      />
                     </div>
-                    <div>
-                      <label className="google-form-label">Supervisor Access key <span style={{ color: "var(--google-red)" }}>*</span></label>
-                      <div style={{ position: "relative" }}>
-                        <input value={newUserPass} onChange={e => setNewUserPass(e.target.value)} placeholder="••••••••" type={showPass ? "text" : "password"} className="google-form-input" style={{ paddingRight: 48 }} />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Access Key <span className="text-rose-500">*</span></label>
+                      <div className="relative">
+                        <input
+                          value={newUserPass}
+                          onChange={e => setNewUserPass(e.target.value)}
+                          placeholder="••••••••"
+                          type={showPass ? "text" : "password"}
+                          className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200 pr-12"
+                        />
                         <button
                           type="button"
                           onClick={() => setShowPass(!showPass)}
-                          style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", border: "none", background: "none", color: "var(--neutral-400)", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
                         >
                           {showPass ? "HIDE" : "SHOW"}
                         </button>
                       </div>
                     </div>
-                    <div>
-                      <label className="google-form-label">Verify Access key <span style={{ color: "var(--google-red)" }}>*</span></label>
-                      <input value={newUserConfirm} onChange={e => setNewUserConfirm(e.target.value)} placeholder="••••••••" type={showPass ? "text" : "password"} className="google-form-input" />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Verify Access Key <span className="text-rose-500">*</span></label>
+                      <input
+                        value={newUserConfirm}
+                        onChange={e => setNewUserConfirm(e.target.value)}
+                        placeholder="••••••••"
+                        type={showPass ? "text" : "password"}
+                        className="google-form-input focus:border-blue-600 transition-all rounded-xl p-3 border-slate-200"
+                      />
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
-                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }} style={{ flex: 1, padding: "10px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", fontSize: 13, fontWeight: 600, color: "var(--neutral-600)", cursor: "pointer" }}>Cancel</button>
-                    <button disabled={savingUser || !newUserEmail.trim() || !newUserPass.trim()} onClick={handleCreateAdminUser}
-                      style={{ flex: 1, padding: "10px", borderRadius: 20, border: "none", background: "var(--google-blue, #1a73e8)", color: "#ffffff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: (savingUser || !newUserEmail.trim() || !newUserPass.trim()) ? 0.6 : 1 }}>
+                  <div className="border-t border-slate-100 pt-6 flex gap-3 mt-2">
+                    <button
+                      onClick={() => { setShowUserModal(false); resetUserForm(); }}
+                      className="flex-1 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      disabled={savingUser || !newUserEmail.trim() || !newUserPass.trim()}
+                      onClick={handleCreateAdminUser}
+                      className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-60"
+                    >
                       {savingUser ? "Provisions..." : "Grant Access"}
                     </button>
                   </div>
@@ -1671,13 +1545,6 @@ export default function AdminPage() {
           </div>
         )}
       </AnimatePresence>
-
-      <footer style={{ borderTop: "1px solid rgba(0, 0, 0, 0.05)", padding: "24px 0", background: "rgba(255, 255, 255, 0.4)", backdropFilter: "blur(10px)", marginTop: "auto" }}>
-        <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-          <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 500 }}>© {new Date().getFullYear()} Google Antigravity. All rights reserved.</p>
-          <div style={{ display: "flex", gap: 20 }}><a href="/jobs" style={{ fontSize: 13, color: "var(--neutral-500)", textDecoration: "none", fontWeight: 500 }}>Careers Desk</a></div>
-        </div>
-      </footer>
     </main>
   );
 }

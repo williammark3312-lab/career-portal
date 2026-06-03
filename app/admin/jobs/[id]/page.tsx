@@ -8,7 +8,7 @@ import {
   ArrowLeft, FileText, MapPin, Briefcase, ExternalLink, X,
   MessageSquare, Send, Users, ChevronRight, Loader2, Trash2,
   CheckCircle2, Clock, Eye, UserX, Search, Database, Sparkles,
-  Calendar, Mail, Plus, Copy, Check,
+  Calendar, Mail, Plus, Copy, Check
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
@@ -57,33 +57,19 @@ function parseNotes(raw: string | null | undefined): NotesData {
   };
 }
 
-function parseComments(raw: string | null | undefined): Comment[] {
-  return parseNotes(raw).comments;
-}
-
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
-  Pending:     { label: "Pending",     color: "#f9ab00", bg: "rgba(249, 171, 0, 0.06)", border: "rgba(249, 171, 0, 0.12)", icon: <Clock className="w-3.5 h-3.5" /> },
-  Reviewed:    { label: "Reviewed",    color: "#9b51e0", bg: "rgba(155, 81, 224, 0.06)", border: "rgba(155, 81, 224, 0.12)", icon: <Eye className="w-3.5 h-3.5" /> },
-  Shortlisted: { label: "Shortlisted", color: "#1e8e3e", bg: "rgba(30, 142, 62, 0.06)", border: "rgba(30, 142, 62, 0.12)", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-  Rejected:    { label: "Rejected",    color: "#d93025", bg: "rgba(217, 48, 37, 0.06)", border: "rgba(217, 48, 37, 0.12)", icon: <UserX className="w-3.5 h-3.5" /> },
+  Pending:     { label: "Pending",     color: "#f9ab00", bg: "rgba(249, 171, 0, 0.08)", border: "rgba(249, 171, 0, 0.18)", icon: <Clock className="w-3.5 h-3.5" /> },
+  Reviewed:    { label: "Reviewed",    color: "#9b51e0", bg: "rgba(155, 81, 224, 0.08)", border: "rgba(155, 81, 224, 0.18)", icon: <Eye className="w-3.5 h-3.5" /> },
+  Shortlisted: { label: "Shortlisted", color: "#1e8e3e", bg: "rgba(30, 142, 62, 0.08)", border: "rgba(30, 142, 62, 0.18)", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+  Rejected:    { label: "Rejected",    color: "#d93025", bg: "rgba(217, 48, 37, 0.08)", border: "rgba(217, 48, 37, 0.18)", icon: <UserX className="w-3.5 h-3.5" /> },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, color: "#5f6368", bg: "var(--neutral-100)", border: "rgba(0,0,0,0.06)", icon: null };
+  const cfg = STATUS_CONFIG[status] ?? { label: status, color: "#5f6368", bg: "rgba(95, 99, 104, 0.08)", border: "rgba(95, 99, 104, 0.15)", icon: null };
   return (
     <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "4px 10px",
-        borderRadius: 10,
-        fontSize: 11.5,
-        fontWeight: 600,
-        color: cfg.color,
-        backgroundColor: cfg.bg,
-        border: `1px solid ${cfg.border}`,
-      }}
+      style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
+      className="inline-flex items-center gap-1.5 px-3 py-1 border rounded-full text-xs font-bold whitespace-nowrap"
     >
       {cfg.icon}
       <span>{cfg.label}</span>
@@ -91,38 +77,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-/* ─── Google Brand colors for departments ─── */
-function getDeptStyle(dept: string) {
-  const d = dept.toLowerCase();
-  if (d.includes("engineer") || d.includes("tech")) {
-    return {
-      color: "var(--google-blue, #1a73e8)",
-      bg: "rgba(26, 115, 232, 0.06)",
-      border: "rgba(26, 115, 232, 0.12)",
-    };
-  }
-  if (d.includes("design") || d.includes("creative")) {
-    return {
-      color: "var(--google-yellow, #f9ab00)",
-      bg: "rgba(249, 171, 0, 0.06)",
-      border: "rgba(249, 171, 0, 0.12)",
-    };
-  }
-  if (d.includes("market") || d.includes("growth")) {
-    return {
-      color: "var(--google-green, #1e8e3e)",
-      bg: "rgba(30, 142, 62, 0.06)",
-      border: "rgba(30, 142, 62, 0.12)",
-    };
-  }
-  return {
-    color: "var(--google-red, #d93025)",
-    bg: "rgba(217, 48, 37, 0.06)",
-    border: "rgba(217, 48, 37, 0.12)",
-  };
-}
-
-/* ─── Applicant Card ─── */
+/* ─── Applicant Card Component ─── */
 function ApplicantCard({
   app, session, onStatusChange, onDelete, onOpenCV, onSetUpInterview,
 }: {
@@ -214,75 +169,49 @@ function ApplicantCard({
   }
 
   return (
-    <div
-      style={{
-        borderRadius: 24,
-        border: "1px solid rgba(0,0,0,0.06)",
-        background: "rgba(255, 255, 255, 0.75)",
-        backdropFilter: "blur(20px)",
-        overflow: "hidden",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.01)"
-      }}
-    >
-      {/* Top bar */}
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "16px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
-            <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>{app.name}</h3>
+    <div className="bg-white/60 backdrop-blur-md rounded-3xl border border-slate-200/50 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+      {/* Top Header Card Panel */}
+      <div className="p-5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 border-b border-slate-100">
+        <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h3 className="text-base font-bold text-slate-900 leading-none">{app.name}</h3>
             <StatusBadge status={app.status} />
             {interview && (
               <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "4px 10px",
-                  borderRadius: 10,
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  color: interview.status === "scheduled" ? "#1e8e3e" : "#1a73e8",
-                  backgroundColor: interview.status === "scheduled" ? "rgba(30, 142, 62, 0.06)" : "rgba(26, 115, 232, 0.06)",
-                  border: interview.status === "scheduled" ? "1px solid rgba(30, 142, 62, 0.12)" : "1px solid rgba(26, 115, 232, 0.12)",
-                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 border rounded-full text-xs font-bold whitespace-nowrap ${
+                  interview.status === "scheduled"
+                    ? "text-emerald-600 bg-emerald-50 border-emerald-150"
+                    : "text-blue-600 bg-blue-50 border-blue-150 animate-pulse-slow"
+                }`}
               >
                 {interview.status === "scheduled" ? (
                   <>
-                    <CheckCircle2 style={{ width: 13, height: 13 }} />
-                    <span>📅 Confirmed: {formatDateTime(interview.selected_slot!)}</span>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Interview: {formatDateTime(interview.selected_slot!)}</span>
                   </>
                 ) : (
                   <>
-                    <Clock style={{ width: 13, height: 13 }} />
-                    <span>⏳ Awaiting Candidate Slot Confirmation</span>
+                    <Clock className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: "3s" }} />
+                    <span>Awaiting Candidate Confirmation</span>
                   </>
                 )}
               </span>
             )}
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, fontSize: 12.5, color: "var(--neutral-500)", fontWeight: 500 }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FileText style={{ width: 13, height: 13, color: "var(--neutral-400)" }} />{app.email}</span>
-            {app.phone && <span style={{ display: "flex", alignItems: "center", gap: 5 }}><Briefcase style={{ width: 13, height: 13, color: "var(--neutral-400)" }} />{app.phone}</span>}
-            {app.location && <span style={{ display: "flex", alignItems: "center", gap: 5 }}><MapPin style={{ width: 13, height: 13, color: "var(--neutral-400)" }} />{app.location}</span>}
-            <span style={{ color: "var(--neutral-400)" }}>• Applied {new Date(app.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+          <div className="flex items-center gap-3 flex-wrap text-xs text-slate-400 font-semibold">
+            <span className="truncate flex items-center gap-1"><FileText className="w-3.5 h-3.5" /> {app.email}</span>
+            {app.phone && <span className="flex items-center gap-1">• <Briefcase className="w-3.5 h-3.5" /> {app.phone}</span>}
+            {app.location && <span className="flex items-center gap-1">• <MapPin className="w-3.5 h-3.5" /> {app.location}</span>}
+            <span>• Applied {new Date(app.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
           </div>
         </div>
 
-        {/* Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        {/* Action Controls Toolbar */}
+        <div className="flex items-center gap-2 self-stretch xl:self-auto justify-end flex-wrap">
           <select
             value={app.status}
             onChange={e => onStatusChange(app.id, e.target.value)}
-            style={{
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.08)",
-              background: "#ffffff",
-              padding: "6px 12px",
-              fontSize: 12.5,
-              fontWeight: 600,
-              color: "var(--neutral-700)",
-              outline: "none",
-              cursor: "pointer"
-            }}
+            className="px-3 py-2 rounded-xl border border-slate-200/80 bg-white text-xs font-bold text-slate-600 focus:outline-none cursor-pointer"
           >
             <option>Pending</option>
             <option>Reviewed</option>
@@ -291,185 +220,113 @@ function ApplicantCard({
           </select>
           <button
             onClick={() => onOpenCV(app.resume_url)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "7px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(0, 0, 0, 0.08)",
-              background: "#ffffff",
-              fontSize: 12.5,
-              fontWeight: 600,
-              color: "var(--neutral-700)",
-              cursor: "pointer",
-              transition: "all 0.2s"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "var(--neutral-50)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "#ffffff"}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200/60 hover:border-slate-300 text-slate-500 hover:text-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-[0.98]"
           >
-            <Eye style={{ width: 14, height: 14 }} /> View Resume
+            <Eye className="w-3.5 h-3.5" /> View Resume
           </button>
           <button
             onClick={() => onSetUpInterview(app)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "7px 14px",
-              borderRadius: 12,
-              border: interview ? "1px solid rgba(26,115,232,0.2)" : "1px solid rgba(0, 0, 0, 0.08)",
-              background: interview ? "rgba(26,115,232,0.04)" : "#ffffff",
-              color: interview ? "var(--google-blue)" : "var(--neutral-700)",
-              fontSize: 12.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              transition: "all 0.2s"
-            }}
-            onMouseEnter={(e) => {
-              if (!interview) e.currentTarget.style.background = "var(--neutral-50)";
-            }}
-            onMouseLeave={(e) => {
-              if (!interview) e.currentTarget.style.background = "#ffffff";
-            }}
+            className={`flex items-center gap-1.5 px-3.5 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-[0.98] ${
+              interview
+                ? "bg-blue-50/50 hover:bg-blue-50 border-blue-100 text-blue-600"
+                : "bg-white hover:bg-slate-50 border-slate-200/60 hover:border-slate-300 text-slate-500 hover:text-slate-800"
+            }`}
           >
-            <Calendar style={{ width: 14, height: 14 }} />
+            <Calendar className="w-3.5 h-3.5" />
             {interview ? "Interview Settings" : "Set Up Interview"}
           </button>
           <button
             disabled={moving || moved}
             onClick={handleMoveToDatabase}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "7px 14px",
-              borderRadius: 12,
-              border: moved ? "1px solid rgba(30,142,62,0.2)" : "1px solid rgba(0, 0, 0, 0.08)",
-              background: moved ? "rgba(30,142,62,0.04)" : "#ffffff",
-              color: moved ? "var(--google-green)" : "var(--neutral-700)",
-              fontSize: 12.5,
-              fontWeight: 600,
-              cursor: moved ? "default" : "pointer",
-              transition: "all 0.2s",
-              opacity: moving ? 0.65 : 1
-            }}
+            className={`flex items-center gap-1.5 px-3.5 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm ${
+              moved
+                ? "bg-emerald-50/50 border-emerald-100 text-emerald-600 cursor-default"
+                : "bg-white hover:bg-slate-50 border-slate-200/60 hover:border-slate-300 text-slate-500 hover:text-slate-800 cursor-pointer active:scale-[0.98]"
+            }`}
           >
             {moving ? (
-              <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : moved ? (
-              <CheckCircle2 style={{ width: 14, height: 14 }} />
+              <CheckCircle2 className="w-3.5 h-3.5" />
             ) : (
-              <Database style={{ width: 14, height: 14 }} />
+              <Database className="w-3.5 h-3.5" />
             )}
             {moved ? "In CV DB" : "Move to DB"}
           </button>
           <button
             onClick={() => onDelete(app.id)}
-            style={{
-              padding: "8px",
-              borderRadius: 12,
-              border: "1px solid rgba(217,48,37,0.12)",
-              background: "rgba(217,48,37,0.04)",
-              color: "var(--google-red)",
-              cursor: "pointer",
-              display: "inline-flex"
-            }}
-            title="Delete application"
+            className="p-2 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700 rounded-xl transition-all cursor-pointer"
+            title="Delete Application Record"
           >
-            <Trash2 style={{ width: 14, height: 14 }} />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Comments remarks block */}
-      <div style={{ padding: "12px 16px", background: "rgba(0,0,0,0.005)" }}>
+      {/* Recruiter Remarks section */}
+      <div className="bg-slate-50/50 p-4">
         <div
           onClick={() => setShowComments(!showComments)}
-          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: "var(--neutral-500)" }}
+          className="flex justify-between items-center cursor-pointer text-slate-500"
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600 }}>
-            <MessageSquare style={{ width: 14, height: 14, color: "var(--google-blue)" }} />
-            <span>Recruiter Remarks</span>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide">
+            <MessageSquare className="w-4 h-4 text-blue-500" />
+            <span>Evaluation Remarks</span>
             {comments.length > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(0,0,0,0.06)", color: "var(--neutral-700)", padding: "2px 6px", borderRadius: 8 }}>{comments.length}</span>
+              <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{comments.length}</span>
             )}
           </div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--google-blue)" }}>
-            {showComments ? "Collapse Remarks" : "Expand Remarks"}
+          <span className="text-xs font-bold text-blue-600 hover:underline">
+            {showComments ? "Collapse comments" : "Expand comments"}
           </span>
         </div>
 
-        {/* Collapsible comment section */}
         <AnimatePresence>
           {showComments && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              style={{ overflow: "hidden" }}
+              className="overflow-hidden mt-4"
             >
-              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div className="flex flex-col gap-4">
                 {comments.length > 0 && (
-                  <div style={{ maxHeight: 200, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, paddingRight: 6 }}>
+                  <div className="max-h-48 overflow-y-auto flex flex-col gap-3 pr-2">
                     {comments.map(c => (
-                      <div key={c.id} style={{ position: "relative", padding: "12px", border: "1px solid rgba(0,0,0,0.05)", background: "#ffffff", borderRadius: 12, fontSize: 12.5 }} className="group">
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                          <span style={{ fontWeight: 600, color: "var(--google-blue)" }}>{c.author.split("@")[0]}</span>
-                          <span style={{ fontSize: 11, color: "var(--neutral-400)" }}>{new Date(c.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                      <div key={c.id} className="comment-bubble p-3 rounded-2xl relative flex flex-col gap-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold text-blue-600">{c.author.split("@")[0]}</span>
+                          <span className="text-[10px] font-bold text-slate-400">
+                            {new Date(c.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </span>
                         </div>
-                        <p style={{ color: "var(--neutral-700)", margin: 0, lineHeight: 1.5 }}>{c.text}</p>
+                        <p className="text-[12.5px] text-slate-700 leading-relaxed pr-6">{c.text}</p>
+                        
                         <button
                           onClick={() => deleteComment(c.id)}
-                          style={{ position: "absolute", top: 10, right: 10, border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex" }}
+                          className="absolute top-2 right-2 border-none bg-none text-slate-300 hover:text-rose-500 cursor-pointer"
                         >
-                          <X style={{ width: 12, height: 12 }} />
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* New comment input */}
-                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                <div className="flex gap-2">
                   <textarea
-                    placeholder="Append recruiter note..."
+                    placeholder="Add evaluation note..."
                     value={commentInput}
                     onChange={e => setCommentInput(e.target.value)}
                     rows={1}
-                    style={{
-                      flex: 1,
-                      borderRadius: 12,
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      background: "#ffffff",
-                      padding: "10px 14px",
-                      fontSize: 12.5,
-                      color: "var(--neutral-900)",
-                      outline: "none",
-                      resize: "none",
-                      fontFamily: "inherit"
-                    }}
+                    className="flex-1 rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 bg-white resize-none"
                   />
                   <button
                     disabled={!commentInput.trim() || posting}
                     onClick={postComment}
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: 12,
-                      fontWeight: 600,
-                      fontSize: 12,
-                      cursor: "pointer",
-                      border: "none",
-                      color: "#ffffff",
-                      background: "var(--google-blue, #1a73e8)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      alignSelf: "flex-end"
-                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer self-end shadow-sm"
                   >
-                    {posting ? <Loader2 style={{ width: 12, height: 12 }} className="animate-spin" /> : <Send style={{ width: 12, height: 12 }} />}
+                    {posting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                     Add
                   </button>
                 </div>
@@ -482,7 +339,7 @@ function ApplicantCard({
   );
 }
 
-/* ─── Main Page ─── */
+/* ─── Main Job Screening Workspace ─── */
 export default function JobScreeningPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -532,7 +389,7 @@ export default function JobScreeningPage() {
       `Best regards,\n` +
       `Recruitment Team`
     );
-    return `mailto:${email}?subject=${subject}&body=${body}`;
+    return `mailto:${email}?subject=${subject}?&body=${body}`;
   }
 
   async function handleSaveSchedule() {
@@ -543,7 +400,7 @@ export default function JobScreeningPage() {
       return;
     }
     setSavingSchedule(true);
-    
+
     const parsed = parseNotes(schedulingApp.notes);
     const updatedInterview: InterviewData = {
       proposed_slots: slots,
@@ -572,7 +429,7 @@ export default function JobScreeningPage() {
     if (!schedulingApp) return;
     if (!confirm("Are you sure you want to cancel and delete the interview setup?")) return;
     setSavingSchedule(true);
-    
+
     const parsed = parseNotes(schedulingApp.notes);
     const updatedNotes = JSON.stringify({ comments: parsed.comments, interview: null });
     const { error } = await supabase
@@ -590,21 +447,21 @@ export default function JobScreeningPage() {
     setSavingSchedule(false);
   }
 
-  /* Auth check */
+  /* Auth validation check */
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setAuthLoading(false);
-      const isRecruiter = 
-        session?.user?.app_metadata?.role === "admin" || 
+      const isRecruiter =
+        session?.user?.app_metadata?.role === "admin" ||
         session?.user?.user_metadata?.role === "admin" ||
         session?.user?.email === "williammark3312@gmail.com";
       if (!session || !isRecruiter) router.replace("/admin");
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
-      const isRecruiter = 
-        s?.user?.app_metadata?.role === "admin" || 
+      const isRecruiter =
+        s?.user?.app_metadata?.role === "admin" ||
         s?.user?.user_metadata?.role === "admin" ||
         s?.user?.email === "williammark3312@gmail.com";
       if (!s || !isRecruiter) router.replace("/admin");
@@ -612,7 +469,7 @@ export default function JobScreeningPage() {
     return () => subscription.unsubscribe();
   }, [router]);
 
-  /* Load data */
+  /* Load database records */
   useEffect(() => {
     if (!session || !jobId) return;
     async function load() {
@@ -621,7 +478,7 @@ export default function JobScreeningPage() {
         supabase.from("jobs").select("*").eq("id", jobId).single(),
         supabase.from("applications").select("*, jobs(*)").eq("job_id", jobId).order("created_at", { ascending: false }),
       ]);
-      
+
       if (jobErr) console.error("Direct job load error:", jobErr);
       if (appsErr) console.error("Applications load error:", appsErr);
 
@@ -634,7 +491,7 @@ export default function JobScreeningPage() {
           setJob(Array.isArray(joinedJob) ? (joinedJob[0] || null) : joinedJob);
         }
       }
-      
+
       if (appsData) setApplications(appsData);
       setLoading(false);
     }
@@ -654,7 +511,7 @@ export default function JobScreeningPage() {
     setApplications(prev => prev.filter(a => a.id !== appId));
   }
 
-  /* Filters implementation */
+  /* Toolbar Filters logic */
   const filtered = applications.filter(a => {
     const matchSearch = !search ||
       a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -672,112 +529,89 @@ export default function JobScreeningPage() {
     await supabase.auth.signOut();
   }
 
-  /* Loading state */
   if (!mounted || authLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
         <AnimatedBackground />
-        <div className="w-8 h-8 border-2 border-[var(--google-blue)]/30 border-t-[var(--google-blue)] rounded-full animate-spin relative z-10" />
+        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin relative z-10" />
       </main>
     );
   }
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#F8F9FF", color: "var(--neutral-900)", position: "relative", zIndex: 1 }}>
+    <main className="min-h-screen bg-[#F8F9FF] text-slate-800 relative z-10 flex flex-col overflow-hidden">
       <AnimatedBackground />
       <Header session={session} handleLogout={handleLogout} />
 
-      <div style={{ flex: 1, width: "100%", maxWidth: 1240, margin: "0 auto", padding: "clamp(80px, 8vw, 100px) clamp(12px, 3vw, 24px) 80px" }}>
-
-        {/* Breadcrumbs */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: "#5f6368", marginBottom: 28 }}>
+      <div className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pt-28 pb-20 relative z-10 flex flex-col gap-8">
+        
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
           <button
             onClick={() => router.push("/admin")}
-            style={{ border: "none", background: "none", color: "#5f6368", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, padding: 0 }}
+            className="flex items-center gap-1 text-slate-400 hover:text-blue-600 transition-colors border-none bg-none cursor-pointer"
           >
-            <ArrowLeft style={{ width: 14, height: 14 }} /> Admin
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Console
           </button>
-          <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} />
-          <span style={{ color: "#3c4043", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
-            {job?.title ?? "Listing"}
-          </span>
-          <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} />
-          <span style={{ color: "#1a73e8", fontWeight: 600 }}>Candidate Reviews</span>
+          <ChevronRight className="w-3 h-3 text-slate-300" />
+          <span className="truncate max-w-[150px] font-medium">{job?.title ?? "Role Panel"}</span>
+          <ChevronRight className="w-3 h-3 text-slate-300" />
+          <span className="text-blue-600 font-bold">Screening Pool</span>
         </div>
 
-        {/* Page title header */}
-        <div style={{ marginBottom: 36 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20 }}>
-            <div>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#1a73e8", background: "rgba(26,115,232,0.08)", padding: "4px 10px", borderRadius: 10, display: "inline-block", marginBottom: 12 }}>
-                {job?.department ?? "Evaluation"}
-              </span>
-              <h1 style={{ color: "#121317", fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15, fontFamily: "var(--font-sans), sans-serif", margin: 0 }}>
-                {job?.title ?? "Evaluation Dashboard"}
-              </h1>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13.5, color: "#5f6368", fontWeight: 500, marginTop: 6 }}>
-                <MapPin style={{ width: 14, height: 14, color: "#9aa0a6" }} /> {job?.location ?? "Remote / Hybrid"}
-              </div>
+        {/* Screening Page Header Title */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-200/40 pb-6">
+          <div className="flex flex-col gap-2">
+            <span className="text-[10px] font-extrabold px-3 py-1 bg-blue-50 border border-blue-100 text-blue-600 rounded-full uppercase tracking-wider self-start">
+              {job?.department ?? "Evaluation"}
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 leading-tight">
+              {job?.title ?? "Screening Panel"}
+            </h1>
+            <div className="flex items-center gap-1 text-xs font-semibold text-slate-400">
+              <MapPin className="w-3.5 h-3.5 text-slate-300" /> {job?.location ?? "Remote / Hybrid"}
             </div>
+          </div>
 
-            {/* Status summary list */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              {(["Pending", "Reviewed", "Shortlisted", "Rejected"] as const).map(s => {
-                const sc = STATUS_CONFIG[s];
-                return (
-                  <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 12, fontSize: 12, fontWeight: 600, color: sc.color, backgroundColor: sc.bg, border: `1px solid ${sc.border}` }}>
-                    {sc.icon}
-                    <span>{s}</span>
-                    <span style={{ fontWeight: 700, marginLeft: 2, background: "rgba(0,0,0,0.04)", padding: "1px 6px", borderRadius: 6 }}>{counts[s] ?? 0}</span>
-                  </div>
-                );
-              })}
-            </div>
+          {/* Quick stats counters indicators row */}
+          <div className="flex flex-wrap gap-2">
+            {(["Pending", "Reviewed", "Shortlisted", "Rejected"] as const).map(statusVal => {
+              const cfg = STATUS_CONFIG[statusVal];
+              return (
+                <div
+                  key={statusVal}
+                  style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-[11px] font-bold shadow-sm"
+                >
+                  {cfg.icon}
+                  <span>{statusVal}</span>
+                  <span className="bg-white/80 px-1.5 py-0.5 rounded-md font-extrabold text-[9px] shadow-sm ml-1 text-slate-700">
+                    {counts[statusVal] ?? 0}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Toolbar */}
+        {/* Search & Status Filter Toolbar */}
         {applications.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "row", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
-            <div style={{ position: "relative", flex: 1, minWidth: "min(100%, 260px)" }}>
-              <Search style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 15, height: 15, color: "var(--neutral-400)" }} />
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-4 border border-slate-200/50 shadow-sm flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search candidates by name or email address..."
+                placeholder="Search candidate profiles by name or email handle..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                style={{
-                  width: "100%",
-                  paddingLeft: 38,
-                  paddingRight: 16,
-                  paddingTop: 10,
-                  paddingBottom: 10,
-                  background: "#ffffff",
-                  border: "1px solid rgba(0, 0, 0, 0.08)",
-                  borderRadius: 24,
-                  fontSize: 13.5,
-                  color: "var(--neutral-900)",
-                  outline: "none",
-                  transition: "all 0.2s",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.01)"
-                }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200/80 bg-white/90 text-sm focus:outline-none focus:border-blue-600 focus:shadow-inner transition-all text-slate-800"
               />
             </div>
+            
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              style={{
-                borderRadius: 24,
-                border: "1px solid rgba(0,0,0,0.08)",
-                background: "#ffffff",
-                padding: "8px 16px",
-                fontSize: 13.5,
-                fontWeight: 600,
-                color: "var(--neutral-700)",
-                outline: "none",
-                cursor: "pointer",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.01)"
-              }}
+              className="px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white/90 text-xs font-bold text-slate-600 focus:outline-none focus:border-blue-600 cursor-pointer"
             >
               <option value="All">All Applications ({applications.length})</option>
               <option value="Pending">Pending ({counts.Pending ?? 0})</option>
@@ -788,32 +622,36 @@ export default function JobScreeningPage() {
           </div>
         )}
 
-        {/* Grid List */}
+        {/* Applications workspace results panel */}
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", paddingTop: 100 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e8f0fe", borderTopColor: "var(--google-blue, #1a73e8)", animation: "spin 0.8s linear infinite" }} />
+          <div className="flex justify-center py-20">
+            <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
           </div>
         ) : applications.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "60px 40px", borderRadius: 24, border: "1px dashed rgba(0,0,0,0.1)", textAlign: "center", background: "rgba(255,255,255,0.6)" }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(26, 115, 232, 0.06)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <Users style={{ width: 22, height: 22, color: "var(--google-blue)" }} />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-16 border border-dashed border-slate-200 bg-white/40 backdrop-blur-md rounded-3xl text-center">
+            <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-4 shadow-sm">
+              <Users className="w-6 h-6" />
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: "var(--neutral-900)" }}>No candidate profiles</h3>
-            <p style={{ fontSize: 13.5, color: "var(--neutral-500)", margin: 0, fontWeight: 500 }}>Applications submitted for this opening will appear here in real time.</p>
+            <h3 className="text-base font-bold text-slate-900 mb-1">No candidate files loaded</h3>
+            <p className="text-xs text-slate-400 font-medium">Submissions submitted for this role will register here automatically.</p>
           </motion.div>
         ) : filtered.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "50px 40px", borderRadius: 24, border: "1px solid rgba(0,0,0,0.06)", textAlign: "center", background: "rgba(255,255,255,0.6)" }}>
-            <p style={{ fontSize: 14.5, color: "var(--neutral-500)", margin: "0 0 12px", fontWeight: 500 }}>No applications match your filtering configurations.</p>
-            <button onClick={() => { setSearch(""); setStatusFilter("All"); }} style={{ border: "none", background: "none", color: "var(--google-blue)", fontWeight: 600, fontSize: 13, textDecoration: "underline", cursor: "pointer" }}>
-              Reset Filters
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-12 border border-slate-200/50 bg-white/50 backdrop-blur-md rounded-3xl text-center flex flex-col items-center gap-3">
+            <p className="text-sm font-semibold text-slate-500">No applications match your search parameter filters.</p>
+            <button
+              onClick={() => { setSearch(""); setStatusFilter("All"); }}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 underline border-none bg-none cursor-pointer"
+            >
+              Reset screening filter parameters
             </button>
           </motion.div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 600, margin: "0 0 4px" }}>
-              Showing <span style={{ color: "var(--neutral-800)", fontWeight: 700 }}>{filtered.length}</span> of {applications.length} profiles
+          <div className="flex flex-col gap-5">
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+              Showing <span className="text-slate-800 font-extrabold">{filtered.length}</span> of {applications.length} active submissions
             </p>
-            {filtered.map((app, i) => (
+            
+            {filtered.map((app) => (
               <ApplicantCard
                 key={app.id}
                 app={app}
@@ -832,273 +670,146 @@ export default function JobScreeningPage() {
         )}
       </div>
 
-      {/* CV Resume Modal Sandbox */}
+      {/* CV Document Sandbox Modal */}
       <AnimatePresence>
         {cvOpen && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 99, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.2)", backdropFilter: "blur(8px)" }}
+              className="absolute inset-0 bg-slate-900/30 backdrop-blur-md"
               onClick={() => setCvOpen(false)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              style={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 820,
-                height: "85vh",
-                borderRadius: 24,
-                background: "#ffffff",
-                border: "1px solid rgba(0,0,0,0.08)",
-                overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.05)"
-              }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="relative w-full max-w-4xl h-[85vh] bg-white border border-slate-200 rounded-[32px] overflow-hidden flex flex-col shadow-2xl"
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid rgba(0,0,0,0.05)", background: "#ffffff", flexShrink: 0 }}>
-                <h3 style={{ fontSize: 14.5, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>Resume Sandbox</h3>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="p-4 sm:p-5 border-b border-slate-100 flex justify-between items-center bg-white">
+                <h3 className="text-base font-bold text-slate-950">Candidate CV Sandbox</h3>
+                <div className="flex items-center gap-2">
                   <a
                     href={selectedCV}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      borderRadius: 12,
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      background: "#ffffff",
-                      color: "var(--neutral-700)",
-                      padding: "6px 12px",
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      textDecoration: "none"
-                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition-all text-decoration-none"
                   >
-                    External view <ExternalLink style={{ width: 13, height: 13 }} />
+                    Open Externally <ExternalLink className="w-3.5 h-3.5" />
                   </a>
-                  <button
-                    onClick={() => setCvOpen(false)}
-                    style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex" }}
-                  >
-                    <X style={{ width: 18, height: 18 }} />
+                  <button onClick={() => setCvOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              <div style={{ flex: 1, background: "#f8f9ff", padding: 12 }}>
-                <iframe
-                  src={selectedCV}
-                  style={{ width: "100%", height: "100%", borderRadius: 16, border: "1px solid rgba(0,0,0,0.06)", background: "#ffffff" }}
-                  title="Resume Sandbox"
-                />
+              <div className="flex-1 bg-slate-100 p-4">
+                <iframe src={selectedCV} className="w-full h-full border border-slate-200/50 rounded-2xl bg-white" title="Resume Document Sandbox" />
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Interview Scheduling Settings Modal */}
+      {/* Interview Scheduling Configuration Overlay Modal */}
       <AnimatePresence>
         {schedulingApp && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              style={{ position: "absolute", inset: 0, background: "rgba(0, 0, 0, 0.25)", backdropFilter: "blur(8px)" }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
               onClick={() => setSchedulingApp(null)}
             />
+
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              style={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 500,
-                maxHeight: "90vh",
-                borderRadius: 24,
-                background: "#ffffff",
-                border: "1px solid rgba(0,0,0,0.08)",
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "0 12px 48px rgba(0,0,0,0.12)",
-                padding: "24px",
-                zIndex: 101,
-                overflow: "visible"
-              }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              className="relative w-full max-w-md bg-white border border-slate-200 rounded-[32px] p-6 sm:p-8 shadow-2xl flex flex-col gap-6"
             >
-              {/* Header */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(26,115,232,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Calendar style={{ width: 18, height: 18, color: "var(--google-blue)" }} />
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl border border-blue-100 bg-blue-50 flex items-center justify-center text-blue-600">
+                    <Calendar className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--neutral-900)", margin: 0 }}>Interview Scheduler</h3>
-                    <p style={{ fontSize: 12, color: "var(--neutral-500)", margin: 0 }}>Propose dates for {schedulingApp.name}</p>
+                    <h3 className="text-base font-bold text-slate-950">Interview Scheduler</h3>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5">Invite candidate {schedulingApp.name}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSchedulingApp(null)}
-                  style={{ border: "none", background: "none", color: "var(--neutral-400)", cursor: "pointer", display: "flex", padding: 4 }}
-                >
-                  <X style={{ width: 18, height: 18 }} />
+                <button onClick={() => setSchedulingApp(null)} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Status Display if confirmed */}
               {parseNotes(schedulingApp.notes).interview && parseNotes(schedulingApp.notes).interview?.status === "scheduled" && (
-                <div style={{
-                  padding: "12px 16px",
-                  borderRadius: 16,
-                  background: "rgba(30,142,62,0.06)",
-                  border: "1px solid rgba(30,142,62,0.12)",
-                  color: "#1e8e3e",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  marginBottom: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8
-                }}>
-                  <CheckCircle2 style={{ width: 16, height: 16 }} />
-                  <span>
-                    <strong>Confirmed Slot:</strong> {formatDateTime(parseNotes(schedulingApp.notes).interview?.selected_slot!)}
-                  </span>
+                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-2 text-xs font-bold text-emerald-600 shadow-sm animate-pulse-slow">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Confirmed Slot: {formatDateTime(parseNotes(schedulingApp.notes).interview?.selected_slot!)}</span>
                 </div>
               )}
 
-              {/* Propose Slots Scrollbox container */}
-              <div style={{ display: "flex", flexDirection: "column", marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: "var(--neutral-700)", marginBottom: 8 }}>
-                  Proposed Date & Time Slots
-                </label>
+              {/* Slots List config */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Proposed Slots Options</label>
                 
-                <div style={{
-                  maxHeight: "220px",
-                  overflowY: "auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  paddingRight: 6,
-                  marginBottom: 12
-                }}>
+                <div className="max-h-48 overflow-y-auto flex flex-col gap-2.5 pr-2 mb-1">
                   {proposedSlots.map((slot, idx) => (
-                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div key={idx} className="flex gap-2 items-center">
                       <input
                         type="datetime-local"
                         value={slot}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updated = [...proposedSlots];
                           updated[idx] = e.target.value;
                           setProposedSlots(updated);
                         }}
-                        style={{
-                          flex: 1,
-                          borderRadius: 12,
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          background: "#ffffff",
-                          padding: "10px 14px",
-                          fontSize: 13,
-                          color: "var(--neutral-900)",
-                          outline: "none",
-                        }}
+                        className="flex-1 rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 bg-white"
                       />
                       <button
                         onClick={() => {
                           const updated = proposedSlots.filter((_, i) => i !== idx);
                           setProposedSlots(updated.length === 0 ? [""] : updated);
                         }}
-                        style={{
-                          padding: "10px",
-                          borderRadius: 12,
-                          border: "1px solid rgba(217,48,37,0.12)",
-                          background: "rgba(217,48,37,0.04)",
-                          color: "var(--google-red)",
-                          cursor: "pointer",
-                          display: "inline-flex"
-                        }}
-                        title="Remove slot"
+                        className="p-2.5 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700 rounded-xl transition-all cursor-pointer"
+                        title="Remove slot option"
                       >
-                        <Trash2 style={{ width: 14, height: 14 }} />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
                 </div>
 
                 <button
-                  type="button"
                   onClick={() => setProposedSlots([...proposedSlots, ""])}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    alignSelf: "flex-start",
-                    padding: "6px 12px",
-                    borderRadius: 10,
-                    border: "1px dashed rgba(26,115,232,0.3)",
-                    background: "rgba(26,115,232,0.02)",
-                    color: "var(--google-blue)",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
+                  className="flex items-center gap-1.5 py-2 px-3 border border-dashed border-blue-200 hover:bg-blue-50/20 text-blue-600 font-bold text-xs rounded-xl cursor-pointer self-start transition-all"
                 >
-                  <Plus style={{ width: 14, height: 14 }} /> Add Option
+                  <Plus className="w-3.5 h-3.5" /> Add Slot Option
                 </button>
               </div>
 
-              {/* Action and Generated Link */}
-              <div style={{ borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="border-t border-slate-100 pt-6 flex flex-col gap-4 mt-2">
                 <button
                   disabled={savingSchedule}
                   onClick={handleSaveSchedule}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: 14,
-                    fontWeight: 600,
-                    fontSize: 13.5,
-                    cursor: "pointer",
-                    border: "none",
-                    color: "#ffffff",
-                    background: "var(--google-blue, #1a73e8)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                  }}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-50"
                 >
-                  {savingSchedule ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <Sparkles style={{ width: 16, height: 16 }} />}
-                  {parseNotes(schedulingApp.notes).interview ? "Update & Save Slots" : "Generate Scheduling Link"}
+                  {savingSchedule ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {parseNotes(schedulingApp.notes).interview ? "Save & Update Slots" : "Generate Booking Link"}
                 </button>
 
                 {parseNotes(schedulingApp.notes).interview && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <label style={{ fontSize: 11.5, fontWeight: 600, color: "var(--neutral-500)" }}>Scheduling Link</label>
-                      <div style={{ display: "flex", gap: 6 }}>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Candidate Booking URL</label>
+                      <div className="flex gap-2">
                         <input
                           type="text"
                           readOnly
                           value={`${window.location.origin}/schedule/${schedulingApp.id}`}
-                          style={{
-                            flex: 1,
-                            borderRadius: 12,
-                            border: "1px solid rgba(0,0,0,0.08)",
-                            background: "rgba(0,0,0,0.02)",
-                            padding: "8px 12px",
-                            fontSize: 12.5,
-                            color: "var(--neutral-600)",
-                            outline: "none",
-                          }}
-                          onClick={(e) => (e.target as HTMLInputElement).select()}
+                          onClick={e => (e.target as HTMLInputElement).select()}
+                          className="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-500 focus:outline-none"
                         />
                         <button
                           onClick={() => {
@@ -1106,61 +817,26 @@ export default function JobScreeningPage() {
                             setCopied(true);
                             setTimeout(() => setCopied(false), 2000);
                           }}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                            padding: "8px 12px",
-                            borderRadius: 12,
-                            border: "1px solid rgba(0,0,0,0.08)",
-                            background: copied ? "rgba(30,142,62,0.06)" : "#ffffff",
-                            color: copied ? "#1e8e3e" : "var(--neutral-700)",
-                            fontSize: 12,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                          }}
+                          className={`flex items-center gap-1 px-3 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            copied ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                          }`}
                         >
-                          {copied ? <Check style={{ width: 14, height: 14 }} /> : <Copy style={{ width: 14, height: 14 }} />}
-                          {copied ? "Copied!" : "Copy"}
+                          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          {copied ? "Copied" : "Copy"}
                         </button>
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    <div className="flex gap-2 w-full mt-1">
                       <a
                         href={getMailtoUrl(schedulingApp.name, job?.title || "Job Application", `${window.location.origin}/schedule/${schedulingApp.id}`, schedulingApp.email)}
-                        style={{
-                          flex: 1,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 6,
-                          padding: "10px",
-                          borderRadius: 12,
-                          border: "1px solid rgba(26,115,232,0.15)",
-                          background: "rgba(26,115,232,0.04)",
-                          color: "var(--google-blue)",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          textDecoration: "none",
-                          cursor: "pointer",
-                          textAlign: "center"
-                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-blue-150 bg-blue-50/50 hover:bg-blue-50 text-blue-600 text-xs font-bold rounded-xl text-decoration-none transition-all cursor-pointer"
                       >
-                        <Mail style={{ width: 14, height: 14 }} /> Email Candidate
+                        <Mail className="w-4 h-4" /> Send Invite Email
                       </a>
                       <button
                         onClick={handleCancelSchedule}
-                        style={{
-                          padding: "10px 14px",
-                          borderRadius: 12,
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          background: "#ffffff",
-                          color: "var(--google-red)",
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                        }}
+                        className="px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-rose-500 font-bold text-xs rounded-xl cursor-pointer transition-all"
                       >
                         Cancel Scheduler
                       </button>
@@ -1172,13 +848,6 @@ export default function JobScreeningPage() {
           </div>
         )}
       </AnimatePresence>
-
-      <footer style={{ borderTop: "1px solid rgba(0, 0, 0, 0.05)", padding: "24px 0", background: "rgba(255, 255, 255, 0.4)", backdropFilter: "blur(10px)", marginTop: "auto" }}>
-        <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-          <p style={{ fontSize: 13, color: "var(--neutral-500)", fontWeight: 500 }}>© {new Date().getFullYear()} Google Antigravity. All rights reserved.</p>
-          <div style={{ display: "flex", gap: 20 }}><a href="/jobs" style={{ fontSize: 13, color: "var(--neutral-500)", textDecoration: "none", fontWeight: 500 }}>Careers Desk</a></div>
-        </div>
-      </footer>
     </main>
   );
 }
