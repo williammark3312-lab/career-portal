@@ -28,8 +28,8 @@ export default function Header({ session, handleLogout }: HeaderProps) {
       style={{ zIndex: 100 }}
     >
       <motion.div
-        className="pointer-events-auto relative flex items-center justify-between w-full max-w-4xl rounded-full bg-[rgba(26,56,179,0.88)] backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_-4px_rgba(26,86,219,0.4)] px-4 sm:px-5 py-2.5 sm:py-3 overflow-hidden"
-        whileHover={{ boxShadow: "0 12px 40px -4px rgba(26,86,219,0.6)", borderColor: "rgba(255,255,255,0.3)" }}
+        className="pointer-events-auto relative flex items-center justify-between w-full max-w-4xl rounded-full bg-[rgba(15,15,17,0.92)] backdrop-blur-2xl border border-white/8 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5)] px-4 sm:px-5 py-2.5 sm:py-3 overflow-hidden"
+        whileHover={{ boxShadow: "0 12px 40px -4px rgba(0,0,0,0.7)", borderColor: "rgba(255,255,255,0.15)" }}
       >
         {/* Animated sheen effect sweeping across the pill */}
         <motion.div
@@ -162,7 +162,7 @@ export default function Header({ session, handleLogout }: HeaderProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="pointer-events-auto absolute top-full left-3 right-3 mt-2 rounded-2xl bg-[rgba(26,56,179,0.95)] backdrop-blur-2xl border border-white/20 shadow-[0_12px_40px_-4px_rgba(26,86,219,0.5)] p-3 md:hidden z-50"
+            className="pointer-events-auto absolute top-full left-3 right-3 mt-2 rounded-2xl bg-[rgba(15,15,17,0.97)] backdrop-blur-2xl border border-white/8 shadow-[0_12px_40px_-4px_rgba(0,0,0,0.6)] p-3 md:hidden z-50"
           >
             <div className="flex flex-col gap-1">
               {isAdminPage ? (
