@@ -112,15 +112,15 @@ export default function JobsPage() {
           {/* Pill Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-50/50 text-blue-600 text-xs font-bold uppercase tracking-wider mb-5">
             <Sparkles className="w-3.5 h-3.5" />
-            Careers Portal
+            Join Our Team
           </div>
 
           <h1 className="text-[36px] sm:text-[54px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-gradient">
-            Shape the Future<br />
-            With Antigravity
+            Build Your Career<br />
+            With Us
           </h1>
           <p className="mt-4 text-base sm:text-lg leading-[1.65] text-zinc-500 max-w-xl font-medium">
-            Join a fast-moving, design-obsessed team building the next generation of web infrastructure. Discover open opportunities below.
+            Explore premium career opportunities, collaborate with ambitious teams.
           </p>
         </motion.div>
       </section>
