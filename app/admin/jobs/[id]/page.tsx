@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
-import AnimatedBackground from "../../../../src/components/AnimatedBackground";
+import GlassBackground from "../../../../src/components/GlassBackground";
 
 /* ─── Types ─── */
 interface Job {
@@ -382,7 +382,7 @@ export default function JobScreeningPage() {
   if (!mounted || authLoading) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
-        <AnimatedBackground />
+        <GlassBackground />
         <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin relative z-10" />
       </main>
     );
@@ -390,7 +390,7 @@ export default function JobScreeningPage() {
 
   return (
     <main className="min-h-screen bg-[#F8F9FC] text-zinc-800 relative z-10 flex flex-col overflow-hidden">
-      <AnimatedBackground />
+      <GlassBackground />
       <Header session={session} handleLogout={handleLogout} />
 
       <div className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pt-28 pb-20 relative z-10 flex flex-col gap-6">

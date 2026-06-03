@@ -2,31 +2,10 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows, MeshTransmissionMaterial } from "@react-three/drei";
 import { Briefcase } from "lucide-react";
 import Header from "../src/components/Header";
 import Footer from "../src/components/Footer";
-/* —— Same ring as jobs/admin pages —— */
-function FloatingRing() {
-  return (
-    <Float speed={1.8} rotationIntensity={0.9} floatIntensity={1.2}>
-      <mesh rotation={[0.5, -0.5, 0]}>
-        <torusGeometry args={[2, 0.45, 64, 128]} />
-        <MeshTransmissionMaterial
-          backside samples={6} thickness={0.6}
-          chromaticAberration={0.08} anisotropy={0.5}
-          distortion={0.12} distortionScale={0.2}
-          temporalDistortion={0.03} clearcoat={1}
-          clearcoatRoughness={0.05} color="#1a3bbd"
-          transmission={0.55} roughness={0.05}
-          resolution={1024}
-        />
-      </mesh>
-    </Float>
-  );
-}
+import GlassBackground from "../src/components/GlassBackground";
 
 export default function Home() {
   const router = useRouter();
@@ -34,18 +13,7 @@ export default function Home() {
   return (
     <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
       {/* 3D Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-55">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-          <ambientLight intensity={1.4} />
-          <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-          <directionalLight position={[-8, -8, -4]} intensity={1.2} color="#3279F9" />
-          <Suspense fallback={null}>
-            <FloatingRing />
-            <Environment preset="city" />
-            <ContactShadows position={[0, -2.5, 0]} opacity={0.2} scale={16} blur={3} color="#737A87" />
-          </Suspense>
-        </Canvas>
-      </div>
+      <GlassBackground />
 
       {/* Header */}
       <Header />

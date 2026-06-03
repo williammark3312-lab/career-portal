@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
-import AnimatedBackground from "../../src/components/AnimatedBackground";
+import GlassBackground from "../../src/components/GlassBackground";
 import KineticText from "../../src/components/KineticText";
 
 /* ─── Interfaces ─── */
@@ -435,7 +435,7 @@ export default function AdminPage() {
   if ((!mounted || authLoading) && !loginSuccess) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
-        <AnimatedBackground />
+        <GlassBackground />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
           <p className="text-sm font-bold text-slate-500 tracking-wide animate-pulse-slow">Initializing Control Console...</p>
@@ -448,7 +448,7 @@ export default function AdminPage() {
   if (loginSuccess) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
-        <AnimatedBackground />
+        <GlassBackground />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -588,7 +588,7 @@ export default function AdminPage() {
   /* ── MAIN DASHBOARD PANEL ── */
   return (
     <main className="min-h-screen bg-[#F8F9FC] text-zinc-800 relative z-10 flex flex-col lg:flex-row overflow-hidden">
-      <AnimatedBackground />
+      <GlassBackground />
 
       {/* ── Midnight-Dark Sidebar (Stripe Style) ── */}
       <aside className="w-72 bg-zinc-950 border-r border-zinc-900/80 hidden lg:flex flex-col justify-between p-6 fixed h-screen z-20">
