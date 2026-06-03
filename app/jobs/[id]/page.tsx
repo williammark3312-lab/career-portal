@@ -2,17 +2,23 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../../src/lib/supabase";
-import { ArrowLeft, CheckCircle2, Upload, Briefcase, MapPin, Download, ChevronLeft, Calendar } from "lucide-react";
+import { 
+  ArrowRight, MapPin, Briefcase, Search, X, Sparkles, 
+  ChevronRight, ExternalLink, Lock, Upload, CheckCircle2, Download 
+} from "lucide-react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import Header from "../../../src/components/Header";
-import Footer from "../../../src/components/Footer";
 import GlassBackground from "../../../src/components/GlassBackground";
 
 type Job = {
-  id: string; title: string; department: string; location: string; description: string;
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  description: string;
 };
 
 function renderMd(md: string): string {
@@ -25,16 +31,16 @@ function renderMd(md: string): string {
 
     if (/^#{1,3} /.test(trimmed)) {
       const text = trimmed.replace(/^#{1,3} /, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      out.push(`<h3 class="text-base sm:text-lg font-bold text-zinc-900 mt-6 mb-3 tracking-tight leading-tight">${text}</h3>`);
+      out.push(`<h3 class="text-xs font-bold text-zinc-900 mt-6 mb-2.5 uppercase tracking-wider">${text}</h3>`);
       continue;
     }
 
     if (/^[•\-] /.test(trimmed)) {
       const items = trimmed.split("\n").map(line => line.trim()).filter(Boolean);
-      out.push('<ul class="space-y-2.5 my-4 ml-5 list-disc text-zinc-600 font-medium">');
+      out.push('<ul class="space-y-2.5 my-4 ml-5 list-disc text-zinc-500 font-medium">');
       for (const item of items) {
         const text = item.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-zinc-800'>$1</strong>");
-        out.push(`<li class="pl-1 marker:text-blue-500 text-sm leading-relaxed">${text}</li>`);
+        out.push(`<li class="pl-1 marker:text-blue-500 text-xs leading-relaxed">${text}</li>`);
       }
       out.push('</ul>');
       continue;
@@ -47,7 +53,7 @@ function renderMd(md: string): string {
       .join(" ")
       .replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-zinc-800'>$1</strong>");
     
-    out.push(`<p class="my-3 text-sm sm:text-[15px] leading-relaxed text-zinc-600 font-medium">${text}</p>`);
+    out.push(`<p class="my-3 text-xs sm:text-[13.5px] leading-relaxed text-zinc-500 font-medium">${text}</p>`);
   }
 
   return out.join("\n");
@@ -78,30 +84,87 @@ function playSuccessChime() {
   } catch { /* silent */ }
 }
 
-export default function JobDetailsPage() {
+export default function JobsPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
 
-  const [job, setJob]               = useState<Job | null>(null);
-  const [loading, setLoading]       = useState(false);
-  const [showApply, setShowApply]   = useState(false);
-  const [submitted, setSubmitted]   = useState(false);
-  const [name, setName]             = useState("");
-  const [email, setEmail]           = useState("");
-  const [phone, setPhone]           = useState("");
-  const [location, setLocation]     = useState("");
-  const [resume, setResume]         = useState<File | null>(null);
-  const [errors, setErrors]         = useState<Record<string, string>>({});
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDept, setSelectedDept] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  /* Drawer / Application form states */
+  const [activeDrawerJob, setActiveDrawerJob] = useState<Job | null>(null);
+  const [showApply, setShowApply] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [resume, setResume] = useState<File | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [submittedApp, setSubmittedApp] = useState<{ id?: string } | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { fetchJob(); }, []);
+  useEffect(() => {
+    setMounted(true);
+    fetchJobs();
+  }, []);
 
-  async function fetchJob() {
-    const { data } = await supabase.from("jobs").select("*").eq("id", id).single();
-    if (data) setJob(data);
+  async function fetchJobs() {
+    setLoading(true);
+    const { data, error } = await supabase.from("jobs").select("*").order("created_at", { ascending: false });
+    if (!error && data) {
+      setJobs(data);
+      // Pre-open matching drawer if ID exists in URL params
+      if (id) {
+        const matchingJob = data.find(j => j.id === id);
+        if (matchingJob) {
+          setActiveDrawerJob(matchingJob);
+        }
+      }
+    }
+    setLoading(false);
+  }
+
+  const departments = ["All", ...Array.from(new Set(jobs.map((j) => j.department))).filter(Boolean)];
+
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch =
+      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDept =
+      selectedDept && selectedDept !== "All"
+        ? job.department.toLowerCase() === selectedDept.toLowerCase()
+        : true;
+    return matchesSearch && matchesDept;
+  });
+
+  /* Drawer Handlers */
+  function handleOpenJobDrawer(job: Job) {
+    // Modify URL route dynamically for better UX without full reloads
+    window.history.pushState(null, "", `/jobs/${job.id}`);
+    setActiveDrawerJob(job);
+    setShowApply(false);
+    setSubmitted(false);
+    setName("");
+    setEmail("");
+    setPhone("");
+    setLocation("");
+    setResume(null);
+    setErrors({});
+    setSubmittedApp(null);
+  }
+
+  function handleCloseJobDrawer() {
+    // Reset URL route back to index listings
+    window.history.pushState(null, "", "/jobs");
+    setActiveDrawerJob(null);
   }
 
   async function handleDownloadPDF() {
@@ -147,15 +210,15 @@ export default function JobDetailsPage() {
   }
 
   async function handleSubmit() {
-    if (!validate() || !resume) return;
+    if (!validate() || !resume || !activeDrawerJob) return;
     try {
-      setLoading(true);
+      setFormLoading(true);
       const fileName = `${Date.now()}-${resume.name}`;
       const { error: uploadErr } = await supabase.storage.from("resumes").upload(fileName, resume);
       if (uploadErr) { alert(uploadErr.message); return; }
       const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(fileName);
       const { data, error } = await supabase.from("applications").insert([
-        { name, email, phone: `+91 ${phone}`, location, resume_url: publicUrl, job_id: id, status: "Pending" },
+        { name, email, phone: `+91 ${phone}`, location, resume_url: publicUrl, job_id: activeDrawerJob.id, status: "Pending" },
       ]).select().single();
       if (error) alert(error.message);
       else {
@@ -164,315 +227,469 @@ export default function JobDetailsPage() {
         setSubmitted(true);
       }
     } catch { alert("Something went wrong. Please check your network and try again."); }
-    finally { setLoading(false); }
+    finally { setFormLoading(false); }
   }
 
-  /* Loading state */
-  if (!job) {
-    return (
-      <main className="min-h-screen bg-[#F8F9FC] flex items-center justify-center relative overflow-hidden">
-        <GlassBackground />
-        <div className="flex flex-col items-center gap-4 relative z-10">
-          <div className="w-10 h-10 rounded-full border-2 border-blue-500/20 border-t-blue-600 animate-spin" />
-          <p className="text-xs font-bold text-zinc-400 tracking-wider">Fetching opening details...</p>
-        </div>
-      </main>
-    );
-  }
-
-  /* Success / Ticket Receipt view */
-  if (submitted) {
-    return (
-      <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
-        <GlassBackground />
-        <Header />
-        
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-28 gap-6 max-w-lg mx-auto w-full">
-          {/* Receipt card (designed like a Vercel Ticket) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            ref={receiptRef}
-            className="w-full bg-white border border-zinc-200/60 rounded-[32px] overflow-hidden shadow-xl shadow-blue-500/5 relative"
-          >
-            {/* Vercel-style top gradient stripe */}
-            <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-rose-500" />
-
-            {/* Header section */}
-            <div className="px-8 pt-8 pb-6 text-center border-b border-dashed border-zinc-200 relative">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.15 }}
-                className="w-14 h-14 bg-emerald-50 border border-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"
-              >
-                <CheckCircle2 className="w-7 h-7" />
-              </motion.div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">
-                Application Received
-              </h2>
-              <p className="text-xs font-medium text-zinc-400 mt-1">Thank you! Your profile is in review.</p>
-              
-              {/* Receipt left/right punch holes */}
-              <div className="absolute -bottom-[10px] -left-[10px] w-5 h-5 rounded-full bg-[#F8F9FC] border border-zinc-200/50" />
-              <div className="absolute -bottom-[10px] -right-[10px] w-5 h-5 rounded-full bg-[#F8F9FC] border border-zinc-200/50" />
-            </div>
-
-            {/* Details table */}
-            <div className="p-8 flex flex-col gap-4">
-              {[
-                { label: "Confirmation ID", value: `#${submittedApp?.id?.slice(0, 8).toUpperCase() || "N/A"}`, isMono: true },
-                { label: "Applicant", value: name },
-                { label: "Role Applied", value: job.title },
-                { label: "Location", value: location },
-                {
-                  label: "Submitted On",
-                  value: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-                },
-              ].map((row) => (
-                <div key={row.label} className="flex justify-between items-start gap-4">
-                  <span className="text-[10px] font-bold text-zinc-400 tracking-wider uppercase">{row.label}</span>
-                  <span className={`text-xs font-bold text-zinc-800 text-right max-w-[60%] ${row.isMono ? 'font-mono text-blue-600 bg-blue-50 border border-blue-100/50 px-2 py-0.5 rounded' : ''}`}>
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-              <div className="border-t border-zinc-100 mt-4 pt-4 text-center">
-                <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
-                  Secure Recruiter Desk Verification
-                </span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Action buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35, duration: 0.4 }}
-            className="w-full flex flex-col gap-3"
-          >
-            <button
-              id="receipt-download-btn"
-              disabled={isDownloading}
-              onClick={handleDownloadPDF}
-              className="w-full py-3 px-6 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed shadow-md shadow-blue-500/10 cursor-pointer flex items-center justify-center gap-2"
-            >
-              {isDownloading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Generating PDF...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4.5 h-4.5" />
-                  Download Receipt Slip
-                </>
-              )}
-            </button>
-            <button
-              id="receipt-return-btn"
-              onClick={() => router.push("/jobs")}
-              className="w-full py-3 px-6 rounded-xl font-bold text-xs text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Return to Openings
-            </button>
-          </motion.div>
-        </div>
-        
-        <Footer />
-      </main>
-    );
-  }
-
-  /* Main Form Layout */
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
+    <main className="min-h-screen bg-[#F8F9FC] text-zinc-800 relative z-10 flex flex-col lg:flex-row overflow-hidden">
+      {/* 2D Premium Glow Background */}
       <GlassBackground />
-      <Header />
 
-      <div className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-6 sm:px-8 pt-24 sm:pt-28 pb-12">
-        
-        {/* Back Button */}
-        <button 
-          onClick={() => router.push("/jobs")}
-          className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-zinc-800 text-xs font-bold uppercase tracking-wider mb-6 group cursor-pointer transition-colors"
-        >
-          <ChevronLeft className="w-4.5 h-4.5 group-hover:-translate-x-0.5 transition-transform" />
-          Back to Listings
-        </button>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-white border border-zinc-200/60 rounded-3xl overflow-hidden shadow-sm"
-        >
-          {/* Header Panel */}
-          <div className="p-6 sm:p-10 border-b border-zinc-150">
-            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100/50 px-2.5 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">
-              {job.department}
-            </span>
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-zinc-900 leading-tight mb-5">
-              {job.title}
-            </h1>
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-1.5 rounded-xl border border-zinc-250/30 bg-zinc-50 px-3.5 py-1.5 text-xs font-bold text-zinc-500">
-                <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-                <span>{job.location}</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-xl border border-zinc-250/30 bg-zinc-50 px-3.5 py-1.5 text-xs font-bold text-zinc-500">
-                <Briefcase className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Full Time</span>
-              </div>
+      {/* ── Midnight-Dark Sidebar (Admin Mirror) ── */}
+      <aside className="w-72 bg-zinc-950 border-r border-zinc-900/80 hidden lg:flex flex-col justify-between p-6 fixed h-screen z-20">
+        <div className="flex flex-col gap-8">
+          
+          {/* Logo Branding */}
+          <div className="flex items-center gap-3 px-2 py-1 cursor-pointer" onClick={() => router.push("/")}>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/10">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-white tracking-tight leading-none">Antigravity</h1>
+              <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Careers Portal</span>
             </div>
           </div>
 
-          {/* Core content split */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-zinc-150">
-            {/* Left Column: Job Description */}
-            <div className="lg:col-span-7 p-6 sm:p-10">
-              <h2 className="text-lg font-bold text-zinc-800 mb-5 uppercase tracking-wide">
-                Role Description
-              </h2>
-              <div 
-                className="prose prose-zinc max-w-none text-zinc-600 font-medium"
-                dangerouslySetInnerHTML={{ __html: renderMd(job.description) }} 
-              />
+          {/* Navigation Links */}
+          <nav className="flex flex-col gap-1">
+            <button
+              onClick={() => { handleCloseJobDrawer(); setSelectedDept(""); setSearchQuery(""); }}
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold text-white bg-zinc-900 border border-zinc-855 cursor-pointer w-full text-left"
+            >
+              <Briefcase className="w-4 h-4 text-blue-500" />
+              <span>Explore Openings</span>
+            </button>
+            <a
+              href="https://www.linkedin.com/in/anandugirish/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent transition-all"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>LinkedIn Profile</span>
+            </a>
+          </nav>
+        </div>
+
+        {/* Sidebar Footer Link to Admin Dashboard */}
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={() => router.push("/admin")}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-zinc-250 hover:bg-zinc-900 border border-transparent hover:border-zinc-900 transition-all cursor-pointer"
+          >
+            <Lock className="w-4 h-4" />
+            <span>Admin Console</span>
+          </button>
+          <div className="text-[10px] text-zinc-650 font-semibold px-3">
+            © {new Date().getFullYear()} Google Antigravity
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Mobile Layout Header ── */}
+      <div className="lg:hidden w-full relative z-30">
+        <Header />
+        {/* Mobile menu navigation tab strip */}
+        <div className="bg-white/80 backdrop-blur-md border-b border-zinc-250 px-4 py-2 flex gap-1.5 overflow-x-auto">
+          <button
+            onClick={() => { handleCloseJobDrawer(); setSelectedDept(""); setSearchQuery(""); }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white bg-zinc-950 shadow-sm cursor-pointer whitespace-nowrap"
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            Openings
+          </button>
+          <a
+            href="https://www.linkedin.com/in/anandugirish/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-zinc-500 bg-zinc-100 hover:bg-zinc-200 whitespace-nowrap"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            LinkedIn
+          </a>
+          <button
+            onClick={() => router.push("/admin")}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-zinc-500 bg-zinc-100 hover:bg-zinc-200 cursor-pointer whitespace-nowrap"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            Admin
+          </button>
+        </div>
+      </div>
+
+      {/* ── Main Workspace Content ── */}
+      <div className="flex-1 lg:ml-72 min-h-screen flex flex-col p-4 sm:p-8 lg:p-10 relative z-10 pt-20 lg:pt-10 overflow-y-auto">
+        <div className="max-w-5xl w-full mx-auto flex flex-col gap-6 flex-grow pb-16">
+          
+          {/* Header Panel */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-200/50">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                <span>Careers</span>
+                <ChevronRight className="w-3 h-3" />
+                <span className="text-zinc-500 font-semibold">Openings</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 leading-none">
+                Available Opportunities
+              </h1>
             </div>
+          </div>
 
-            {/* Right Column: Application Form */}
-            <div className="lg:col-span-5 p-6 sm:p-10 bg-zinc-50/50">
-              {!showApply ? (
-                <div className="h-full flex flex-col justify-center items-center py-12 text-center">
-                  <Briefcase className="w-10 h-10 text-zinc-300 mb-4" />
-                  <h3 className="text-base font-bold text-zinc-800 mb-1">Apply for this role</h3>
-                  <p className="text-xs text-zinc-400 font-medium max-w-[240px] mb-5">
-                    Submit your CV to begin the application review workspace.
-                  </p>
-                  <button 
-                    onClick={() => setShowApply(true)} 
-                    className="py-3 px-6 rounded-xl font-bold text-xs text-white bg-zinc-950 hover:bg-zinc-900 transition-all cursor-pointer shadow-sm shadow-zinc-950/10"
-                  >
-                    Start Application
-                  </button>
-                </div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4 }}
-                  className="flex flex-col gap-6"
-                >
-                  <div>
-                    <h3 className="text-lg font-bold text-zinc-800">Apply Now</h3>
-                    <p className="text-xs text-zinc-400 font-medium mt-1">Submit your details to start the review process.</p>
+          {/* Vercel-Style Stats Grid */}
+          {mounted && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {[
+                { label: "Active Roles", value: jobs.length, icon: <Briefcase className="w-4 h-4" /> },
+                { label: "Departments", value: departments.length - 1, icon: <Sparkles className="w-4 h-4" /> },
+                { label: "Locations", value: Array.from(new Set(jobs.map(j => j.location))).length, icon: <MapPin className="w-4 h-4" /> }
+              ].map((s, idx) => (
+                <div key={idx} className="bg-white border border-zinc-200/60 rounded-2xl p-5 flex flex-col gap-3 shadow-sm hover:border-zinc-300 transition-all">
+                  <div className="flex justify-between items-center text-zinc-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{s.label}</span>
+                    {s.icon}
                   </div>
+                  <span className="text-3xl font-extralight tracking-tight text-zinc-900 leading-none">{s.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
-                  <div className="space-y-4">
-                    {/* Full Name */}
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Full Name</label>
-                      <input
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="Jane Doe"
-                        className="w-full border border-zinc-200/80 rounded-xl px-4 py-2.5 bg-white text-zinc-800 text-sm font-semibold placeholder-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
-                      />
-                      {errors.name && <p className="text-[11px] font-bold text-rose-500">{errors.name}</p>}
-                    </div>
+          {/* Search & Filters */}
+          <div className="bg-white border border-zinc-200/60 rounded-2xl p-4 flex flex-col xl:flex-row items-center justify-between gap-4 shadow-sm">
+            <div className="relative flex-1 w-full flex items-center bg-zinc-50 rounded-xl border border-zinc-200/60 focus-within:border-blue-500 focus-within:bg-white focus-within:shadow-sm px-3.5 py-2 transition-all">
+              <Search className="w-4 h-4 text-zinc-400 mr-2.5 shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Filter openings by title, department, location..."
+                className="w-full bg-transparent border-none outline-none text-xs font-semibold text-zinc-800 placeholder-zinc-400"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="text-zinc-400 hover:text-zinc-650 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-1.5 overflow-x-auto w-full xl:w-auto pb-1 xl:pb-0">
+              {departments.map(dept => {
+                const isActive = (selectedDept || "All") === dept;
+                return (
+                  <button
+                    key={dept}
+                    onClick={() => setSelectedDept(dept === "All" ? "" : dept)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border whitespace-nowrap cursor-pointer transition-all ${
+                      isActive
+                        ? "bg-zinc-950 text-white border-transparent"
+                        : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300"
+                    }`}
+                  >
+                    {dept}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-                    {/* Email */}
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Address</label>
-                      <input
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        type="email"
-                        placeholder="jane.doe@company.com"
-                        className="w-full border border-zinc-200/80 rounded-xl px-4 py-2.5 bg-white text-zinc-800 text-sm font-semibold placeholder-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
-                      />
-                      {errors.email && <p className="text-[11px] font-bold text-rose-500">{errors.email}</p>}
-                    </div>
-
-                    {/* Phone & City Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Phone */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Phone Number</label>
-                        <div className="flex">
-                          <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-zinc-200 bg-zinc-100 text-xs font-bold text-zinc-400 select-none">
-                            +91
-                          </span>
-                          <input
-                            value={phone}
-                            onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
-                            placeholder="9876543210"
-                            maxLength={10}
-                            className="w-full border border-zinc-200/80 rounded-r-xl px-4 py-2.5 bg-white text-zinc-800 text-sm font-semibold placeholder-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
-                          />
-                        </div>
-                        {errors.phone && <p className="text-[11px] font-bold text-rose-500">{errors.phone}</p>}
-                      </div>
-                      
-                      {/* City */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Current City</label>
-                        <input
-                          value={location}
-                          onChange={e => setLocation(e.target.value)}
-                          placeholder="e.g. Bangalore"
-                          className="w-full border border-zinc-200/80 rounded-xl px-4 py-2.5 bg-white text-zinc-800 text-sm font-semibold placeholder-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
-                        />
-                        {errors.location && <p className="text-[11px] font-bold text-rose-500">{errors.location}</p>}
-                      </div>
-                    </div>
-
-                    {/* Resume Upload */}
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Resume / CV File</label>
-                      <div className="relative rounded-xl border border-dashed border-zinc-300 bg-white hover:bg-zinc-50/50 hover:border-zinc-400 transition-colors p-6 text-center cursor-pointer">
-                        <input
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                        <Upload className="mx-auto h-6 w-6 text-zinc-400 mb-2" />
-                        <p className="text-xs font-bold text-zinc-700 truncate px-2">
-                          {resume ? resume.name : "Click to select CV document"}
-                        </p>
-                        <p className="text-[10px] text-zinc-400 font-semibold mt-1">PDF or Word files up to 5 MB</p>
-                      </div>
-                      {errors.resume && <p className="text-[11px] font-bold text-rose-500">{errors.resume}</p>}
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="pt-2">
-                      <button
-                        disabled={loading}
-                        onClick={handleSubmit}
-                        className="w-full py-3 px-6 rounded-xl font-bold text-xs text-white bg-zinc-950 hover:bg-zinc-900 transition-all cursor-pointer shadow-md shadow-zinc-950/10 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          {/* Job Openings Table */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20 bg-white border border-zinc-200/60 rounded-3xl">
+              <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
+            </div>
+          ) : filteredJobs.length === 0 ? (
+            <div className="p-16 border border-zinc-200/65 bg-white rounded-3xl text-center">
+              <Briefcase className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+              <p className="text-sm text-zinc-500 font-semibold">
+                {jobs.length === 0 ? "No active positions found." : "No postings match your search filters."}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white border border-zinc-200/60 rounded-3xl shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-zinc-150 bg-zinc-50/50 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                      <th className="py-4 px-6">Role Title</th>
+                      <th className="py-4 px-6">Department</th>
+                      <th className="py-4 px-6">Location</th>
+                      <th className="py-4 px-6 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 text-xs font-semibold text-zinc-750">
+                    {filteredJobs.map((job) => (
+                      <tr 
+                        key={job.id} 
+                        onClick={() => handleOpenJobDrawer(job)}
+                        className="hover:bg-zinc-50/70 transition-colors cursor-pointer group"
                       >
-                        {loading ? (
+                        <td className="py-4.5 px-6 font-bold text-zinc-900 group-hover:text-blue-600 transition-colors">
+                          {job.title}
+                        </td>
+                        <td className="py-4.5 px-6">
+                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100/50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                            {job.department}
+                          </span>
+                        </td>
+                        <td className="py-4.5 px-6 text-zinc-500">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+                            <span>{job.location}</span>
+                          </div>
+                        </td>
+                        <td className="py-4.5 px-6 text-right" onClick={e => e.stopPropagation()}>
+                          <button 
+                            onClick={() => handleOpenJobDrawer(job)}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-750 cursor-pointer"
+                          >
+                            <span>Apply</span>
+                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Right-Side Slide-Over Workspace Drawer ── */}
+      <AnimatePresence>
+        {activeDrawerJob && (
+          <>
+            {/* Backdrop filter overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseJobDrawer}
+              className="fixed inset-0 bg-black/30 z-30 pointer-events-auto backdrop-blur-sm"
+            />
+            {/* Sliding Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-y-0 right-0 z-40 w-full max-w-2xl bg-white border-l border-zinc-200/80 shadow-2xl flex flex-col pointer-events-auto"
+            >
+              {/* Drawer Header */}
+              <div className="p-6 border-b border-zinc-150 flex justify-between items-start bg-zinc-50/50">
+                <div>
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100/50 px-2.5 py-1 rounded-full uppercase tracking-wider mb-2.5 inline-block">
+                    {activeDrawerJob.department}
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 leading-tight">
+                    {activeDrawerJob.title}
+                  </h2>
+                  <div className="flex gap-2.5 mt-2.5 text-xs font-bold text-zinc-500">
+                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-zinc-400" />{activeDrawerJob.location}</span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1"><Briefcase className="w-3.5 h-3.5 text-zinc-400" />Full Time</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleCloseJobDrawer}
+                  className="p-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-400 hover:text-zinc-650 hover:bg-zinc-50 transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Scrollable Drawer Body */}
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 flex flex-col gap-8">
+                {submitted ? (
+                  /* Success ticket slip view */
+                  <div className="flex flex-col items-center gap-6 py-6 max-w-md mx-auto w-full">
+                    {/* Receipt ticket card */}
+                    <div ref={receiptRef} className="w-full bg-white border border-zinc-200/60 rounded-[28px] overflow-hidden shadow-lg relative">
+                      <div className="h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-rose-500" />
+                      <div className="px-6 pt-6 pb-5 text-center border-b border-dashed border-zinc-200 relative">
+                        <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                          <CheckCircle2 className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-lg font-bold text-zinc-950">Application Received</h3>
+                        <p className="text-[10px] font-semibold text-zinc-450 mt-0.5">We are reviewing your CV profile.</p>
+                        
+                        <div className="absolute -bottom-[10px] -left-[10px] w-5 h-5 rounded-full bg-white border border-zinc-200/50" />
+                        <div className="absolute -bottom-[10px] -right-[10px] w-5 h-5 rounded-full bg-white border border-zinc-200/50" />
+                      </div>
+                      <div className="p-6 flex flex-col gap-3.5 text-xs font-semibold text-zinc-700">
+                        {[
+                          { label: "CONFIRMATION ID", value: `#${submittedApp?.id?.slice(0, 8).toUpperCase() || "N/A"}`, isMono: true },
+                          { label: "NAME", value: name },
+                          { label: "POSITION", value: activeDrawerJob.title },
+                          { label: "CITY", value: location },
+                          { label: "SUBMITTED ON", value: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) }
+                        ].map(row => (
+                          <div key={row.label} className="flex justify-between items-start gap-4">
+                            <span className="text-[9px] font-bold text-zinc-400 tracking-wider uppercase">{row.label}</span>
+                            <span className={`text-right max-w-[60%] ${row.isMono ? 'font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50' : 'text-zinc-800'}`}>
+                              {row.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="w-full flex flex-col gap-2.5">
+                      <button
+                        onClick={handleDownloadPDF}
+                        disabled={isDownloading}
+                        className="w-full py-3 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        {isDownloading ? (
                           <>
-                            <div className="w-4.5 h-4.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Submitting...
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Generating PDF...
                           </>
-                        ) : "Submit Profile Application"}
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4" />
+                            Download Receipt
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleCloseJobDrawer}
+                        className="w-full py-3 rounded-xl font-bold text-xs text-zinc-600 bg-white border border-zinc-200 hover:bg-zinc-50 cursor-pointer text-center"
+                      >
+                        Close Panel
                       </button>
                     </div>
                   </div>
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
+                ) : (
+                  <>
+                    {/* Role Description */}
+                    <div>
+                      <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">Role Description</h3>
+                      <div 
+                        className="prose prose-zinc text-zinc-655 font-medium text-sm leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: renderMd(activeDrawerJob.description) }}
+                      />
+                    </div>
 
-      <Footer />
+                    {/* Apply Toggle / Form */}
+                    <div className="pt-6 border-t border-zinc-150">
+                      {!showApply ? (
+                        <button 
+                          onClick={() => setShowApply(true)}
+                          className="w-full py-3.5 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer text-center transition-all active:scale-[0.98]"
+                        >
+                          Apply For This Position
+                        </button>
+                      ) : (
+                        <div className="flex flex-col gap-5">
+                          <div>
+                            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Submit Application</h3>
+                            <p className="text-[11px] text-zinc-400 font-semibold mt-1">Please fill in your details below.</p>
+                          </div>
+
+                          <div className="space-y-4">
+                            {/* Full Name */}
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Full Name</label>
+                              <input
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                placeholder="Jane Doe"
+                                className="w-full border border-zinc-200 rounded-xl px-3.5 py-2.5 bg-white text-zinc-800 text-xs font-semibold placeholder-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                              />
+                              {errors.name && <p className="text-[10px] font-bold text-rose-500">{errors.name}</p>}
+                            </div>
+
+                            {/* Email */}
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Email Address</label>
+                              <input
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                type="email"
+                                placeholder="jane@example.com"
+                                className="w-full border border-zinc-200 rounded-xl px-3.5 py-2.5 bg-white text-zinc-800 text-xs font-semibold placeholder-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                              />
+                              {errors.email && <p className="text-[10px] font-bold text-rose-500">{errors.email}</p>}
+                            </div>
+
+                            {/* Grid: Phone / City */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Phone Number</label>
+                                <div className="flex">
+                                  <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-zinc-200 bg-zinc-55 text-[11px] font-bold text-zinc-400 select-none">
+                                    +91
+                                  </span>
+                                  <input
+                                    value={phone}
+                                    onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
+                                    placeholder="9876543210"
+                                    maxLength={10}
+                                    className="w-full border border-zinc-200 rounded-r-xl px-3.5 py-2.5 bg-white text-zinc-800 text-xs font-semibold placeholder-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                  />
+                                </div>
+                                {errors.phone && <p className="text-[10px] font-bold text-rose-500">{errors.phone}</p>}
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">City</label>
+                                <input
+                                  value={location}
+                                  onChange={e => setLocation(e.target.value)}
+                                  placeholder="e.g. Mumbai"
+                                  className="w-full border border-zinc-200 rounded-xl px-3.5 py-2.5 bg-white text-zinc-800 text-xs font-semibold placeholder-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                />
+                                {errors.location && <p className="text-[10px] font-bold text-rose-500">{errors.location}</p>}
+                              </div>
+                            </div>
+
+                            {/* Resume CV */}
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Resume Document</label>
+                              <div className="relative rounded-xl border border-dashed border-zinc-300 bg-white hover:bg-zinc-50/50 hover:border-zinc-405 p-6 text-center cursor-pointer transition-colors">
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx"
+                                  onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <Upload className="mx-auto h-5.5 w-5.5 text-zinc-400 mb-1.5" />
+                                <p className="text-xs font-bold text-zinc-700 truncate px-2">
+                                  {resume ? resume.name : "Click to select CV document"}
+                                </p>
+                                <p className="text-[9px] text-zinc-400 font-semibold mt-1">PDF or Word files up to 5 MB</p>
+                              </div>
+                              {errors.resume && <p className="text-[10px] font-bold text-rose-500">{errors.resume}</p>}
+                            </div>
+
+                            {/* Submit */}
+                            <div className="pt-2">
+                              <button
+                                disabled={formLoading}
+                                onClick={handleSubmit}
+                                className="w-full py-3.5 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                              >
+                                {formLoading ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Submitting...
+                                  </>
+                                ) : "Submit Application Form"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
