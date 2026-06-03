@@ -110,13 +110,13 @@ export default function JobsPage() {
           className="max-w-3xl"
         >
           <h1 className="text-[36px] sm:text-[54px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-white">
-            Shape the Future<br />
+            Build Your Career<br />
             <span style={{ background: "linear-gradient(135deg, #60a5fa 0%, #818cf8 60%, #c084fc 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              With Antigravity
+              With Us
             </span>
           </h1>
           <p className="mt-4 text-base sm:text-lg leading-[1.65] text-zinc-400 max-w-xl font-medium">
-            Join a fast-moving, design-obsessed team building the next generation of web infrastructure. Discover open opportunities below.
+            Explore premium career opportunities, collaborate with ambitious teams.
           </p>
         </motion.div>
       </section>
