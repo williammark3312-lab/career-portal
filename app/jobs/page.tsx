@@ -94,7 +94,7 @@ export default function JobsPage() {
   });
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
+    <main className="relative flex flex-col min-h-screen bg-[#09090b] text-white">
       {/* 2D Premium Glow Background */}
       <GlassBackground />
 
@@ -109,18 +109,14 @@ export default function JobsPage() {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-3xl"
         >
-          {/* Pill Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-50/50 text-blue-600 text-xs font-bold uppercase tracking-wider mb-5">
-            <Sparkles className="w-3.5 h-3.5" />
-            Join Our Team
-          </div>
-
-          <h1 className="text-[36px] sm:text-[54px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-gradient">
-            Build Your Career<br />
-            With Us
+          <h1 className="text-[36px] sm:text-[54px] md:text-[68px] font-medium tracking-[-0.03em] leading-[1.04] text-white">
+            Shape the Future<br />
+            <span style={{ background: "linear-gradient(135deg, #60a5fa 0%, #818cf8 60%, #c084fc 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              With Antigravity
+            </span>
           </h1>
-          <p className="mt-4 text-base sm:text-lg leading-[1.65] text-zinc-500 max-w-xl font-medium">
-            Explore premium career opportunities, collaborate with ambitious teams.
+          <p className="mt-4 text-base sm:text-lg leading-[1.65] text-zinc-400 max-w-xl font-medium">
+            Join a fast-moving, design-obsessed team building the next generation of web infrastructure. Discover open opportunities below.
           </p>
         </motion.div>
       </section>
@@ -136,27 +132,27 @@ export default function JobsPage() {
             className="flex flex-wrap items-center gap-3 mb-4 pl-1"
           >
             {/* Live Database Badge */}
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 shadow-sm">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/30 border border-emerald-900/50 shadow-sm animate-pulse-slow">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75" />
-                <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
                 Active Openings
               </span>
             </div>
 
             {/* Total Roles */}
-            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/70 backdrop-blur-md border border-zinc-200/50 shadow-sm">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                Positions: <strong className="text-zinc-800">{jobs.length}</strong>
+            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-zinc-900/50 border border-zinc-800/50 shadow-sm">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                Positions: <strong className="text-zinc-200">{jobs.length}</strong>
               </span>
             </div>
 
             {/* Departments Count */}
-            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/70 backdrop-blur-md border border-zinc-200/50 shadow-sm">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                Departments: <strong className="text-zinc-800">{departments.length - 1}</strong>
+            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-zinc-900/50 border border-zinc-800/50 shadow-sm">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                Departments: <strong className="text-zinc-200">{departments.length - 1}</strong>
               </span>
             </div>
           </motion.div>
@@ -169,16 +165,16 @@ export default function JobsPage() {
             opacity: 1,
             y: 0,
             boxShadow: searchFocused
-              ? "0 24px 48px -12px rgba(37, 99, 235, 0.08), 0 0 0 2px rgba(37, 99, 235, 0.15)"
-              : "0 20px 40px -12px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(255, 255, 255, 0.4)",
-            borderColor: searchFocused ? "rgba(37, 99, 235, 0.3)" : "rgba(228, 228, 231, 0.5)"
+              ? "0 24px 48px -12px rgba(99, 102, 241, 0.15), 0 0 0 2px rgba(99, 102, 241, 0.25)"
+              : "0 20px 40px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)",
+            borderColor: searchFocused ? "rgba(99, 102, 241, 0.4)" : "rgba(255, 255, 255, 0.08)"
           }}
           transition={{ duration: 0.25 }}
-          className="bg-white/60 backdrop-blur-2xl rounded-3xl p-4 flex flex-col xl:flex-row items-stretch xl:items-center gap-4 transition-all duration-300 border relative overflow-hidden"
+          className="bg-zinc-950/60 backdrop-blur-2xl rounded-3xl p-4 flex flex-col xl:flex-row items-stretch xl:items-center gap-4 transition-all duration-300 border relative overflow-hidden"
         >
           {/* Custom Search Box */}
-          <div className="relative flex-1 flex items-center bg-white/80 rounded-2xl border border-zinc-200/60 focus-within:border-blue-500 focus-within:bg-white focus-within:shadow-md px-4 py-3 transition-all duration-300">
-            <Search className={`w-4 h-4 mr-3 transition-colors duration-300 ${searchFocused ? "text-blue-600" : "text-zinc-400"}`} />
+          <div className="relative flex-1 flex items-center bg-zinc-900/80 rounded-2xl border border-zinc-800/60 focus-within:border-blue-500/80 focus-within:bg-zinc-900 px-4 py-3 transition-all duration-300">
+            <Search className={`w-4 h-4 mr-3 transition-colors duration-300 ${searchFocused ? "text-blue-400" : "text-zinc-500"}`} />
             <input
               id="jobs-search"
               type="text"
@@ -187,12 +183,12 @@ export default function JobsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
-              className="w-full bg-transparent border-none outline-none text-sm text-zinc-800 placeholder-zinc-400 font-semibold"
+              className="w-full bg-transparent border-none outline-none text-sm text-zinc-200 placeholder-zinc-500 font-semibold"
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery("")} 
-                className="ml-2 p-1 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-all duration-200"
+                className="ml-2 p-1 rounded-full hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-all duration-200"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -210,8 +206,8 @@ export default function JobsPage() {
                   onClick={() => setSelectedDept(dept === "All" ? "" : dept)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 relative overflow-hidden group cursor-pointer ${
                     isActive
-                      ? "bg-zinc-950 text-white border-transparent shadow-md scale-[1.02]"
-                      : "bg-white hover:bg-zinc-50 text-zinc-600 border-zinc-200/70 hover:border-zinc-300"
+                      ? "bg-white text-zinc-950 border-transparent shadow-md scale-[1.02]"
+                      : "bg-zinc-900/80 hover:bg-zinc-850 text-zinc-400 border-zinc-800/60 hover:border-zinc-700/80"
                   }`}
                 >
                   <span className="relative z-10">{dept}</span>
@@ -223,12 +219,12 @@ export default function JobsPage() {
           {/* Results Info */}
           {!loading && (searchQuery || (selectedDept && selectedDept !== "All")) && (
             <div className="flex items-center gap-3 ml-auto xl:ml-0 xl:pl-2 shrink-0">
-              <span className="text-xs font-semibold text-zinc-500 bg-zinc-100 border border-zinc-250/30 px-3 py-1.5 rounded-full">
-                Found <strong className="text-blue-600">{filteredJobs.length}</strong> matching role{filteredJobs.length !== 1 ? "s" : ""}
+              <span className="text-xs font-semibold text-zinc-400 bg-zinc-900 border border-zinc-800/60 px-3 py-1.5 rounded-full">
+                Found <strong className="text-blue-400">{filteredJobs.length}</strong> matching role{filteredJobs.length !== 1 ? "s" : ""}
               </span>
               <button
                 onClick={() => { setSearchQuery(""); setSelectedDept(""); }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-bold transition-colors cursor-pointer"
+                className="text-xs text-blue-400 hover:text-blue-300 font-bold transition-colors cursor-pointer"
               >
                 Reset
               </button>
@@ -241,22 +237,22 @@ export default function JobsPage() {
       <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-24">
         {loading ? (
           <div className="flex items-center justify-center py-32">
-            <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
           </div>
         ) : filteredJobs.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
-            className="bg-white/60 backdrop-blur-xl border border-zinc-200/50 rounded-3xl p-16 text-center"
+            className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-16 text-center"
           >
-            <Briefcase className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
-            <p className="text-zinc-500 font-semibold">
+            <Briefcase className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
+            <p className="text-zinc-400 font-semibold">
               {jobs.length === 0 ? "No open vacancies listed at this moment. check back later!" : "No jobs match your search parameters. Try adjusting filters."}
             </p>
             {(searchQuery || selectedDept) && (
               <button
                 onClick={() => { setSearchQuery(""); setSelectedDept(""); }}
-                className="mt-4 px-4 py-2 bg-zinc-950 text-white rounded-xl text-xs font-bold hover:bg-zinc-900 cursor-pointer"
+                className="mt-4 px-4 py-2 bg-white text-zinc-950 rounded-xl text-xs font-bold hover:bg-zinc-100 cursor-pointer"
               >
                 Reset filters
               </button>
@@ -275,23 +271,23 @@ export default function JobsPage() {
                   <div className="flex flex-col h-full">
                     <div className="flex items-start justify-between gap-4 mb-6">
                       <span className="dept-tag">{job.department}</span>
-                      <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-[#E1E6EC] bg-white px-3 py-1">
-                        <MapPin className="w-3.5 h-3.5 text-[#121317]" />
-                        <span className="text-[12px] font-medium text-[#121317]">{job.location}</span>
+                      <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-zinc-800 bg-zinc-950/80 px-3 py-1">
+                        <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="text-[12px] font-medium text-zinc-300">{job.location}</span>
                       </div>
                     </div>
-                    <h2 className="text-[24px] font-bold tracking-[-0.02em] text-[#1a3bbd] transition-colors duration-300 mb-3 group-hover:text-[#3279F9]">
+                    <h2 className="text-[24px] font-bold tracking-[-0.02em] text-white transition-colors duration-300 mb-3 group-hover:text-blue-400">
                       {job.title}
                     </h2>
-                    <p className="text-[14px] leading-[1.65] text-[#121317] line-clamp-3 flex-1">
+                    <p className="text-[14px] leading-[1.65] text-zinc-400 line-clamp-3 flex-1">
                       {job.description.replace(/#{1,3} |[*_~`]/g, "")}
                     </p>
-                    <div className="mt-6 pt-5 border-t border-[#E1E6EC] flex items-center justify-between">
+                    <div className="mt-6 pt-5 border-t border-zinc-800/60 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Briefcase className="w-3.5 h-3.5 text-[#121317]" />
-                        <span className="text-[13px] font-medium text-[#121317]">Full Time</span>
+                        <Briefcase className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="text-[13px] font-medium text-zinc-300">Full Time</span>
                       </div>
-                      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-[#3279F9]">
+                      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-blue-400 hover:text-blue-300">
                         Apply Now
                         <ArrowRight className="w-3.5 h-3.5" />
                       </span>

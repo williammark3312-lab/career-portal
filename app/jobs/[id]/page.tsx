@@ -25,18 +25,18 @@ function renderMd(md: string): string {
     if (/^#{1,3} /.test(line)) {
       if (inUl) { out.push("</ul>"); inUl = false; }
       const text = line.replace(/^#{1,3} /, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      out.push(`<h3 class="text-[17px] sm:text-[19px] font-bold text-[#1a3bbd] mt-8 mb-4 tracking-tight">${text}</h3>`);
+      out.push(`<h3 class="text-[17px] sm:text-[19px] font-bold text-blue-400 mt-8 mb-4 tracking-tight">${text}</h3>`);
       continue;
     }
     if (/^[•\-] /.test(line)) {
-      if (!inUl) { out.push('<ul class="space-y-2.5 my-5 ml-5 list-disc text-[#121317] font-medium">'); inUl = true; }
-      const text = line.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-[#121317]'>$1</strong>");
-      out.push(`<li class="pl-1 marker:text-[#3279F9] text-[14px] leading-relaxed">${text}</li>`);
+      if (!inUl) { out.push('<ul class="space-y-2.5 my-5 ml-5 list-disc text-zinc-300 font-medium">'); inUl = true; }
+      const text = line.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-white'>$1</strong>");
+      out.push(`<li class="pl-1 marker:text-blue-400 text-[14px] leading-relaxed">${text}</li>`);
       continue;
     }
     if (inUl) { out.push("</ul>"); inUl = false; }
-    const text = line.replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-[#121317]'>$1</strong>");
-    out.push(`<p class="my-3 text-[14px] sm:text-[15px] leading-relaxed text-[#121317]">${text}</p>`);
+    const text = line.replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-white'>$1</strong>");
+    out.push(`<p class="my-3 text-[14px] sm:text-[15px] leading-relaxed text-zinc-300">${text}</p>`);
   }
   if (inUl) out.push("</ul>");
   return out.join("\n");
@@ -148,11 +148,11 @@ export default function JobDetailsPage() {
   /* Loading state */
   if (!job) {
     return (
-      <main className="min-h-screen bg-[#F8F9FC] flex items-center justify-center relative overflow-hidden">
+      <main className="min-h-screen bg-[#09090b] flex items-center justify-center relative overflow-hidden">
         <GlassBackground />
         <div className="flex flex-col items-center gap-4 relative z-10">
-          <div className="w-10 h-10 rounded-full border-2 border-blue-500/20 border-t-blue-600 animate-spin" />
-          <p className="text-xs font-bold text-zinc-400 tracking-wider">Loading job details...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin" />
+          <p className="text-xs font-bold text-zinc-450 tracking-wider">Loading job details...</p>
         </div>
       </main>
     );
@@ -161,7 +161,7 @@ export default function JobDetailsPage() {
   /* Success receipt */
   if (submitted) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
+      <main className="relative flex flex-col min-h-screen bg-[#09090b] text-white">
         <GlassBackground />
         <Header />
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-28 gap-6 max-w-lg mx-auto w-full">
@@ -170,22 +170,22 @@ export default function JobDetailsPage() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             ref={receiptRef}
-            className="w-full bg-white border border-zinc-200/60 rounded-[32px] overflow-hidden shadow-xl shadow-blue-500/5"
+            className="w-full bg-zinc-900 border border-zinc-800/80 rounded-[32px] overflow-hidden shadow-2xl"
           >
             <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-rose-500" />
-            <div className="px-8 pt-8 pb-6 text-center border-b border-dashed border-zinc-200 relative">
+            <div className="px-8 pt-8 pb-6 text-center border-b border-dashed border-zinc-800 relative">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.15 }}
-                className="w-14 h-14 bg-emerald-50 border border-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"
+                className="w-14 h-14 bg-emerald-950/30 border border-emerald-900/50 text-emerald-450 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"
               >
                 <CheckCircle2 className="w-7 h-7" />
               </motion.div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950">Application Received</h2>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Application Received</h2>
               <p className="text-xs font-medium text-zinc-400 mt-1">Thank you! Your profile is in review.</p>
-              <div className="absolute -bottom-[10px] -left-[10px] w-5 h-5 rounded-full bg-[#F8F9FC] border border-zinc-200/50" />
-              <div className="absolute -bottom-[10px] -right-[10px] w-5 h-5 rounded-full bg-[#F8F9FC] border border-zinc-200/50" />
+              <div className="absolute -bottom-[10px] -left-[10px] w-5 h-5 rounded-full bg-[#09090b] border border-zinc-800/80" />
+              <div className="absolute -bottom-[10px] -right-[10px] w-5 h-5 rounded-full bg-[#09090b] border border-zinc-800/80" />
             </div>
             <div className="p-8 flex flex-col gap-4">
               {[
@@ -196,8 +196,8 @@ export default function JobDetailsPage() {
                 { label: "Submitted On", value: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
               ].map((row) => (
                 <div key={row.label} className="flex justify-between items-start gap-4">
-                  <span className="text-[10px] font-bold text-zinc-400 tracking-wider uppercase">{row.label}</span>
-                  <span className={`text-xs font-bold text-zinc-800 text-right max-w-[60%] ${row.isMono ? "font-mono text-blue-600 bg-blue-50 border border-blue-100/50 px-2 py-0.5 rounded" : ""}`}>
+                  <span className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">{row.label}</span>
+                  <span className={`text-xs font-bold text-zinc-200 text-right max-w-[60%] ${row.isMono ? "font-mono text-blue-455 bg-blue-950/30 border border-blue-900/50 px-2 py-0.5 rounded" : ""}`}>
                     {row.value}
                   </span>
                 </div>
@@ -213,7 +213,7 @@ export default function JobDetailsPage() {
             <button
               disabled={isDownloading}
               onClick={handleDownloadPDF}
-              className="btn-primary w-full justify-center disabled:opacity-60"
+              className="w-full py-3 px-6 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {isDownloading ? (
                 <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving PDF…</>
@@ -221,7 +221,10 @@ export default function JobDetailsPage() {
                 <><Download className="w-4 h-4" />Download Receipt</>
               )}
             </button>
-            <button onClick={() => router.push("/jobs")} className="btn-dark w-full justify-center">
+            <button 
+              onClick={() => router.push("/jobs")} 
+              className="w-full py-3 px-6 rounded-xl font-bold text-xs text-zinc-950 bg-white hover:bg-zinc-100 transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
+            >
               Back to Careers
             </button>
           </motion.div>
@@ -233,7 +236,7 @@ export default function JobDetailsPage() {
 
   /* Main job detail page */
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#F8F9FC] text-[#121317]">
+    <main className="relative flex flex-col min-h-screen bg-[#09090b] text-white">
       <GlassBackground />
       <Header />
 
@@ -241,9 +244,9 @@ export default function JobDetailsPage() {
         {/* Back link */}
         <button
           onClick={() => router.push("/jobs")}
-          className="inline-flex items-center gap-1.5 text-[#737A87] hover:text-[#121317] text-[13px] font-semibold mb-6 group cursor-pointer transition-colors"
+          className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-white text-[13px] font-semibold mb-6 group cursor-pointer transition-colors"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:-translate-x-0.5 transition-all" />
           Back to Listings
         </button>
 
@@ -251,21 +254,21 @@ export default function JobDetailsPage() {
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="glass rounded-[24px] sm:rounded-[32px] overflow-hidden"
+          className="bg-zinc-900/60 backdrop-blur-2xl border border-zinc-800/80 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl shadow-black/40"
         >
           {/* Job Header */}
-          <div className="px-5 sm:px-10 py-6 sm:py-10 border-b border-[#E1E6EC]">
+          <div className="px-5 sm:px-10 py-6 sm:py-10 border-b border-zinc-800/85">
             <span className="dept-tag mb-5 inline-block">{job.department}</span>
-            <h1 className="text-[28px] sm:text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-4 sm:mb-6 text-gradient">
+            <h1 className="text-[28px] sm:text-[38px] md:text-[52px] font-bold tracking-[-0.03em] leading-[1.1] mb-4 sm:mb-6 text-white">
               {job.title}
             </h1>
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#121317]">
-                <MapPin className="w-3.5 h-3.5 text-[#121317]" />
+              <div className="flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950/80 px-4 py-2 text-[13px] font-medium text-zinc-300">
+                <MapPin className="w-3.5 h-3.5 text-zinc-400" />
                 {job.location}
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-[#E1E6EC] bg-white px-4 py-2 text-[13px] font-medium text-[#121317]">
-                <Briefcase className="w-3.5 h-3.5 text-[#121317]" />
+              <div className="flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-950/80 px-4 py-2 text-[13px] font-medium text-zinc-300">
+                <Briefcase className="w-3.5 h-3.5 text-zinc-400" />
                 Full Time
               </div>
             </div>
@@ -273,11 +276,11 @@ export default function JobDetailsPage() {
 
           {/* Job Body */}
           <div className="px-5 sm:px-10 py-6 sm:py-10">
-            <h2 className="text-[22px] font-semibold mb-6 text-[#121317]">About the role</h2>
+            <h2 className="text-[22px] font-semibold mb-6 text-white">About the role</h2>
             <div className="text-[15px]" dangerouslySetInnerHTML={{ __html: renderMd(job.description) }} />
 
             {!showApply ? (
-              <div className="mt-10 pt-8 border-t border-[#E1E6EC]">
+              <div className="mt-10 pt-8 border-t border-zinc-800/85">
                 <button onClick={() => setShowApply(true)} className="btn-primary">
                   Apply for this position
                 </button>
@@ -287,44 +290,44 @@ export default function JobDetailsPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-10 pt-10 border-t border-[#E1E6EC]"
+                className="mt-10 pt-10 border-t border-zinc-800/85"
               >
                 <div className="mb-8">
-                  <h2 className="text-[26px] font-semibold text-[#1a3bbd]">Submit your application</h2>
-                  <p className="text-[14px] text-[#121317] mt-2">
-                    Fill out the form below to apply for <strong className="text-[#3279F9]">{job.title}</strong>
+                  <h2 className="text-[26px] font-semibold text-white">Submit your application</h2>
+                  <p className="text-[14px] text-zinc-400 mt-2">
+                    Fill out the form below to apply for <strong className="text-blue-400">{job.title}</strong>
                   </p>
                 </div>
 
                 <div className="space-y-5">
                   <div>
-                    <label className="form-label">Full Name <span className="text-red-500">*</span></label>
+                    <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Full Name <span className="text-red-500">*</span></label>
                     <input
                       value={name}
                       onChange={e => setName(e.target.value)}
                       placeholder="Jane Doe"
-                      className="form-input"
+                      className="w-full px-4 py-3 bg-zinc-950/80 border border-zinc-800 rounded-xl text-sm font-semibold text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                     />
                     {errors.name && <p className="mt-1.5 text-[12px] text-red-500">{errors.name}</p>}
                   </div>
 
                   <div>
-                    <label className="form-label">Email Address <span className="text-red-500">*</span></label>
+                    <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Email Address <span className="text-red-500">*</span></label>
                     <input
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       type="email"
                       placeholder="jane@example.com"
-                      className="form-input"
+                      className="w-full px-4 py-3 bg-zinc-950/80 border border-zinc-800 rounded-xl text-sm font-semibold text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                     />
                     {errors.email && <p className="mt-1.5 text-[12px] text-red-500">{errors.email}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="form-label">Phone Number <span className="text-red-500">*</span></label>
+                      <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Phone Number <span className="text-red-500">*</span></label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-[#CDD4DC] bg-[#F8F9FC] text-[15px] font-medium text-[#121317] select-none whitespace-nowrap">
+                        <span className="inline-flex items-center px-4 rounded-l-[12px] border border-r-0 border-zinc-800 bg-zinc-950 text-[15px] font-medium text-zinc-300 select-none whitespace-nowrap">
                           +91
                         </span>
                         <input
@@ -332,35 +335,35 @@ export default function JobDetailsPage() {
                           onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
                           placeholder="98765 43210"
                           maxLength={10}
-                          className="form-input rounded-l-none border-l-0"
+                          className="w-full px-4 py-3 bg-zinc-950/80 border border-zinc-800 rounded-xl rounded-l-none border-l-0 text-sm font-semibold text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                         />
                       </div>
                       {errors.phone && <p className="mt-1.5 text-[12px] text-red-500">{errors.phone}</p>}
                     </div>
                     <div>
-                      <label className="form-label">City <span className="text-red-500">*</span></label>
+                      <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">City <span className="text-red-500">*</span></label>
                       <input
                         value={location}
                         onChange={e => setLocation(e.target.value)}
                         placeholder="e.g. Mumbai"
-                        className="form-input"
+                        className="w-full px-4 py-3 bg-zinc-950/80 border border-zinc-800 rounded-xl text-sm font-semibold text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                       />
                       {errors.location && <p className="mt-1.5 text-[12px] text-red-500">{errors.location}</p>}
                     </div>
                   </div>
 
                   <div>
-                    <label className="form-label">Resume / CV <span className="text-red-500">*</span></label>
-                    <div className="relative rounded-[14px] border-2 border-dashed border-[#CDD4DC] bg-white/60 px-6 py-9 text-center hover:bg-white transition-colors cursor-pointer">
+                    <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Resume / CV <span className="text-red-500">*</span></label>
+                    <div className="relative rounded-[14px] border-2 border-dashed border-zinc-800 bg-zinc-950/40 px-6 py-9 text-center hover:bg-zinc-900/40 hover:border-zinc-700 transition-colors cursor-pointer">
                       <input
                         type="file"
                         accept=".pdf,.doc,.docx"
                         onChange={e => { const f = e.target.files?.[0]; if (f) setResume(f); }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
-                      <Upload className="mx-auto h-7 w-7 text-[#121317] mb-2" />
-                      <p className="text-[14px] font-medium text-[#121317]">{resume ? resume.name : "Click to upload or drag & drop"}</p>
-                      <p className="text-[12px] text-[#121317] mt-1">PDF, DOC up to 5 MB</p>
+                      <Upload className="mx-auto h-7 w-7 text-zinc-400 mb-2" />
+                      <p className="text-[14px] font-medium text-zinc-200">{resume ? resume.name : "Click to upload or drag & drop"}</p>
+                      <p className="text-[12px] text-zinc-500 mt-1">PDF, DOC up to 5 MB</p>
                     </div>
                     {errors.resume && <p className="mt-1.5 text-[12px] text-red-500">{errors.resume}</p>}
                   </div>
@@ -369,7 +372,7 @@ export default function JobDetailsPage() {
                     <button
                       disabled={loading}
                       onClick={handleSubmit}
-                      className="btn-dark w-full disabled:opacity-60"
+                      className="w-full py-3.5 px-6 rounded-xl font-bold text-xs text-zinc-950 bg-white hover:bg-zinc-100 transition-all cursor-pointer shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {loading ? "Submitting…" : "Submit Application"}
                     </button>

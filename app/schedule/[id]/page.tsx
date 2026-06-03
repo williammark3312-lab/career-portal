@@ -204,15 +204,15 @@ export default function CandidateSchedulingPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FC] relative overflow-hidden">
+      <main className="min-h-screen flex items-center justify-center bg-[#09090b] relative overflow-hidden">
         <GlassBackground />
-        <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin relative z-10" />
+        <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin relative z-10" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen flex flex-col justify-between bg-[#F8F9FC] text-zinc-800 relative z-10 overflow-hidden">
+    <main className="min-h-screen flex flex-col justify-between bg-[#09090b] text-white relative z-10 overflow-hidden">
       <GlassBackground />
 
       {/* Decorative Header Banner */}
@@ -224,61 +224,61 @@ export default function CandidateSchedulingPage() {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-red-100 rounded-3xl p-8 text-center shadow-xl shadow-red-500/2"
+            className="bg-zinc-900 border border-red-950/50 rounded-3xl p-8 text-center shadow-xl shadow-red-950/2"
           >
-            <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-5 border border-red-100/50">
+            <div className="w-14 h-14 rounded-full bg-red-950/30 text-red-400 flex items-center justify-center mx-auto mb-5 border border-red-900/50">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold text-zinc-900 mb-2">Unable to Load Scheduling Page</h2>
+            <h2 className="text-lg font-bold text-white mb-2">Unable to Load Scheduling Page</h2>
             <p className="text-xs font-semibold text-zinc-400 leading-relaxed">{error}</p>
           </motion.div>
         ) : confirmedSlot ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border border-zinc-200/60 rounded-[32px] p-8 text-center shadow-xl shadow-blue-500/5"
+            className="bg-zinc-900 border border-zinc-800/80 rounded-[32px] p-8 text-center shadow-2xl"
           >
-            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mx-auto mb-6 border border-emerald-100/80 shadow-inner animate-pulse-slow">
+            <div className="w-16 h-16 rounded-full bg-emerald-950/30 text-emerald-450 flex items-center justify-center mx-auto mb-6 border border-emerald-900/50 shadow-inner animate-pulse-slow">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-950 mb-2">
+            <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
               Interview Confirmed!
             </h1>
             <p className="text-xs font-semibold text-zinc-400 leading-relaxed max-w-[280px] mx-auto mb-8">
               Hi {app?.name}, your discussion slot has been finalized with the recruitment team.
             </p>
 
-            <div className="bg-emerald-50/20 border border-emerald-100/70 rounded-2xl p-6 text-left mb-8 shadow-sm">
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-2">
+            <div className="bg-emerald-950/20 border border-emerald-900/50 rounded-2xl p-6 text-left mb-8 shadow-sm">
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-2">
                 Confirmed Meeting Info
               </span>
-              <h3 className="text-base font-bold text-zinc-800 mb-1">
+              <h3 className="text-base font-bold text-white mb-1">
                 {job?.title || "Role Interview"}
               </h3>
-              <p className="text-xs font-semibold text-zinc-400 mb-4">
+              <p className="text-xs font-semibold text-zinc-450 mb-4">
                 Recruitment Candidate Evaluation
               </p>
-              <div className="flex gap-2.5 items-start text-xs font-bold text-zinc-700">
-                <Calendar className="w-4.5 h-4.5 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="flex gap-2.5 items-start text-xs font-bold text-zinc-200">
+                <Calendar className="w-4.5 h-4.5 text-emerald-450 shrink-0 mt-0.5" />
                 <span>{formatDateTime(confirmedSlot)}</span>
               </div>
             </div>
 
             <p className="text-[11px] text-zinc-400 font-semibold leading-relaxed">
-              We have dispatched a calendar invitation to <strong className="text-zinc-600 font-bold">{app?.email}</strong>. We look forward to speaking with you!
+              We have dispatched a calendar invitation to <strong className="text-zinc-300 font-bold">{app?.email}</strong>. We look forward to speaking with you!
             </p>
           </motion.div>
         ) : proposedSlots.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-zinc-200/60 rounded-[32px] p-8 text-center shadow-xl shadow-blue-500/5"
+            className="bg-zinc-900 border border-zinc-800/80 rounded-[32px] p-8 text-center shadow-2xl"
           >
-            <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mx-auto mb-5 border border-blue-100/50">
+            <div className="w-14 h-14 rounded-full bg-blue-950/30 text-blue-400 flex items-center justify-center mx-auto mb-5 border border-blue-900/50">
               <Clock className="w-6 h-6 animate-pulse-slow" />
             </div>
-            <h2 className="text-lg font-bold text-zinc-900 mb-2">No Time Slots Offered</h2>
+            <h2 className="text-lg font-bold text-white mb-2">No Time Slots Offered</h2>
             <p className="text-xs font-semibold text-zinc-400 leading-relaxed">
               Our team has not proposed scheduling options for this applicant profile yet. Reach out to your coordinator to set up your meeting window.
             </p>
@@ -287,13 +287,13 @@ export default function CandidateSchedulingPage() {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-zinc-200/60 rounded-[32px] p-8 shadow-xl shadow-blue-500/5"
+            className="bg-zinc-900 border border-zinc-800/80 rounded-[32px] p-8 shadow-2xl"
           >
             <div className="mb-6 text-center sm:text-left">
-              <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100/50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-3.5 inline-block">
+              <span className="text-[9px] font-bold text-blue-400 bg-blue-950/30 border border-blue-900/50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-3.5 inline-block">
                 Choose a time
               </span>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-950 mb-1.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-1.5">
                 Select Interview Slot
               </h1>
               <p className="text-xs font-semibold text-zinc-400 leading-relaxed">
@@ -310,18 +310,18 @@ export default function CandidateSchedulingPage() {
                     onClick={() => setSelectedSlot(slot)}
                     className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 text-left outline-none cursor-pointer w-full ${
                       isSelected
-                        ? "border-blue-500 bg-blue-50/20 shadow-sm"
-                        : "border-zinc-200 hover:border-zinc-300 bg-white"
+                        ? "border-blue-500 bg-blue-950/25 shadow-sm"
+                        : "border-zinc-800 hover:border-zinc-700 bg-zinc-950/50"
                     }`}
                   >
                     <div className="flex gap-3.5 items-center">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                        isSelected ? "bg-blue-100 text-blue-600" : "bg-zinc-50 text-zinc-400"
+                        isSelected ? "bg-blue-955 bg-blue-950 text-blue-400" : "bg-zinc-900 text-zinc-500"
                       }`}>
                         <Calendar className="w-4 h-4" />
                       </div>
                       <span className={`text-xs sm:text-sm font-bold ${
-                        isSelected ? "text-zinc-800" : "text-zinc-600"
+                        isSelected ? "text-zinc-150 text-white" : "text-zinc-300"
                       }`}>
                         {formatDateTime(slot)}
                       </span>
@@ -339,10 +339,10 @@ export default function CandidateSchedulingPage() {
             <button
               disabled={!selectedSlot || confirming}
               onClick={handleConfirmSlot}
-              className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs cursor-pointer border-none text-white flex items-center justify-center gap-2 transition-all duration-200 ${
+              className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs cursor-pointer border-none flex items-center justify-center gap-2 transition-all duration-200 ${
                 selectedSlot 
-                  ? "bg-zinc-950 hover:bg-zinc-900 shadow-md shadow-zinc-950/15" 
-                  : "bg-zinc-300 cursor-not-allowed"
+                  ? "bg-white text-zinc-950 hover:bg-zinc-100 shadow-md" 
+                  : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
               }`}
             >
               {confirming ? (
@@ -357,7 +357,7 @@ export default function CandidateSchedulingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200/50 py-6 bg-white/40 backdrop-blur-md mt-auto z-15">
+      <footer className="border-t border-zinc-900 py-6 bg-zinc-950/40 backdrop-blur-md mt-auto z-15">
         <div className="max-w-lg mx-auto px-6 flex justify-between items-center text-[11px] text-zinc-500 font-semibold">
           <p>© {new Date().getFullYear()} Google Antigravity. All rights reserved.</p>
         </div>
