@@ -102,7 +102,7 @@ export default function JobsPage() {
       <Header />
 
       {/* Hero */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pt-32 sm:pt-40 pb-6 sm:pb-8">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pt-24 sm:pt-28 pb-4">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -126,7 +126,7 @@ export default function JobsPage() {
       </section>
 
       {/* Search & Filter Bar */}
-      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-10">
+      <section className="relative z-10 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-6">
         {/* Dynamic Live Stats Bar */}
         {mounted && (
           <motion.div
@@ -238,7 +238,7 @@ export default function JobsPage() {
       </section>
 
       {/* Job Cards */}
-      <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-24">
+      <section className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto px-6 sm:px-8 md:px-12 pb-16">
         {loading ? (
           <div className="flex items-center justify-center py-32">
             <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />

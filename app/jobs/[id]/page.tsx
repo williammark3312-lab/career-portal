@@ -16,29 +16,40 @@ type Job = {
 };
 
 function renderMd(md: string): string {
-  const lines = md.split("\n");
+  const blocks = md.split(/\n\s*\n/);
   const out: string[] = [];
-  let inUl = false;
-  for (const raw of lines) {
-    const line = raw.trim();
-    if (!line) { if (inUl) { out.push("</ul>"); inUl = false; } continue; }
-    if (/^#{1,3} /.test(line)) {
-      if (inUl) { out.push("</ul>"); inUl = false; }
-      const text = line.replace(/^#{1,3} /, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      out.push(`<h3 class="text-[17px] sm:text-[19px] font-bold text-zinc-900 mt-8 mb-4 tracking-tight leading-tight">${text}</h3>`);
+
+  for (const block of blocks) {
+    const trimmed = block.trim();
+    if (!trimmed) continue;
+
+    if (/^#{1,3} /.test(trimmed)) {
+      const text = trimmed.replace(/^#{1,3} /, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      out.push(`<h3 class="text-base sm:text-lg font-bold text-zinc-900 mt-6 mb-3 tracking-tight leading-tight">${text}</h3>`);
       continue;
     }
-    if (/^[•\-] /.test(line)) {
-      if (!inUl) { out.push('<ul class="space-y-2.5 my-5 ml-5 list-disc text-zinc-600 font-medium">'); inUl = true; }
-      const text = line.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-zinc-800'>$1</strong>");
-      out.push(`<li class="pl-1 marker:text-blue-500 text-sm leading-relaxed">${text}</li>`);
+
+    if (/^[•\-] /.test(trimmed)) {
+      const items = trimmed.split("\n").map(line => line.trim()).filter(Boolean);
+      out.push('<ul class="space-y-2.5 my-4 ml-5 list-disc text-zinc-600 font-medium">');
+      for (const item of items) {
+        const text = item.replace(/^[•\-] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-zinc-800'>$1</strong>");
+        out.push(`<li class="pl-1 marker:text-blue-500 text-sm leading-relaxed">${text}</li>`);
+      }
+      out.push('</ul>');
       continue;
     }
-    if (inUl) { out.push("</ul>"); inUl = false; }
-    const text = line.replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-zinc-800'>$1</strong>");
+
+    const text = trimmed
+      .split("\n")
+      .map(line => line.trim())
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold text-zinc-800'>$1</strong>");
+    
     out.push(`<p class="my-3 text-sm sm:text-[15px] leading-relaxed text-zinc-600 font-medium">${text}</p>`);
   }
-  if (inUl) out.push("</ul>");
+
   return out.join("\n");
 }
 
@@ -282,7 +293,7 @@ export default function JobDetailsPage() {
       <GlassBackground />
       <Header />
 
-      <div className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-6 sm:px-8 pt-32 sm:pt-40 pb-16">
+      <div className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-6 sm:px-8 pt-24 sm:pt-28 pb-12">
         
         {/* Back Button */}
         <button 

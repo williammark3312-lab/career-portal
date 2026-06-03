@@ -218,7 +218,7 @@ export default function CandidateSchedulingPage() {
       {/* Decorative Header Banner */}
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-rose-500 z-20" />
 
-      <div className="flex-1 w-full max-w-lg mx-auto px-6 py-28 flex flex-col justify-center relative z-10">
+      <div className="flex-1 w-full max-w-lg mx-auto px-6 pt-24 pb-16 flex flex-col justify-center relative z-10">
         
         {error ? (
           <motion.div
