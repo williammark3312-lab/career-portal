@@ -3,6 +3,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  baseRadius: number;
+  color: string;
+}
+
 export default function GlassBackground() {
   const [mounted, setMounted] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -22,7 +32,6 @@ export default function GlassBackground() {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let time = 0;
 
     // Handle Resize
     const resizeCanvas = () => {
@@ -49,10 +58,28 @@ export default function GlassBackground() {
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseleave", onMouseLeave);
 
-    // Grid Parameters
-    const cols = 26;
-    const rows = 18;
-    const focalLength = 350;
+    // Initialize Particles
+    const particles: Particle[] = [];
+    const particleCount = Math.min(Math.floor((window.innerWidth * window.innerHeight) / 13000), 90);
+    const colors = [
+      "rgba(99, 102, 241, 0.6)", // Indigo
+      "rgba(168, 85, 247, 0.6)", // Purple
+      "rgba(6, 182, 212, 0.6)",  // Cyan
+      "rgba(251, 191, 36, 0.4)"  // Amber
+    ];
+
+    for (let i = 0; i < particleCount; i++) {
+      const radius = Math.random() * 1.8 + 0.8;
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.45,
+        radius: radius,
+        baseRadius: radius,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
 
     // Animation Loop
     const draw = () => {
@@ -61,127 +88,101 @@ export default function GlassBackground() {
       const h = canvas.height;
       const mouse = mouseRef.current;
 
-      time += 0.012;
+      // Update and Draw Particles
+      particles.forEach((p) => {
+        // Apply velocity
+        p.x += p.vx;
+        p.y += p.vy;
 
-      // 3D Grid coordinates calculation
-      const points: { sx: number; sy: number; scale: number; alpha: number }[][] = [];
+        // Mouse Proximity Interaction (Repulsion gravity well)
+        if (mouse.active) {
+          const dx = p.x - mouse.x;
+          const dy = p.y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const maxDist = 160;
 
-      // Grid boundaries in 3D space
-      const gridWidth = w * 1.2;
-      const gridDepth = 600;
-      const centerY = h * 0.55;
-
-      for (let r = 0; r < rows; r++) {
-        points[r] = [];
-        const z3d = 100 + (r / (rows - 1)) * gridDepth; // Depth from 100 to 700
-
-        for (let c = 0; c < cols; c++) {
-          const x3d = -gridWidth / 2 + (c / (cols - 1)) * gridWidth; // X centered around 0
-
-          // Calculate wave height (Y)
-          let waveY = 
-            Math.sin(c * 0.25 + time) * 15 + 
-            Math.cos(r * 0.35 - time * 0.7) * 15;
-
-          // Projected point coordinates prior to mouse displacement (to calculate distance to cursor)
-          const tempScale = focalLength / (focalLength + z3d);
-          const tempSx = w / 2 + x3d * tempScale;
-          const tempSy = centerY + waveY * tempScale + (z3d - 300) * 0.35; // Tilt the grid slightly downwards
-
-          // Mouse Gravitational Distortion (Gravity Well)
-          if (mouse.active) {
-            const dx = mouse.x - tempSx;
-            const dy = mouse.y - tempSy;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const maxInfluence = 180;
-            if (dist < maxInfluence) {
-              const force = (maxInfluence - dist) / maxInfluence;
-              // Push the grid points downwards at the cursor location (making a well)
-              waveY += force * force * 70;
-            }
+          if (dist < maxDist) {
+            const force = (maxDist - dist) / maxDist;
+            const angle = Math.atan2(dy, dx);
+            
+            // Push particle away gently
+            p.x += Math.cos(angle) * force * 1.5;
+            p.y += Math.sin(angle) * force * 1.5;
+            
+            // Pulse particle radius on hover
+            p.radius = p.baseRadius * (1 + force * 0.8);
+          } else {
+            p.radius = p.baseRadius;
           }
-
-          // Recompute final projection with displacement
-          const scale = focalLength / (focalLength + z3d);
-          const sx = w / 2 + x3d * scale;
-          const sy = centerY + waveY * scale + (z3d - 300) * 0.35;
-
-          // Compute opacity based on depth (closer points are brighter)
-          const depthProgress = (z3d - 100) / gridDepth; // 0 (closest) to 1 (furthest)
-          const alpha = (1 - depthProgress) * 0.25 + 0.05;
-
-          points[r][c] = { sx, sy, scale, alpha };
+        } else {
+          p.radius = p.baseRadius;
         }
-      }
 
-      // Draw Grid Lines (connecting rows and columns)
-      ctx.lineWidth = 1;
-      
-      // Horizontal Lines (connecting cols in each row)
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols - 1; c++) {
-          const p1 = points[r][c];
-          const p2 = points[r][c + 1];
+        // Screen boundary collisions (wrap or bounce)
+        if (p.x < 0) { p.x = 0; p.vx *= -1; }
+        if (p.x > w) { p.x = w; p.vx *= -1; }
+        if (p.y < 0) { p.y = 0; p.vy *= -1; }
+        if (p.y > h) { p.y = h; p.vy *= -1; }
 
-          // Skip drawing if coordinates are invalid/offscreen
-          if (Math.abs(p1.sx - p2.sx) > w * 0.5) continue;
+        // Draw particle node
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
 
-          const grad = ctx.createLinearGradient(p1.sx, p1.sy, p2.sx, p2.sy);
-          const avgAlpha = (p1.alpha + p2.alpha) / 2;
-          grad.addColorStop(0, `rgba(99, 102, 241, ${p1.alpha * 0.8})`); // indigo
-          grad.addColorStop(0.5, `rgba(96, 165, 250, ${avgAlpha * 0.9})`); // blue
-          grad.addColorStop(1, `rgba(168, 85, 247, ${p2.alpha * 0.8})`); // purple
-
+        // Node aura glow
+        if (p.radius > p.baseRadius) {
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = "#60a5fa";
           ctx.beginPath();
-          ctx.moveTo(p1.sx, p1.sy);
-          ctx.lineTo(p2.sx, p2.sy);
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = (p1.scale + p2.scale) * 0.4;
-          ctx.stroke();
-        }
-      }
-
-      // Vertical Lines (connecting rows in each col)
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows - 1; r++) {
-          const p1 = points[r][c];
-          const p2 = points[r + 1][c];
-
-          const grad = ctx.createLinearGradient(p1.sx, p1.sy, p2.sx, p2.sy);
-          const avgAlpha = (p1.alpha + p2.alpha) / 2;
-          grad.addColorStop(0, `rgba(99, 102, 241, ${p1.alpha * 0.8})`);
-          grad.addColorStop(1, `rgba(168, 85, 247, ${p2.alpha * 0.8})`);
-
-          ctx.beginPath();
-          ctx.moveTo(p1.sx, p1.sy);
-          ctx.lineTo(p2.sx, p2.sy);
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = (p1.scale + p2.scale) * 0.4;
-          ctx.stroke();
-        }
-      }
-
-      // Draw Grid Nodes (dots)
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const p = points[r][c];
-          ctx.beginPath();
-          ctx.arc(p.sx, p.sy, p.scale * 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 1.8})`;
-          
-          // Add a subtle glow to dots closer to cursor
-          if (mouse.active) {
-            const dx = mouse.x - p.sx;
-            const dy = mouse.y - p.sy;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 100) {
-              ctx.shadowBlur = (100 - dist) * 0.1;
-              ctx.shadowColor = "#60a5fa";
-            }
-          }
-
+          ctx.arc(p.x, p.y, p.radius * 0.5, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
           ctx.fill();
           ctx.shadowBlur = 0; // reset
+        }
+      });
+
+      // Draw Proximity Connections (Constellation lines)
+      ctx.lineWidth = 0.5;
+      const connectionLimit = 110;
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const p1 = particles[i];
+          const p2 = particles[j];
+
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < connectionLimit) {
+            // Compute opacity based on distance
+            const alpha = (1 - dist / connectionLimit) * 0.16;
+
+            // Highlight connections near cursor
+            let isNearMouse = false;
+            if (mouse.active) {
+              const mx1 = p1.x - mouse.x;
+              const my1 = p1.y - mouse.y;
+              const md1 = Math.sqrt(mx1 * mx1 + my1 * my1);
+              if (md1 < 120) {
+                isNearMouse = true;
+              }
+            }
+
+            // Create gradient line between nodes
+            const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+            const baseOpacity = isNearMouse ? alpha * 2.2 : alpha;
+            grad.addColorStop(0, p1.color.replace("0.6", baseOpacity.toString()));
+            grad.addColorStop(1, p2.color.replace("0.6", baseOpacity.toString()));
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = isNearMouse ? 0.75 : 0.45;
+            ctx.stroke();
+          }
         }
       }
 
@@ -202,35 +203,35 @@ export default function GlassBackground() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ background: "#060608" }}>
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none" style={{ background: "#050507" }}>
       {/* Background Ambient Cosmic Nebulas */}
-      <div className="absolute inset-0 z-0 opacity-30 mix-blend-screen">
-        {/* Nebula 1 — Deep purple blob */}
+      <div className="absolute inset-0 z-0 opacity-25 mix-blend-screen">
+        {/* Nebula 1 — Deep purple/indigo blob */}
         <motion.div
           animate={{
-            scale: [1, 1.2, 0.95, 1.1, 1],
-            x: [0, 50, -30, 20, 0],
-            y: [0, -40, 30, -10, 0],
+            scale: [1, 1.15, 0.95, 1.08, 1],
+            x: [0, 30, -20, 15, 0],
+            y: [0, -30, 20, -10, 0],
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-15%] left-[-10%] w-[75vw] h-[75vw] max-w-[900px] max-h-[900px] rounded-full"
+          className="absolute top-[-10%] left-[-5%] w-[80vw] h-[80vw] max-w-[900px] max-h-[900px] rounded-full"
           style={{
-            background: "radial-gradient(circle at 50% 50%, rgba(99,102,241,0.22), rgba(124,58,237,0.08) 45%, transparent 70%)",
+            background: "radial-gradient(circle at 50% 50%, rgba(99,102,241,0.18), rgba(168,85,247,0.06) 45%, transparent 70%)",
             filter: "blur(90px)",
           }}
         />
 
-        {/* Nebula 2 — Emerald / Cyan ambient bloom */}
+        {/* Nebula 2 — Emerald/Cyan ambient bloom */}
         <motion.div
           animate={{
-            scale: [1.1, 0.95, 1.15, 1.0, 1.1],
-            x: [0, -60, 40, -20, 0],
-            y: [0, 50, -40, 30, 0],
+            scale: [1.1, 0.95, 1.12, 1.0, 1.1],
+            x: [0, -40, 30, -15, 0],
+            y: [0, 40, -30, 20, 0],
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-20%] right-[-15%] w-[70vw] h-[70vw] max-w-[850px] max-h-[850px] rounded-full"
+          className="absolute bottom-[-15%] right-[-10%] w-[75vw] h-[75vw] max-w-[850px] max-h-[850px] rounded-full"
           style={{
-            background: "radial-gradient(circle at 45% 55%, rgba(6,182,212,0.16), rgba(99,102,241,0.06) 50%, transparent 75%)",
+            background: "radial-gradient(circle at 45% 55%, rgba(6,182,212,0.14), rgba(99,102,241,0.05) 50%, transparent 75%)",
             filter: "blur(95px)",
           }}
         />
@@ -240,8 +241,8 @@ export default function GlassBackground() {
       <canvas ref={canvasRef} className="absolute inset-0 z-10 w-full h-full" />
 
       {/* Subtle vignettes overlay */}
-      <div className="absolute inset-0 z-20 bg-radial-vignette" style={{
-        background: "radial-gradient(circle at 50% 50%, transparent 20%, rgba(6,6,8,0.7) 100%)"
+      <div className="absolute inset-0 z-20" style={{
+        background: "radial-gradient(circle at 50% 50%, transparent 30%, rgba(5,5,7,0.85) 100%)"
       }} />
     </div>
   );

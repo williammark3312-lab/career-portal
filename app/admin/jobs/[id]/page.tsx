@@ -554,7 +554,7 @@ export default function JobScreeningPage() {
       {/* ── ╔══════╗ Right Slide-over Split screening workspace drawer ╔══════╗ ── */}
       <AnimatePresence>
         {activePreviewApp && (
-          <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="fixed inset-0 z-[150] flex justify-end">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -576,18 +576,18 @@ export default function JobScreeningPage() {
             >
               
               {/* LEFT HALF: Candidate Info, Remarks feed, Interview scheduler */}
-              <div className="w-full md:w-1/2 h-full flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-900">
-                <div className="flex-1 overflow-y-auto p-6 premium-scrollbar flex flex-col gap-6">
+              <div className="w-full md:w-1/2 h-[55%] md:h-full flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-900">
+                <div className="flex-1 overflow-y-auto p-8 premium-scrollbar flex flex-col gap-8">
                   
                   {/* Drawer Header */}
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white font-extrabold text-xs">
+                      <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white font-extrabold text-sm">
                         {activePreviewApp.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
                       </div>
                       <div>
-                        <h2 className="text-base font-bold text-white">{activePreviewApp.name}</h2>
-                        <span className="text-xs text-zinc-500 font-semibold">Candidate Application details</span>
+                        <h2 className="text-lg font-bold text-white leading-tight">{activePreviewApp.name}</h2>
+                        <span className="text-xs text-zinc-500 font-semibold mt-0.5 block">Candidate Application details</span>
                       </div>
                     </div>
                     <button
@@ -595,7 +595,7 @@ export default function JobScreeningPage() {
                         setActivePreviewApp(null);
                         setProposedSlots([""]);
                       }}
-                      className="p-2 hover:bg-zinc-900 text-zinc-400 hover:text-white rounded-xl transition-all cursor-pointer"
+                      className="p-2.5 hover:bg-zinc-900 text-zinc-400 hover:text-white rounded-xl transition-all cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -607,7 +607,7 @@ export default function JobScreeningPage() {
                       <select
                         value={activePreviewApp.status}
                         onChange={e => handleStatusChange(activePreviewApp.id, e.target.value)}
-                        className="flex-1 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-zinc-350 bg-zinc-950 focus:outline-none focus:border-zinc-700 cursor-pointer"
+                        className="flex-1 border border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-zinc-300 bg-zinc-950 focus:outline-none focus:border-zinc-700 cursor-pointer"
                       >
                         <option>Pending</option>
                         <option>Reviewed</option>
@@ -618,7 +618,7 @@ export default function JobScreeningPage() {
                       <button
                         disabled={movingToDb[activePreviewApp.id] || movedToDb[activePreviewApp.id]}
                         onClick={() => handleMoveToDatabase(activePreviewApp)}
-                        className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm ${
+                        className={`flex items-center gap-2 px-4 py-3 border rounded-xl text-sm font-bold transition-all shadow-sm ${
                           movedToDb[activePreviewApp.id]
                             ? "bg-emerald-950/30 border-emerald-900/50 text-emerald-450 cursor-default"
                             : "bg-zinc-900/60 hover:bg-zinc-900 border-zinc-800 text-zinc-350 cursor-pointer active:scale-[0.98]"
@@ -636,7 +636,7 @@ export default function JobScreeningPage() {
 
                       <button
                         onClick={() => handleDelete(activePreviewApp.id)}
-                        className="p-2 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-455 text-rose-400 rounded-xl cursor-pointer"
+                        className="p-3.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-400 rounded-xl cursor-pointer hover:text-rose-350 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -644,41 +644,41 @@ export default function JobScreeningPage() {
                   </div>
 
                   {/* Contact details */}
-                  <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-4 flex flex-col gap-3 text-xs text-zinc-300 font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-zinc-500" />
+                  <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-4 text-sm text-zinc-300 font-semibold shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-4 h-4 text-zinc-550" />
                       <span>{activePreviewApp.email}</span>
                     </div>
                     {activePreviewApp.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-zinc-500" />
+                      <div className="flex items-center gap-3">
+                        <Phone className="w-4 h-4 text-zinc-550" />
                         <span>{activePreviewApp.phone}</span>
                       </div>
                     )}
                     {activePreviewApp.location && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-zinc-500" />
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-4 h-4 text-zinc-550" />
                         <span>{activePreviewApp.location}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Interview Scheduler Configuration */}
-                  <div className="border-t border-zinc-900 pt-5 flex flex-col gap-4">
+                  <div className="border-t border-zinc-900 pt-6 flex flex-col gap-5">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                      <Calendar className="w-4 h-4 text-blue-400" />
                       <span>Interview Scheduling desk</span>
                     </label>
 
                     {parseNotes(activePreviewApp.notes).interview && parseNotes(activePreviewApp.notes).interview?.status === "scheduled" && (
-                      <div className="p-3 bg-emerald-950/30 border border-emerald-900/50 rounded-2xl flex items-center gap-2 text-xs font-bold text-emerald-450 shadow-sm animate-pulse-slow">
-                        <CheckCircle2 className="w-4 h-4" />
+                      <div className="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-2xl flex items-center gap-3 text-sm font-bold text-emerald-450 shadow-sm animate-pulse-slow">
+                        <CheckCircle2 className="w-5 h-5" />
                         <span>Confirmed Slot: {formatDateTime(parseNotes(activePreviewApp.notes).interview?.selected_slot!)}</span>
                       </div>
                     )}
 
-                    <div className="flex flex-col gap-2.5">
-                      <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-3.5">
+                      <div className="flex flex-col gap-2.5">
                         {proposedSlots.map((slot, idx) => (
                           <div key={idx} className="flex gap-2 items-center">
                             <input
@@ -689,14 +689,14 @@ export default function JobScreeningPage() {
                                 updated[idx] = e.target.value;
                                 setProposedSlots(updated);
                               }}
-                              className="flex-1 rounded-xl border border-zinc-800 p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/80 bg-zinc-900/60"
+                              className="flex-1 rounded-xl border border-zinc-800 p-3.5 text-sm text-white focus:outline-none focus:border-blue-500/80 bg-zinc-900/60"
                             />
                             <button
                               onClick={() => {
                                 const updated = proposedSlots.filter((_, i) => i !== idx);
                                 setProposedSlots(updated.length === 0 ? [""] : updated);
                               }}
-                              className="p-2.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-400 hover:text-rose-350 rounded-xl cursor-pointer"
+                              className="p-3.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-400 hover:text-rose-350 rounded-xl cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -704,18 +704,18 @@ export default function JobScreeningPage() {
                         ))}
                       </div>
 
-                      <div className="flex gap-2 justify-between">
+                      <div className="flex gap-3 justify-between items-center">
                         <button
                           onClick={() => setProposedSlots([...proposedSlots, ""])}
-                          className="flex items-center gap-1.5 py-2 px-3 border border-dashed border-blue-900 hover:bg-blue-955/20 text-blue-400 font-bold text-xs rounded-xl cursor-pointer transition-all"
+                          className="flex items-center gap-2 py-3 px-4 border border-dashed border-blue-900 hover:bg-blue-955/20 text-blue-400 font-bold text-xs rounded-xl cursor-pointer transition-all"
                         >
-                          <Plus className="w-3.5 h-3.5" /> Add Slot Option
+                          <Plus className="w-4 h-4" /> Add Slot Option
                         </button>
                         
                         <button
                           disabled={savingSchedule}
                           onClick={handleSaveSchedule}
-                          className="py-2 px-4 bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs rounded-xl cursor-pointer transition-all shadow-sm"
+                          className="py-3 px-5 bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs rounded-xl cursor-pointer transition-all shadow-sm"
                         >
                           {savingSchedule ? "Saving..." : "Save proposed slots"}
                         </button>
@@ -723,16 +723,16 @@ export default function JobScreeningPage() {
                     </div>
 
                     {parseNotes(activePreviewApp.notes).interview && (
-                      <div className="bg-zinc-900/40 border border-zinc-850 rounded-2xl p-4 flex flex-col gap-3">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase">Booking URL</span>
-                          <div className="flex gap-2 mt-1">
+                      <div className="bg-zinc-900/40 border border-zinc-850 rounded-2xl p-5 flex flex-col gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Booking URL</span>
+                          <div className="flex gap-3 mt-1.5">
                             <input
                               type="text"
                               readOnly
                               value={`${window.location.origin}/schedule/${activePreviewApp.id}`}
                               onClick={e => (e.target as HTMLInputElement).select()}
-                              className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-xs text-zinc-450 focus:outline-none"
+                              className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-xs text-zinc-400 focus:outline-none"
                             />
                             <button
                               onClick={() => {
@@ -740,7 +740,7 @@ export default function JobScreeningPage() {
                                 setCopied(true);
                                 setTimeout(() => setCopied(false), 2000);
                               }}
-                              className={`flex items-center gap-1 px-3 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                              className={`flex items-center gap-1.5 px-4 border rounded-xl text-sm font-bold transition-all cursor-pointer ${
                                 copied ? "bg-emerald-950/30 border-emerald-900/50 text-emerald-450" : "bg-zinc-900/60 hover:bg-zinc-900 border-zinc-800 text-zinc-300"
                               }`}
                             >
@@ -750,16 +750,16 @@ export default function JobScreeningPage() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 w-full mt-1">
+                        <div className="flex gap-3 w-full">
                           <a
                             href={getMailtoUrl(activePreviewApp.name, job?.title || "Job Opening", `${window.location.origin}/schedule/${activePreviewApp.id}`, activePreviewApp.email)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-blue-900 bg-blue-950/20 hover:bg-blue-950/40 text-blue-450 hover:text-blue-400 text-xs font-bold rounded-xl text-decoration-none transition-all cursor-pointer"
+                            className="flex-1 flex items-center justify-center gap-2 py-3 border border-blue-900 bg-blue-950/20 hover:bg-blue-955/40 text-blue-450 hover:text-blue-400 text-sm font-bold rounded-xl text-decoration-none transition-all cursor-pointer"
                           >
                             <Mail className="w-4 h-4" /> Email Link
                           </a>
                           <button
                             onClick={handleCancelSchedule}
-                            className="px-3 py-2 border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-rose-500 font-bold text-xs rounded-xl cursor-pointer transition-all"
+                            className="px-4 py-3 border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-rose-500 font-bold text-sm rounded-xl cursor-pointer transition-all"
                           >
                             Cancel
                           </button>
@@ -769,9 +769,9 @@ export default function JobScreeningPage() {
                   </div>
 
                   {/* Recruiter Remarks timeline feed */}
-                  <div className="border-t border-zinc-900 pt-5 flex flex-col gap-4">
+                  <div className="border-t border-zinc-900 pt-6 flex flex-col gap-4">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                      <MessageSquare className="w-4 h-4 text-blue-400" />
                       <span>Evaluations Remarks</span>
                     </label>
 
@@ -780,17 +780,17 @@ export default function JobScreeningPage() {
                         <p className="text-xs text-zinc-500 italic">No notes created. Write evaluation remarks below.</p>
                       ) : (
                         parseNotes(activePreviewApp.notes).comments.map(comment => (
-                          <div key={comment.id} className="comment-bubble p-3 rounded-2xl relative flex flex-col gap-1">
+                          <div key={comment.id} className="comment-bubble p-4 rounded-2xl relative flex flex-col gap-1.5">
                             <div className="flex justify-between items-center">
                               <span className="text-xs font-bold text-blue-400">{comment.author.split("@")[0]}</span>
-                              <span className="text-[9px] font-bold text-zinc-505 text-zinc-500">
+                              <span className="text-[9px] font-bold text-zinc-500">
                                 {new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                               </span>
                             </div>
-                            <p className="text-[12px] text-zinc-300 leading-relaxed pr-6">{comment.text}</p>
+                            <p className="text-[12.5px] text-zinc-300 leading-relaxed pr-6">{comment.text}</p>
                             <button
                               onClick={() => deleteComment(comment.id)}
-                              className="absolute top-2.5 right-2 text-zinc-500 hover:text-rose-500 cursor-pointer transition-colors border-none bg-none"
+                              className="absolute top-3.5 right-3.5 text-zinc-500 hover:text-rose-500 cursor-pointer transition-colors border-none bg-none"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -803,20 +803,20 @@ export default function JobScreeningPage() {
                 </div>
 
                 {/* Remarks comment input panel */}
-                <div className="p-4 bg-zinc-950 border-t border-zinc-900 flex gap-2">
+                <div className="p-5 bg-zinc-950 border-t border-zinc-900 flex gap-3">
                   <textarea
                     placeholder="Append recruiter note..."
                     value={commentInput}
                     onChange={e => setCommentInput(e.target.value)}
                     rows={1}
-                    className="flex-1 rounded-xl border border-zinc-800 p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/80 bg-zinc-900/60 resize-none"
+                    className="flex-1 rounded-xl border border-zinc-800 p-3.5 text-sm text-white focus:outline-none focus:border-blue-500/80 bg-zinc-900/60 resize-none placeholder-zinc-600"
                   />
                   <button
                     disabled={!commentInput.trim() || postingComment}
                     onClick={postComment}
-                    className="bg-white hover:bg-zinc-100 text-zinc-950 rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm self-end"
+                    className="bg-white hover:bg-zinc-100 text-zinc-950 rounded-xl px-5 py-3 text-sm font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm self-end"
                   >
-                    {postingComment ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                    {postingComment ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                     Add
                   </button>
                 </div>
@@ -824,14 +824,14 @@ export default function JobScreeningPage() {
               </div>
 
               {/* RIGHT HALF: Resume sandbox iframe */}
-              <div className="w-full md:w-1/2 h-full bg-zinc-900/80 p-4 flex flex-col gap-3">
+              <div className="w-full md:w-1/2 h-[45%] md:h-full bg-zinc-900/80 p-5 flex flex-col gap-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-zinc-500">Document Sandbox</span>
+                  <span className="text-sm font-bold text-zinc-500">Document Sandbox</span>
                   <a
                     href={activePreviewApp.resume_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:underline text-decoration-none"
+                    className="flex items-center gap-1.5 text-sm font-bold text-blue-400 hover:underline text-decoration-none"
                   >
                     Open Externally <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -851,7 +851,7 @@ export default function JobScreeningPage() {
       {/* Fallback independent resume modal dialog */}
       <AnimatePresence>
         {cvOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setCvOpen(false)} />
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
