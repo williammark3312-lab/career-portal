@@ -360,15 +360,15 @@ body {
 }
 
 .comment-bubble {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  background: rgba(24, 24, 27, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease;
 }
 
 .comment-bubble:hover {
-  border-color: rgba(50, 121, 249, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-color: rgba(50, 121, 249, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
 }
 
 .animate-pulse-slow {
@@ -391,23 +391,23 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #71717a; /* zinc-500 */
-  background: #fafafa; /* zinc-50 */
+  color: var(--grey-400);
+  background: rgba(20, 20, 23, 0.95);
   padding: 14px 20px;
-  border-bottom: 1px solid #e4e4e7; /* zinc-200 */
+  border-bottom: 1px solid var(--grey-800);
   text-align: left;
 }
 .premium-table td {
   font-size: 13.5px;
-  color: #18181b; /* zinc-900 */
+  color: var(--neutral-100);
   padding: 16px 20px;
-  border-bottom: 1px solid #f4f4f5; /* zinc-100 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
-  background: #ffffff;
+  background: rgba(18, 18, 20, 0.6);
   transition: background-color 0.15s ease;
 }
 .premium-table tr:hover td {
-  background-color: #fafafa; /* zinc-50 */
+  background-color: rgba(255, 255, 255, 0.04);
 }
 .premium-table tr:last-child td {
   border-bottom: none;
@@ -421,9 +421,9 @@ body {
   bottom: 0;
   height: 100vh;
   z-index: 100;
-  background: #ffffff;
-  box-shadow: -10px 0 40px -10px rgba(0, 0, 0, 0.08);
-  border-left: 1px solid #e4e4e7; /* zinc-200 */
+  background: #09090b;
+  box-shadow: -10px 0 40px -10px rgba(0, 0, 0, 0.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ╔══════╗ Premium Scrollbars ╔══════╗ */
@@ -435,11 +435,11 @@ body {
   background: transparent;
 }
 .premium-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
 }
 .premium-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 

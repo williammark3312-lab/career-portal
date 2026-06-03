@@ -42,28 +42,28 @@ function parseComments(raw: string | null | undefined): Comment[] {
 function getDeptStyle(dept: string) {
   const d = dept.toLowerCase();
   if (d.includes("engineer") || d.includes("tech")) {
-    return { color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", dot: "#3b82f6" };
+    return { color: "#60a5fa", bg: "rgba(96, 165, 250, 0.15)", border: "rgba(96, 165, 250, 0.3)", dot: "#3b82f6" };
   }
   if (d.includes("design") || d.includes("creative")) {
-    return { color: "#d97706", bg: "#fef3c7", border: "#fde68a", dot: "#f59e0b" };
+    return { color: "#fbbf24", bg: "rgba(251, 191, 36, 0.15)", border: "rgba(251, 191, 36, 0.3)", dot: "#f59e0b" };
   }
   if (d.includes("market") || d.includes("growth")) {
-    return { color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", dot: "#10b981" };
+    return { color: "#34d399", bg: "rgba(52, 211, 153, 0.15)", border: "rgba(52, 211, 153, 0.3)", dot: "#10b981" };
   }
-  return { color: "#dc2626", bg: "#fef2f2", border: "#fecaca", dot: "#ef4444" };
+  return { color: "#f87171", bg: "rgba(248, 113, 113, 0.15)", border: "rgba(248, 113, 113, 0.3)", dot: "#ef4444" };
 }
 
 /* ─── Status badge helper ─── */
 function getStatusStyle(status: string) {
   switch (status) {
     case "Called":
-      return { color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", dot: "#10b981" };
+      return { color: "#34d399", bg: "rgba(52, 211, 153, 0.15)", border: "rgba(52, 211, 153, 0.3)", dot: "#10b981" };
     case "Interviewing":
-      return { color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", dot: "#3b82f6" };
+      return { color: "#60a5fa", bg: "rgba(96, 165, 250, 0.15)", border: "rgba(96, 165, 250, 0.3)", dot: "#3b82f6" };
     case "Rejected":
-      return { color: "#dc2626", bg: "#fef2f2", border: "#fecaca", dot: "#ef4444" };
+      return { color: "#f87171", bg: "rgba(248, 113, 113, 0.15)", border: "rgba(248, 113, 113, 0.3)", dot: "#ef4444" };
     default:
-      return { color: "#71717a", bg: "#f4f4f5", border: "#e4e4e7", dot: "#a1a1aa" };
+      return { color: "#9ca3af", bg: "rgba(156, 163, 175, 0.15)", border: "rgba(156, 163, 175, 0.3)", dot: "#a1a1aa" };
   }
 }
 
@@ -434,11 +434,11 @@ export default function AdminPage() {
   /* ── Spinner loading state ── */
   if ((!mounted || authLoading) && !loginSuccess) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#09090b] text-white relative overflow-hidden">
         <GlassBackground />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
-          <p className="text-sm font-bold text-slate-500 tracking-wide animate-pulse-slow">Initializing Control Console...</p>
+          <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+          <p className="text-sm font-bold text-zinc-400 tracking-wide animate-pulse-slow">Initializing Control Console...</p>
         </div>
       </main>
     );
@@ -447,24 +447,24 @@ export default function AdminPage() {
   /* ── Auth Success Animation ── */
   if (loginSuccess) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FF] relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#09090b] text-white relative overflow-hidden">
         <GlassBackground />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-6 border border-white/60 rounded-[32px] p-12 bg-white/70 backdrop-blur-2xl shadow-xl shadow-blue-500/5 relative z-10 max-w-sm text-center"
+          className="flex flex-col items-center gap-6 border border-zinc-800/80 rounded-[32px] p-12 bg-zinc-900/60 backdrop-blur-2xl shadow-xl shadow-blue-500/5 relative z-10 max-w-sm text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-            className="w-16 h-16 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shadow-inner"
+            className="w-16 h-16 bg-emerald-950/30 border border-emerald-900/50 rounded-full flex items-center justify-center text-emerald-400 shadow-inner"
           >
             <CheckCircle2 className="w-8 h-8" />
           </motion.div>
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Access Authorized</h2>
-            <p className="text-sm text-slate-500 font-medium">Session secured. Entering supervisor desk...</p>
+            <h2 className="text-xl font-bold text-white tracking-tight">Access Authorized</h2>
+            <p className="text-sm text-zinc-400 font-medium">Session secured. Entering supervisor desk...</p>
           </div>
         </motion.div>
       </main>
@@ -577,7 +577,7 @@ export default function AdminPage() {
               onClick={() => router.push("/")}
               className="w-full py-3 px-6 rounded-xl font-bold text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer"
             >
-              Back to Home page
+              Return to Home
             </button>
           </div>
         </motion.div>
@@ -585,9 +585,8 @@ export default function AdminPage() {
     );
   }
 
-  /* ── MAIN DASHBOARD PANEL ── */
   return (
-    <main className="min-h-screen bg-[#F8F9FC] text-zinc-800 relative z-10 flex flex-col lg:flex-row overflow-hidden">
+    <main className="min-h-screen bg-[#09090b] text-white relative z-10 flex flex-col lg:flex-row overflow-hidden">
       <GlassBackground />
 
       {/* ── Midnight-Dark Sidebar (Stripe Style) ── */}
@@ -606,7 +605,7 @@ export default function AdminPage() {
           </div>
 
           {/* User Account context */}
-          <div className="bg-zinc-900/40 rounded-xl p-3 border border-zinc-800 flex items-center gap-3">
+          <div className="bg-zinc-900/40 rounded-xl p-3 border border-zinc-850 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-extrabold text-xs">
               {session?.user?.email?.[0].toUpperCase()}
             </div>
@@ -626,16 +625,16 @@ export default function AdminPage() {
               const isActive = activeTab === t.key;
               return (
                 <button
-                  key={t.key}
-                  onClick={() => {
-                    setActiveTab(t.key);
-                    setActivePreviewCandidate(null);
-                  }}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    isActive
-                      ? "text-white bg-zinc-900 border border-zinc-850"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent"
-                  }`}
+                   key={t.key}
+                   onClick={() => {
+                     setActiveTab(t.key);
+                     setActivePreviewCandidate(null);
+                   }}
+                   className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                     isActive
+                       ? "text-white bg-zinc-900 border border-zinc-850"
+                       : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent"
+                   }`}
                 >
                   <div className="flex items-center gap-2.5">
                     {t.icon}
@@ -658,12 +657,12 @@ export default function AdminPage() {
         <div className="flex flex-col gap-4">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-950/20 border border-transparent hover:border-rose-950 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold text-rose-450 hover:bg-rose-950/20 border border-transparent hover:border-rose-950 transition-all cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
           </button>
-          <div className="text-[10px] text-zinc-600 font-semibold px-3">
+          <div className="text-[10px] text-zinc-650 font-semibold px-3">
             © {new Date().getFullYear()} Google Antigravity
           </div>
         </div>
@@ -673,7 +672,7 @@ export default function AdminPage() {
       <div className="lg:hidden w-full relative z-30">
         <Header session={session} handleLogout={handleLogout} />
         {/* Mobile menu navigation tab strip */}
-        <div className="bg-white/80 backdrop-blur-md border-b border-zinc-250 px-4 py-2 flex gap-1 overflow-x-auto">
+        <div className="bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900/80 px-4 py-2 flex gap-1 overflow-x-auto">
           {([
             { key: "jobs", label: "Openings", icon: <Briefcase className="w-3.5 h-3.5" /> },
             { key: "cvs", label: "Talent Index", icon: <FileText className="w-3.5 h-3.5" /> },
@@ -685,10 +684,10 @@ export default function AdminPage() {
                 setActiveTab(t.key);
                 setActivePreviewCandidate(null);
               }}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-200 ${
                 activeTab === t.key
-                  ? "bg-zinc-950 text-white shadow-sm"
-                  : "text-zinc-500 bg-zinc-100 hover:bg-zinc-200"
+                  ? "bg-white text-zinc-950 shadow-sm"
+                  : "text-zinc-400 bg-zinc-900 hover:bg-zinc-800"
               }`}
             >
               {t.icon}
@@ -703,14 +702,14 @@ export default function AdminPage() {
         <div className="max-w-5xl w-full mx-auto flex flex-col gap-6 flex-grow pb-16">
           
           {/* Header Panel */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-200/50">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-850">
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                 <span>Console</span>
                 <ChevronRight className="w-3 h-3" />
-                <span className="text-zinc-500 font-semibold">{activeTab}</span>
+                <span className="text-zinc-400 font-semibold">{activeTab}</span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 leading-none">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-none">
                 {activeTab === "jobs" ? "Job Openings Desk" : activeTab === "cvs" ? "Talent Registry Index" : "Supervising Registry"}
               </h1>
             </div>
@@ -719,7 +718,7 @@ export default function AdminPage() {
             {activeTab === "jobs" && (
               <button
                 onClick={openCreate}
-                className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-950 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
               >
                 <Plus className="w-4 h-4" /> Create Opening
               </button>
@@ -727,7 +726,7 @@ export default function AdminPage() {
             {activeTab === "cvs" && (
               <button
                 onClick={() => setShowCvModal(true)}
-                className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-955 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
               >
                 <Upload className="w-4 h-4" /> Upload CV File
               </button>
@@ -735,7 +734,7 @@ export default function AdminPage() {
             {activeTab === "users" && (
               <button
                 onClick={() => setShowUserModal(true)}
-                className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-955 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" /> Provision Account
               </button>
@@ -754,21 +753,21 @@ export default function AdminPage() {
                   { label: "Evaluations Pending", value: stats.pendingApps, icon: <Clock className="w-4 h-4" /> },
                   { label: "Talent Repository", value: stats.totalCVs, icon: <FileText className="w-4 h-4" /> }
                 ].map((s, idx) => (
-                  <div key={idx} className="bg-white border border-zinc-200/60 rounded-2xl p-5 flex flex-col gap-3 shadow-sm hover:border-zinc-300 transition-all">
-                    <div className="flex justify-between items-center text-zinc-400">
+                  <div key={idx} className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 shadow-lg hover:border-zinc-700/80 transition-all">
+                    <div className="flex justify-between items-center text-zinc-500">
                       <span className="text-[10px] font-bold uppercase tracking-wider">{s.label}</span>
                       {s.icon}
                     </div>
-                    <span className="text-3xl font-extralight tracking-tight text-zinc-900 leading-none">{s.value}</span>
+                    <span className="text-3xl font-extralight tracking-tight text-white leading-none">{s.value}</span>
                   </div>
                 ))}
               </div>
 
               {/* Jobs List (Minimal List Design) */}
               {jobs.length === 0 ? (
-                <div className="p-16 border border-dashed border-zinc-200 bg-white/40 backdrop-blur-md rounded-2xl text-center">
-                  <Briefcase className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-500 font-semibold">No job listings published. Click "Create Opening" to start.</p>
+                <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
+                  <Briefcase className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
+                  <p className="text-sm text-zinc-400 font-semibold">No job listings published. Click "Create Opening" to start.</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -777,7 +776,7 @@ export default function AdminPage() {
                     return (
                       <div
                         key={job.id}
-                        className="bg-white border border-zinc-200/60 rounded-2xl p-5 hover:border-zinc-300 hover:shadow-sm transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                        className="bg-[#121214]/60 backdrop-blur-xl border border-zinc-800/80 rounded-2xl p-5 hover:border-zinc-700/80 hover:shadow-lg transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                       >
                         <div className="flex items-start gap-4 min-w-0">
                           {/* Colored circular dot representing dept */}
@@ -786,13 +785,13 @@ export default function AdminPage() {
                             className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
                           />
                           <div className="min-w-0 flex flex-col gap-1">
-                            <h2 className="text-base font-bold text-zinc-900 tracking-tight leading-none hover:text-blue-600 cursor-pointer" onClick={() => router.push(`/admin/jobs/${job.id}`)}>
+                            <h2 className="text-base font-bold text-white tracking-tight leading-none hover:text-blue-400 cursor-pointer" onClick={() => router.push(`/admin/jobs/${job.id}`)}>
                               {job.title}
                             </h2>
-                            <div className="flex items-center gap-2 text-xs text-zinc-400 font-semibold">
+                            <div className="flex items-center gap-2 text-xs text-zinc-500 font-semibold">
                               <span>{job.department}</span>
                               <span>•</span>
-                              <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {job.location}</span>
+                              <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3 text-zinc-500" /> {job.location}</span>
                             </div>
                           </div>
                         </div>
@@ -801,21 +800,21 @@ export default function AdminPage() {
                         <div className="flex items-center gap-3 self-stretch sm:self-auto justify-end">
                           <button
                             onClick={() => openEdit(job)}
-                            className="p-2 border border-zinc-200/60 bg-white hover:bg-zinc-50 text-zinc-400 hover:text-zinc-800 rounded-xl transition-all cursor-pointer"
+                            className="p-2 border border-zinc-800 bg-zinc-950/80 hover:bg-zinc-900 text-zinc-450 hover:text-white rounded-xl transition-all cursor-pointer"
                             title="Modify Listing"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDelete(job.id)}
-                            className="p-2 border border-zinc-200/60 bg-rose-50/50 hover:bg-rose-50 text-rose-500 rounded-xl transition-all cursor-pointer"
+                            className="p-2 border border-rose-900/50 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 rounded-xl transition-all cursor-pointer"
                             title="Delete Listing"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                            className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-900 text-white px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-[0.98]"
+                            className="flex items-center gap-1 bg-white hover:bg-zinc-100 text-zinc-950 px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-[0.98]"
                           >
                             Reviews <ArrowRight className="w-3.5 h-3.5" />
                           </button>
@@ -833,22 +832,22 @@ export default function AdminPage() {
             <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-4">
               
               {/* Search Toolbar */}
-              <div className="bg-white border border-zinc-200/60 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+              <div className="bg-zinc-900/85 border border-zinc-800/80 rounded-2xl p-4 shadow-2xl flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     placeholder="Search candidate registry database..."
                     value={cvSearch}
                     onChange={e => setCvSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-zinc-200/80 bg-white text-xs font-semibold focus:outline-none focus:border-blue-600 transition-colors text-zinc-800"
+                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-zinc-805 border-zinc-800 bg-zinc-950/80 text-xs font-semibold focus:outline-none focus:border-blue-500 transition-colors text-zinc-200"
                   />
                 </div>
                 
                 <select
                   value={cvFilter}
                   onChange={e => setCvFilter(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-zinc-200/80 bg-white text-xs font-bold text-zinc-600 focus:outline-none cursor-pointer"
+                  className="px-3 py-2 rounded-xl border border-zinc-800 bg-zinc-950 text-xs font-bold text-zinc-350 focus:outline-none cursor-pointer"
                 >
                   <option value="All">All Statuses</option>
                   <option value="Not Called">Not Called</option>
@@ -860,12 +859,12 @@ export default function AdminPage() {
 
               {/* Data Table */}
               {cvs.length === 0 ? (
-                <div className="p-16 border border-dashed border-zinc-200 bg-white/40 backdrop-blur-md rounded-2xl text-center">
-                  <FileText className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-500 font-semibold">No candidate profile files indexed.</p>
+                <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
+                  <FileText className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
+                  <p className="text-sm text-zinc-400 font-semibold">No candidate profile files indexed.</p>
                 </div>
               ) : (
-                <div className="bg-white border border-zinc-200/60 rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-2xl">
                   <div className="overflow-x-auto">
                     <table className="premium-table">
                       <thead>
@@ -895,11 +894,11 @@ export default function AdminPage() {
                             >
                               <td>
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-700 font-bold text-[11px] border border-zinc-200">
+                                  <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300 font-bold text-[11px] border border-zinc-700">
                                     {initials}
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="font-bold text-zinc-950">{cv.name}</span>
+                                    <span className="font-bold text-white">{cv.name}</span>
                                     <span className="text-xs text-zinc-400 font-semibold">{cv.email || "No email handle"}</span>
                                   </div>
                                 </div>
@@ -910,7 +909,7 @@ export default function AdminPage() {
                                   <span style={{ color: statusStyle.color }} className="text-xs font-bold">{cv.status}</span>
                                 </span>
                               </td>
-                              <td className="text-xs font-semibold text-zinc-400">
+                              <td className="text-xs font-semibold text-zinc-450">
                                 {new Date(cv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                               </td>
                               <td>
@@ -923,14 +922,14 @@ export default function AdminPage() {
                                       setCvPhone(cv.phone || "");
                                       setShowCvModal(true);
                                     }}
-                                    className="p-1.5 bg-white border border-zinc-200 hover:bg-slate-50 text-zinc-400 hover:text-zinc-800 rounded-lg transition-all cursor-pointer"
+                                    className="p-1.5 bg-zinc-950/80 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-white rounded-lg transition-all cursor-pointer"
                                     title="Edit Candidate"
                                   >
                                     <Edit2 className="w-3 h-3" />
                                   </button>
                                   <button
                                     onClick={() => handleDeleteCv(cv.id)}
-                                    className="p-1.5 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 rounded-lg transition-all cursor-pointer"
+                                    className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-400 rounded-lg transition-all cursor-pointer"
                                     title="Delete Record"
                                   >
                                     <Trash2 className="w-3 h-3" />
@@ -952,9 +951,9 @@ export default function AdminPage() {
           {activeTab === "users" && (
             <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
               {adminUsers.length === 0 ? (
-                <div className="p-16 border border-dashed border-zinc-200 bg-white/40 backdrop-blur-md rounded-2xl text-center">
-                  <Users className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-500 font-semibold font-mono tracking-tight animate-pulse-slow">Loading supervisory accounts list...</p>
+                <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
+                  <Users className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
+                  <p className="text-sm text-zinc-400 font-semibold font-mono tracking-tight animate-pulse-slow">Loading supervisory accounts list...</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -963,28 +962,28 @@ export default function AdminPage() {
                     return (
                       <div
                         key={u.id}
-                        className="bg-white border border-zinc-200/60 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between gap-5 shadow-sm hover:border-zinc-300 transition-all"
+                        className="bg-[#121214]/60 backdrop-blur-xl border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between gap-5 shadow-lg hover:border-zinc-700/80 transition-all"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-white font-extrabold text-sm shadow-md">
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-bold text-zinc-950 truncate leading-none">
-                              {u.name || <span className="italic text-zinc-400 font-semibold">Unnamed Admin</span>}
+                            <p className="font-bold text-white truncate leading-none">
+                              {u.name || <span className="italic text-zinc-500 font-semibold">Unnamed Admin</span>}
                             </p>
-                            <p className="text-xs text-zinc-400 font-semibold mt-0.5">{u.email}</p>
+                            <p className="text-xs text-zinc-550 text-zinc-400 font-semibold mt-0.5">{u.email}</p>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-1.5 border-t border-zinc-100 pt-4 text-[11px] font-semibold text-zinc-400">
+                        <div className="flex flex-col gap-1.5 border-t border-zinc-800/60 pt-4 text-[11px] font-semibold text-zinc-400">
                           <div className="flex justify-between">
                             <span>Key Provisioned:</span>
-                            <span className="text-zinc-700">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                            <span className="text-zinc-300">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Last Sign-In:</span>
-                            <span className="text-zinc-700">
+                            <span className="text-zinc-300">
                               {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
                             </span>
                           </div>
@@ -993,7 +992,7 @@ export default function AdminPage() {
                         {/* Revoke account button */}
                         <button
                           onClick={() => handleDeleteAdminUser(u.id)}
-                          className="absolute top-4 right-4 p-2 bg-rose-50/50 hover:bg-rose-50 border border-rose-100 text-rose-500 rounded-xl cursor-pointer transition-all"
+                          className="absolute top-4 right-4 p-2 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-400 rounded-xl cursor-pointer transition-all"
                           title="Revoke access key"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1017,7 +1016,7 @@ export default function AdminPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm"
+              className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm"
               onClick={() => setActivePreviewCandidate(null)}
             />
 
@@ -1027,54 +1026,54 @@ export default function AdminPage() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 380, damping: 35 }}
-              className="relative w-full max-w-4xl h-full bg-white shadow-2xl border-l border-zinc-200 z-10 flex flex-col md:flex-row overflow-hidden"
+              className="relative w-full max-w-4xl h-full bg-zinc-950 shadow-2xl border-l border-zinc-900 z-10 flex flex-col md:flex-row overflow-hidden"
             >
               {/* LEFT HALF: Candidate Info & Comments Timeline */}
-              <div className="w-full md:w-1/2 h-full flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-100">
+              <div className="w-full md:w-1/2 h-full flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-900">
                 <div className="flex-1 overflow-y-auto p-6 premium-scrollbar flex flex-col gap-6">
                   
                   {/* Drawer Header */}
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-white font-extrabold text-xs">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white font-extrabold text-xs">
                         {activePreviewCandidate.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
                       </div>
                       <div>
-                        <h2 className="text-base font-bold text-zinc-950">{activePreviewCandidate.name}</h2>
-                        <span className="text-xs text-zinc-400 font-semibold">Candidate Record Overview</span>
+                        <h2 className="text-base font-bold text-white">{activePreviewCandidate.name}</h2>
+                        <span className="text-xs text-zinc-500 font-semibold">Candidate Record Overview</span>
                       </div>
                     </div>
                     <button
                       onClick={() => setActivePreviewCandidate(null)}
-                      className="p-2 hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 rounded-xl transition-all cursor-pointer"
+                      className="p-2 hover:bg-zinc-900 text-zinc-400 hover:text-white rounded-xl transition-all cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
 
                   {/* Candidate Quick Contact Details */}
-                  <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-4 flex flex-col gap-3">
-                    <div className="flex items-center gap-2.5 text-xs text-zinc-600 font-semibold">
-                      <Mail className="w-4 h-4 text-zinc-400" />
+                  <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-4 flex flex-col gap-3">
+                    <div className="flex items-center gap-2.5 text-xs text-zinc-300 font-semibold">
+                      <Mail className="w-4 h-4 text-zinc-500" />
                       <span>{activePreviewCandidate.email || "No email provided"}</span>
                     </div>
-                    <div className="flex items-center gap-2.5 text-xs text-zinc-600 font-semibold">
-                      <Phone className="w-4 h-4 text-zinc-400" />
+                    <div className="flex items-center gap-2.5 text-xs text-zinc-300 font-semibold">
+                      <Phone className="w-4 h-4 text-zinc-500" />
                       <span>{activePreviewCandidate.phone || "No contact phone"}</span>
                     </div>
-                    <div className="flex items-center gap-2.5 text-xs text-zinc-600 font-semibold">
-                      <Calendar className="w-4 h-4 text-zinc-400" />
+                    <div className="flex items-center gap-2.5 text-xs text-zinc-300 font-semibold">
+                      <Calendar className="w-4 h-4 text-zinc-500" />
                       <span>Indexed: {new Date(activePreviewCandidate.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
                     </div>
                   </div>
 
                   {/* Status Picker Selector */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Candidate Status</label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Candidate Status</label>
                     <select
                       value={activePreviewCandidate.status}
                       onChange={e => handleCvStatus(activePreviewCandidate.id, e.target.value)}
-                      className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-xs font-bold text-zinc-700 bg-white focus:outline-none cursor-pointer"
+                      className="w-full border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-zinc-350 bg-zinc-950 focus:outline-none focus:border-zinc-700 cursor-pointer"
                     >
                       <option value="Not Called">Not Called</option>
                       <option value="Called">Called</option>
@@ -1085,32 +1084,32 @@ export default function AdminPage() {
 
                   {/* Slack-style Remarks thread timeline */}
                   <div className="flex flex-col gap-4">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
                       <span>Recruiter Remarks feed</span>
                     </label>
 
                     <div className="flex flex-col gap-3 max-h-60 overflow-y-auto pr-1 premium-scrollbar">
                       {parseComments(activePreviewCandidate.comments).length === 0 ? (
-                        <p className="text-xs text-zinc-400 italic">No notes created. Write a comment below to index evaluation logs.</p>
+                        <p className="text-xs text-zinc-500 italic">No notes created. Write a comment below to index evaluation logs.</p>
                       ) : (
                         parseComments(activePreviewCandidate.comments).map(comment => (
                           <div key={comment.id} className="comment-bubble p-3 rounded-2xl relative flex flex-col gap-1">
                             <div className="flex justify-between items-center">
-                              <span className="text-xs font-bold text-blue-600">{comment.author.split("@")[0]}</span>
-                              <span className="text-[9px] font-bold text-slate-400">
+                              <span className="text-xs font-bold text-blue-400">{comment.author.split("@")[0]}</span>
+                              <span className="text-[9px] font-bold text-zinc-500">
                                 {new Date(comment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                               </span>
                             </div>
-                            <p className="text-[12px] text-zinc-700 leading-relaxed pr-6">{comment.text}</p>
+                            <p className="text-[12px] text-zinc-300 leading-relaxed pr-6">{comment.text}</p>
                             <button
                               onClick={async () => {
-                                if (confirm("Delete this remark?")) {
-                                  const freshComments = parseComments(activePreviewCandidate.comments).filter(c => c.id !== comment.id);
-                                  await handleUpdateCvComments(activePreviewCandidate.id, JSON.stringify(freshComments));
-                                }
-                              }}
-                              className="absolute top-2.5 right-2 text-zinc-300 hover:text-rose-500 cursor-pointer transition-colors border-none bg-none"
+                                  if (confirm("Delete this remark?")) {
+                                    const freshComments = parseComments(activePreviewCandidate.comments).filter(c => c.id !== comment.id);
+                                    await handleUpdateCvComments(activePreviewCandidate.id, JSON.stringify(freshComments));
+                                  }
+                                }}
+                              className="absolute top-2.5 right-2 text-zinc-500 hover:text-rose-500 cursor-pointer transition-colors border-none bg-none"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -1123,13 +1122,13 @@ export default function AdminPage() {
                 </div>
 
                 {/* Input box at bottom of Remarks panel */}
-                <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex gap-2">
+                <div className="p-4 bg-zinc-950 border-t border-zinc-900 flex gap-2">
                   <textarea
                     placeholder="Append recruiter note..."
                     value={cvCommentValues[activePreviewCandidate.id] ?? ""}
                     onChange={e => setCvCommentValues(v => ({ ...v, [activePreviewCandidate.id]: e.target.value }))}
                     rows={1}
-                    className="flex-1 rounded-xl border border-zinc-200 p-2.5 text-xs text-zinc-800 focus:outline-none bg-white resize-none"
+                    className="flex-1 rounded-xl border border-zinc-800 p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/80 bg-zinc-900/60 resize-none"
                   />
                   <button
                     disabled={!(cvCommentValues[activePreviewCandidate.id] ?? "").trim()}
@@ -1146,7 +1145,7 @@ export default function AdminPage() {
                       await handleUpdateCvComments(activePreviewCandidate.id, JSON.stringify(updated));
                       setCvCommentValues(v => ({ ...v, [activePreviewCandidate.id]: "" }));
                     }}
-                    className="bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm self-end"
+                    className="bg-white hover:bg-zinc-100 text-zinc-950 rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm self-end"
                   >
                     <Send className="w-3 h-3" /> Add
                   </button>
@@ -1154,21 +1153,21 @@ export default function AdminPage() {
               </div>
 
               {/* RIGHT HALF: Resume File Viewer Iframe Sandbox */}
-              <div className="w-full md:w-1/2 h-full bg-zinc-100 p-4 flex flex-col gap-3">
+              <div className="w-full md:w-1/2 h-full bg-zinc-900/80 p-4 flex flex-col gap-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-zinc-500">Document sandbox</span>
                   <a
                     href={activePreviewCandidate.cv_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline text-decoration-none"
+                    className="flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:underline text-decoration-none"
                   >
                     Open Externally <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
                 <iframe
                   src={activePreviewCandidate.cv_url}
-                  className="w-full flex-1 border border-zinc-200 rounded-2xl bg-white shadow-sm"
+                  className="w-full flex-1 border border-zinc-800 rounded-2xl bg-zinc-950 shadow-sm"
                   title="Document Preview"
                 />
               </div>
@@ -1177,8 +1176,6 @@ export default function AdminPage() {
           </div>
         )}
       </AnimatePresence>
-
-      {/* ── Job Modals overlays ── */}
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1187,53 +1184,53 @@ export default function AdminPage() {
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="relative w-full max-w-xl bg-white border border-zinc-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-5 overflow-y-auto max-h-[90vh]"
+              className="relative w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-[32px] p-8 shadow-2xl flex flex-col gap-5 overflow-y-auto max-h-[90vh]"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-lg font-bold text-zinc-950">{editingJob ? "Adjust Listing Details" : "Publish New Role"}</h2>
-                  <p className="text-xs text-zinc-400 font-semibold mt-0.5">Configure listings and evaluation parameters.</p>
+                  <h2 className="text-lg font-bold text-white">{editingJob ? "Adjust Listing Details" : "Publish New Role"}</h2>
+                  <p className="text-xs text-zinc-500 font-semibold mt-0.5">Configure listings and evaluation parameters.</p>
                 </div>
-                <button onClick={closeModal} className="p-2 hover:bg-zinc-100 rounded-xl text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                <button onClick={closeModal} className="p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-white cursor-pointer">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Job Title</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Job Title</label>
                   <input
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     placeholder="e.g. Senior Software Architect"
-                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                    className="w-full border border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-600"
                   />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Department</label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Department</label>
                     <input
                       value={department}
                       onChange={e => setDepartment(e.target.value)}
                       placeholder="e.g. Engineering"
-                      className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                      className="w-full border border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-600"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Location</label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Location</label>
                     <input
                       value={location}
                       onChange={e => setLocation(e.target.value)}
                       placeholder="e.g. London / Remote"
-                      className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                      className="w-full border border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-600"
                     />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Role Description (Markdown)</label>
-                  <div className="flex gap-1 bg-zinc-50 border border-zinc-200 p-1.5 rounded-xl self-start">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Role Description (Markdown)</label>
+                  <div className="flex gap-1 bg-zinc-905 bg-zinc-900 border border-zinc-800 p-1.5 rounded-xl self-start">
                     {[
                       { label: "Bold", fn: insertBold },
                       { label: "Heading", fn: insertHeading },
@@ -1243,7 +1240,7 @@ export default function AdminPage() {
                         key={b.label}
                         type="button"
                         onClick={b.fn}
-                        className="px-2.5 py-1 bg-white hover:bg-zinc-100 border border-zinc-200 text-[10px] font-bold text-zinc-600 rounded-lg cursor-pointer"
+                        className="px-2.5 py-1 bg-zinc-950 hover:bg-zinc-900 border border-zinc-805 border-zinc-800 text-[10px] font-bold text-zinc-350 hover:text-white rounded-lg cursor-pointer"
                       >
                         {b.label}
                       </button>
@@ -1255,21 +1252,21 @@ export default function AdminPage() {
                     onChange={e => setDescription(e.target.value)}
                     rows={5}
                     placeholder="Describe role specifications..."
-                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none resize-none"
+                    className="w-full border border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none resize-none placeholder-zinc-600"
                   />
                 </div>
               </div>
 
-              <div className="border-t border-zinc-100 pt-6 flex gap-3 mt-2">
+              <div className="border-t border-zinc-900 pt-6 flex gap-3 mt-2">
                 <button
                   onClick={closeModal}
-                  className="flex-1 py-3 border border-zinc-250 hover:bg-zinc-50 text-zinc-500 rounded-xl font-bold text-xs cursor-pointer"
+                  className="flex-1 py-3 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 rounded-xl font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex-1 py-3 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold text-xs shadow-sm cursor-pointer"
+                  className="flex-1 py-3 bg-white hover:bg-zinc-100 text-zinc-950 rounded-xl font-bold text-xs shadow-sm cursor-pointer"
                 >
                   {editingJob ? "Save Changes" : "Publish opening"}
                 </button>
@@ -1278,6 +1275,7 @@ export default function AdminPage() {
           </div>
         )}
       </AnimatePresence>
+
 
       {/* ── Independent CV upload modal ── */}
       <AnimatePresence>
@@ -1288,70 +1286,70 @@ export default function AdminPage() {
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="relative w-full max-w-sm bg-white border border-zinc-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-5"
+              className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-[32px] p-8 shadow-2xl flex flex-col gap-5"
             >
               <div>
-                <h2 className="text-lg font-bold text-zinc-950">{editingCv ? "Modify Candidate Profile" : "Index Candidate Profile"}</h2>
-                <p className="text-xs text-zinc-450 font-semibold mt-0.5">Load resume details directly to talent index.</p>
+                <h2 className="text-lg font-bold text-white">{editingCv ? "Modify Candidate Profile" : "Index Candidate Profile"}</h2>
+                <p className="text-xs text-zinc-500 font-semibold mt-0.5">Load resume details directly to talent index.</p>
               </div>
 
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Candidate Name *</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Candidate Name *</label>
                   <input
                     value={cvName}
                     onChange={e => setCvName(e.target.value)}
                     placeholder="Jane Doe"
-                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                    className="w-full border border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-650"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Email address</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Email address</label>
                   <input
                     value={cvEmail}
                     onChange={e => setCvEmail(e.target.value)}
                     placeholder="jane@doe.com"
                     type="email"
-                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                    className="w-full border border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-650"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Phone contact</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Phone contact</label>
                   <input
                     value={cvPhone}
                     onChange={e => setCvPhone(e.target.value)}
                     placeholder="+91 98765 43210"
-                    className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                    className="w-full border border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-650"
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Resume Document *</label>
-                  <div className="relative border border-dashed border-zinc-200 bg-zinc-50 hover:bg-zinc-100 p-5 rounded-2xl text-center cursor-pointer">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Resume Document *</label>
+                  <div className="relative border border-dashed border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 p-5 rounded-2xl text-center cursor-pointer">
                     <input
                       type="file"
                       accept=".pdf,.doc,.docx"
                       onChange={e => { const f = e.target.files?.[0]; if (f) setCvFile(f); }}
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                     />
-                    <Upload className="w-5 h-5 text-zinc-450 mx-auto mb-2" />
-                    <p className="text-xs font-bold text-zinc-700 truncate">{cvFile ? cvFile.name : "Select PDF resume file"}</p>
-                    <p className="text-[9px] font-semibold text-zinc-400 mt-1">Supports PDF, DOC, DOCX up to 5 MB</p>
+                    <Upload className="w-5 h-5 text-zinc-500 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-zinc-300 truncate">{cvFile ? cvFile.name : "Select PDF resume file"}</p>
+                    <p className="text-[9px] font-semibold text-zinc-500 mt-1">Supports PDF, DOC, DOCX up to 5 MB</p>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-zinc-100 pt-6 flex gap-3 mt-2">
+              <div className="border-t border-zinc-900 pt-6 flex gap-3 mt-2">
                 <button
                   onClick={closeCvModal}
-                  className="flex-1 py-2.5 border border-zinc-250 hover:bg-zinc-50 text-zinc-500 rounded-xl font-bold text-xs cursor-pointer"
+                  className="flex-1 py-2.5 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 rounded-xl font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={uploadingCv}
                   onClick={handleSaveCv}
-                  className="flex-1 py-2.5 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold text-xs shadow-sm cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-white hover:bg-zinc-100 text-zinc-950 rounded-xl font-bold text-xs shadow-sm cursor-pointer disabled:opacity-50"
                 >
                   {uploadingCv ? "Uploading..." : "Save Profile"}
                 </button>
@@ -1376,46 +1374,46 @@ export default function AdminPage() {
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="relative w-full max-w-sm bg-white border border-zinc-200 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
+              className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
             >
               {createdUser ? (
                 <div className="flex flex-col gap-5 text-center items-center">
-                  <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shadow-inner">
+                  <div className="w-12 h-12 bg-emerald-950/30 border border-emerald-900/50 rounded-full flex items-center justify-center text-emerald-400 shadow-inner">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-zinc-950">Access Key Granted</h2>
-                    <p className="text-xs text-zinc-400 font-semibold mt-1">Supervisor user account created successfully.</p>
+                    <h2 className="text-base font-bold text-white">Access Key Granted</h2>
+                    <p className="text-xs text-zinc-550 text-zinc-500 font-semibold mt-1">Supervisor user account created successfully.</p>
                   </div>
 
-                  <div className="bg-zinc-50 border border-zinc-150 rounded-2xl p-4 text-left w-full flex flex-col gap-3 text-xs">
+                  <div className="bg-zinc-900/40 border border-zinc-850 rounded-2xl p-4 text-left w-full flex flex-col gap-3 text-xs">
                     <div>
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Name</span>
-                      <p className="font-bold text-zinc-800 mt-0.5">{createdUser.name || "N/A"}</p>
+                      <span className="text-[10px] font-bold text-zinc-550 text-zinc-500 uppercase tracking-widest">Name</span>
+                      <p className="font-bold text-white mt-0.5">{createdUser.name || "N/A"}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Handle</span>
-                      <p className="font-bold text-zinc-800 mt-0.5">{createdUser.email}</p>
+                      <span className="text-[10px] font-bold text-zinc-555 text-zinc-500 uppercase tracking-widest">Email Handle</span>
+                      <p className="font-bold text-white mt-0.5">{createdUser.email}</p>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2 w-full mt-2">
                     <button
                       onClick={() => copyToClipboard(createdUser.email, "email")}
-                      className="w-full py-2.5 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 rounded-xl font-bold text-xs cursor-pointer transition-all"
+                      className="w-full py-2.5 border border-zinc-800 hover:bg-zinc-900 text-zinc-350 rounded-xl font-bold text-xs cursor-pointer transition-all"
                     >
                       {copiedField === "email" ? "Copied" : "Copy Email Handle"}
                     </button>
                     <div className="flex gap-2 mt-2 w-full">
                       <button
                         onClick={() => setCreatedUser(null)}
-                        className="flex-1 py-2.5 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold text-xs cursor-pointer shadow-sm"
+                        className="flex-1 py-2.5 bg-white hover:bg-zinc-100 text-zinc-950 rounded-xl font-bold text-xs cursor-pointer shadow-sm"
                       >
                         Add Another
                       </button>
                       <button
                         onClick={() => { setShowUserModal(false); resetUserForm(); setCreatedUser(null); }}
-                        className="flex-1 py-2.5 border border-zinc-200 hover:bg-zinc-50 text-zinc-500 rounded-xl font-bold text-xs cursor-pointer"
+                        className="flex-1 py-2.5 border border-zinc-805 border-zinc-800 hover:bg-zinc-900 text-zinc-400 rounded-xl font-bold text-xs cursor-pointer"
                       >
                         Close Desk
                       </button>
@@ -1426,76 +1424,76 @@ export default function AdminPage() {
                 <>
                   <div className="flex justify-between items-start">
                     <div>
-                      <h2 className="text-lg font-bold text-zinc-950">Provision Keys</h2>
-                      <p className="text-xs text-zinc-455 font-semibold mt-0.5">Create new supervisor credentials.</p>
+                      <h2 className="text-lg font-bold text-white">Provision Keys</h2>
+                      <p className="text-xs text-zinc-500 font-semibold mt-0.5">Create new supervisor credentials.</p>
                     </div>
-                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }} className="p-2 hover:bg-zinc-100 text-zinc-450 hover:text-zinc-700 rounded-xl cursor-pointer">
+                    <button onClick={() => { setShowUserModal(false); resetUserForm(); }} className="p-2 hover:bg-zinc-900 text-zinc-400 hover:text-white rounded-xl cursor-pointer">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
 
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">Full Name</label>
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Full Name</label>
                       <input
                         value={newUserName}
                         onChange={e => setNewUserName(e.target.value)}
                         placeholder="Jane Doe"
-                        className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                        className="w-full border border-zinc-805 border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-650"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-zinc-455 uppercase tracking-widest">Email address *</label>
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Email address *</label>
                       <input
                         value={newUserEmail}
                         onChange={e => setNewUserEmail(e.target.value)}
                         placeholder="supervisor@example.com"
                         type="email"
-                        className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                        className="w-full border border-zinc-805 border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-650"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-zinc-455 uppercase tracking-widest">Access Key *</label>
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Access Key *</label>
                       <div className="relative">
                         <input
                           value={newUserPass}
                           onChange={e => setNewUserPass(e.target.value)}
                           placeholder="••••••••"
                           type={showPass ? "text" : "password"}
-                          className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none pr-12"
+                          className="w-full border border-zinc-805 border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none pr-12 placeholder-zinc-650"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-zinc-400 hover:text-zinc-600 cursor-pointer"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-zinc-500 hover:text-zinc-350 cursor-pointer"
                         >
                           {showPass ? "HIDE" : "SHOW"}
                         </button>
                       </div>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-zinc-455 uppercase tracking-widest">Verify Access Key *</label>
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Verify Access Key *</label>
                       <input
                         value={newUserConfirm}
                         onChange={e => setNewUserConfirm(e.target.value)}
                         placeholder="••••••••"
                         type={showPass ? "text" : "password"}
-                        className="w-full border border-zinc-200 focus:border-zinc-800 transition-colors bg-white rounded-xl p-3 text-xs font-semibold text-zinc-800 outline-none"
+                        className="w-full border border-zinc-850 border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-650"
                       />
                     </div>
                   </div>
 
-                  <div className="border-t border-zinc-100 pt-6 flex gap-3 mt-2">
+                  <div className="border-t border-zinc-900 pt-6 flex gap-3 mt-2">
                     <button
                       onClick={() => { setShowUserModal(false); resetUserForm(); }}
-                      className="flex-1 py-2.5 border border-zinc-250 hover:bg-zinc-50 text-zinc-500 rounded-xl font-bold text-xs cursor-pointer"
+                      className="flex-1 py-2.5 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 rounded-xl font-bold text-xs cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       disabled={savingUser || !newUserEmail.trim() || !newUserPass.trim()}
                       onClick={handleCreateAdminUser}
-                      className="flex-1 py-2.5 bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold text-xs shadow-sm cursor-pointer disabled:opacity-60"
+                      className="flex-1 py-2.5 bg-white hover:bg-zinc-100 text-zinc-950 rounded-xl font-bold text-xs shadow-sm cursor-pointer disabled:opacity-60"
                     >
                       {savingUser ? "Provisions..." : "Grant Access"}
                     </button>
@@ -1511,31 +1509,31 @@ export default function AdminPage() {
       <AnimatePresence>
         {cvOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm" onClick={() => setCvOpen(false)} />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm" onClick={() => setCvOpen(false)} />
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              className="relative w-full max-w-4xl h-[85vh] bg-white border border-zinc-200 rounded-[32px] overflow-hidden flex flex-col shadow-2xl"
+              className="relative w-full max-w-4xl h-[85vh] bg-zinc-950 border border-zinc-800 rounded-[32px] overflow-hidden flex flex-col shadow-2xl"
             >
-              <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-white">
-                <h3 className="text-base font-bold text-zinc-950">Candidate CV Sandbox</h3>
+              <div className="p-4 border-b border-zinc-900 flex justify-between items-center bg-zinc-950">
+                <h3 className="text-base font-bold text-white">Candidate CV Sandbox</h3>
                 <div className="flex items-center gap-2">
                   <a
                     href={selectedCV}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-4 py-2 border border-zinc-200 hover:bg-zinc-50 rounded-xl text-xs font-bold text-zinc-650 hover:text-zinc-900 transition-all text-decoration-none"
+                    className="flex items-center gap-1.5 px-4 py-2 border border-zinc-800 hover:bg-zinc-900 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-all text-decoration-none"
                   >
                     Open Externally <ExternalLink className="w-3.5 h-3.5" />
                   </a>
-                  <button onClick={() => setCvOpen(false)} className="p-2 hover:bg-zinc-100 rounded-xl text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                  <button onClick={() => setCvOpen(false)} className="p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-white cursor-pointer">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              <div className="flex-1 bg-zinc-100 p-4">
-                <iframe src={selectedCV} className="w-full h-full border border-zinc-200 rounded-2xl bg-white" title="Resume Sandbox" />
+              <div className="flex-1 bg-zinc-900/60 p-4">
+                <iframe src={selectedCV} className="w-full h-full border border-zinc-800 rounded-2xl bg-zinc-950" title="Resume Sandbox" />
               </div>
             </motion.div>
           </div>
