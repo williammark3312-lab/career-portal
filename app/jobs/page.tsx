@@ -49,7 +49,7 @@ function Card3D({
         onMouseMove={onMouseMove} 
         onMouseLeave={onMouseLeave} 
         onClick={onClick}
-        className={`bg-white/85 backdrop-blur-xl border border-zinc-200/60 rounded-3xl shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-300 cursor-pointer h-full ${className}`} 
+        className={`bg-[#121214]/60 backdrop-blur-2xl border border-zinc-800/80 rounded-3xl shadow-lg hover:shadow-xl hover:border-zinc-700/80 transition-all duration-300 cursor-pointer h-full ${className}`} 
         style={{ transformStyle: "preserve-3d", transition: "transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease" }}
       >
         {children}
