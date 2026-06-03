@@ -270,41 +270,30 @@ export default function JobsPage() {
                   key={job.id} 
                   delay={i * 0.06} 
                   onClick={() => router.push(`/jobs/${job.id}`)}
-                  className="rounded-3xl p-6 sm:p-8 cursor-pointer flex flex-col group"
+                  className="rounded-[20px] sm:rounded-[24px] p-5 sm:p-8 cursor-pointer"
                 >
-                  <div className="flex flex-col h-full justify-between gap-5">
-                    <div>
-                      {/* Department / Location Row */}
-                      <div className="flex items-center justify-between gap-3 mb-5">
-                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100/50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                          {job.department}
-                        </span>
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-zinc-200/40 bg-zinc-50 text-zinc-500">
-                          <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-                          <span className="text-[11px] font-bold uppercase tracking-wider">{job.location}</span>
-                        </div>
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-start justify-between gap-4 mb-6">
+                      <span className="dept-tag">{job.department}</span>
+                      <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-[#E1E6EC] bg-white px-3 py-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#121317]" />
+                        <span className="text-[12px] font-medium text-[#121317]">{job.location}</span>
                       </div>
-
-                      {/* Job Title */}
-                      <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 mb-3 group-hover:text-blue-600 transition-colors duration-250">
-                        {job.title}
-                      </h2>
-
-                      {/* Description Snippet */}
-                      <p className="text-sm leading-relaxed text-zinc-500 font-medium line-clamp-3">
-                        {job.description.replace(/#{1,3} |[*_~`]/g, "")}
-                      </p>
                     </div>
-
-                    {/* Bottom Status / Apply */}
-                    <div className="pt-4 border-t border-zinc-150/60 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-zinc-400 text-xs font-semibold">
-                        <Briefcase className="w-3.5 h-3.5 text-zinc-300" />
-                        <span>Full Time</span>
+                    <h2 className="text-[24px] font-bold tracking-[-0.02em] text-[#1a3bbd] transition-colors duration-300 mb-3 group-hover:text-[#3279F9]">
+                      {job.title}
+                    </h2>
+                    <p className="text-[14px] leading-[1.65] text-[#121317] line-clamp-3 flex-1">
+                      {job.description.replace(/#{1,3} |[*_~`]/g, "")}
+                    </p>
+                    <div className="mt-6 pt-5 border-t border-[#E1E6EC] flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="w-3.5 h-3.5 text-[#121317]" />
+                        <span className="text-[13px] font-medium text-[#121317]">Full Time</span>
                       </div>
-                      <span className="flex items-center gap-1 text-xs font-bold text-blue-600 group-hover:text-blue-700 transition-colors">
-                        View Details
-                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-[#3279F9]">
+                        Apply Now
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
                   </div>
