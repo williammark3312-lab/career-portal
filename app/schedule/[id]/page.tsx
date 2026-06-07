@@ -54,9 +54,10 @@ export default function CandidateSchedulingPage() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmedSlot, setConfirmedSlot] = useState<string | null>(null);
+  const [isCvDb, setIsCvDb] = useState(false);
 
   // Parse notes data
-  const notesData = app ? parseNotes(app.notes) : null;
+  const notesData = app ? parseNotes(app.notes || app.comments) : null;
   const interview = notesData?.interview || null;
   const proposedSlots = interview?.proposed_slots || [];
 
@@ -71,26 +72,43 @@ export default function CandidateSchedulingPage() {
           .eq("id", id)
           .single();
 
+        let record = appData;
+        let isCv = false;
+
         if (appError || !appData) {
-          setError("We couldn't find this scheduling invitation. Please check the URL or contact your recruiter.");
-          setLoading(false);
-          return;
+          // Check cv_database
+          const { data: cvData, error: cvError } = await supabase
+            .from("cv_database")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+          if (cvError || !cvData) {
+            setError("We couldn't find this scheduling invitation. Please check the URL or contact your recruiter.");
+            setLoading(false);
+            return;
+          }
+          record = cvData;
+          isCv = true;
         }
 
-        setApp(appData);
+        setApp(record);
+        setIsCvDb(isCv);
 
-        const parsed = parseNotes(appData.notes);
+        const parsed = parseNotes(record.notes || record.comments);
         if (parsed.interview?.status === "scheduled" && parsed.interview?.selected_slot) {
           setConfirmedSlot(parsed.interview.selected_slot);
         }
 
-        const { data: jobData } = await supabase
-          .from("jobs")
-          .select("*")
-          .eq("id", appData.job_id)
-          .single();
+        if (record.job_id) {
+          const { data: jobData } = await supabase
+            .from("jobs")
+            .select("*")
+            .eq("id", record.job_id)
+            .single();
 
-        if (jobData) setJob(jobData);
+          if (jobData) setJob(jobData);
+        }
       } catch (err) {
         setError("An unexpected error occurred while loading your invitation details.");
       }
@@ -103,14 +121,21 @@ export default function CandidateSchedulingPage() {
     try {
       const d = new Date(str);
       if (!isNaN(d.getTime())) {
-        return d.toLocaleDateString("en-IN", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        });
+        const hours = d.getHours();
+        const minutes = d.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12;
+        const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+        const day = d.getDate();
+        const monthNames = [
+          "January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+        const month = monthNames[d.getMonth()];
+        const year = d.getFullYear();
+        const weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const weekday = weekdayNames[d.getDay()];
+        return `${weekday}, ${day} ${month} ${year} at ${formattedHours}:${formattedMinutes} ${ampm}`;
       }
     } catch {}
     return str;
@@ -157,21 +182,21 @@ export default function CandidateSchedulingPage() {
     setConfirming(true);
 
     try {
-      const parsed = parseNotes(app.notes);
+      const parsed = parseNotes(app.notes || app.comments);
       const updatedInterview: InterviewData = {
         proposed_slots: parsed.interview?.proposed_slots || [],
         selected_slot: selectedSlot,
         status: "scheduled"
       };
 
+      const notesPayload = JSON.stringify({
+        comments: parsed.comments,
+        interview: updatedInterview
+      });
+
       const { error: updateError } = await supabase
-        .from("applications")
-        .update({
-          notes: JSON.stringify({
-            comments: parsed.comments,
-            interview: updatedInterview
-          })
-        })
+        .from(isCvDb ? "cv_database" : "applications")
+        .update(isCvDb ? { comments: notesPayload } : { notes: notesPayload })
         .eq("id", app.id);
 
       if (updateError) {
@@ -186,9 +211,9 @@ export default function CandidateSchedulingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to: app.email,
-            subject: `Interview Finalized - ${job?.title || "Job Application"}`,
+            subject: `Interview Finalized - ${job?.title || "Role Discussion"}`,
             candidateName: app.name,
-            jobTitle: job?.title || "Job Application",
+            jobTitle: job?.title || "Role Discussion",
             dateTime: selectedSlot
           })
         }).catch(err => {

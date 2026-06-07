@@ -5,14 +5,21 @@ function formatDateTime(str: string) {
   try {
     const d = new Date(str);
     if (!isNaN(d.getTime())) {
-      return d.toLocaleDateString("en-IN", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
+      const hours = d.getHours();
+      const minutes = d.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12;
+      const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+      const day = d.getDate();
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const month = monthNames[d.getMonth()];
+      const year = d.getFullYear();
+      const weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const weekday = weekdayNames[d.getDay()];
+      return `${weekday}, ${day} ${month} ${year} at ${formattedHours}:${formattedMinutes} ${ampm}`;
     }
   } catch {}
   return str;

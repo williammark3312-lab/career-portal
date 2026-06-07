@@ -9,7 +9,7 @@ import {
   CheckCircle2, Upload, MessageSquare, Send, Users,
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
   Copy, Eye, Lock, Search, LogOut, Shield, ChevronRight,
-  User, Mail, Phone, Calendar, Loader2
+  User, Mail, Phone, Calendar, Loader2, Check
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -27,6 +27,15 @@ interface CVRecord {
 interface Comment {
   id: string; text: string; created_at: string; author: string;
 }
+interface InterviewData {
+  proposed_slots: string[];
+  selected_slot: string | null;
+  status: "pending" | "scheduled";
+}
+interface CvNotesData {
+  comments: Comment[];
+  interview: InterviewData | null;
+}
 
 /* ─── Helpers ─── */
 function parseComments(raw: string | null | undefined): Comment[] {
@@ -36,6 +45,45 @@ function parseComments(raw: string | null | undefined): Comment[] {
     if (Array.isArray(p)) return p;
   } catch { /* ignore */ }
   return [{ id: "legacy", text: raw, created_at: new Date().toISOString(), author: "Admin" }];
+}
+
+function parseCvNotes(raw: string | null | undefined): CvNotesData {
+  if (!raw) return { comments: [], interview: null };
+  try {
+    const p = JSON.parse(raw);
+    if (Array.isArray(p)) {
+      return { comments: p, interview: null };
+    }
+    if (p && typeof p === "object") {
+      return {
+        comments: Array.isArray(p.comments) ? p.comments : [],
+        interview: p.interview || null
+      };
+    }
+  } catch { /* fallback */ }
+  return {
+    comments: [{ id: "legacy", text: raw, created_at: new Date().toISOString(), author: "Admin" }],
+    interview: null
+  };
+}
+
+function formatDateTime(str: string) {
+  try {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const hours = d.getHours();
+      const minutes = d.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12;
+      const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+      const day = d.getDate();
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const month = monthNames[d.getMonth()];
+      const year = d.getFullYear();
+      return `${day} ${month} ${year}, ${formattedHours}:${formattedMinutes} ${ampm}`;
+    }
+  } catch {}
+  return str;
 }
 
 /* ─── Department theme colors ─── */
@@ -110,6 +158,9 @@ export default function AdminPage() {
   
   /* Right Slide-over profile preview drawer */
   const [activePreviewCandidate, setActivePreviewCandidate] = useState<CVRecord | null>(null);
+  const [cvProposedSlots, setCvProposedSlots] = useState<string[]>([""]);
+  const [cvSavingSchedule, setCvSavingSchedule] = useState(false);
+  const [cvCopied, setCvCopied] = useState(false);
 
   /* CV Viewer modal state (fallback/independent view) */
   const [selectedCV, setSelectedCV] = useState("");
@@ -373,6 +424,74 @@ export default function AdminPage() {
         setActivePreviewCandidate(prev => prev ? { ...prev, comments } : null);
       }
     }
+  }
+
+  function getCvMailtoUrl(candidateName: string, link: string, email: string) {
+    const subject = encodeURIComponent(`Interview Scheduling - Careers Portal`);
+    const body = encodeURIComponent(
+      `Hi ${candidateName},\n\n` +
+      `We would like to schedule a discussion with you regarding potential opportunities. Please click the link below to view our proposed time slots and confirm a time that works best for you:\n\n` +
+      `${link}\n\n` +
+      `We look forward to speaking with you!\n\n` +
+      `Best regards,\n` +
+      `Recruitment Team`
+    );
+    return `mailto:${email}?subject=${subject}&body=${body}`;
+  }
+
+  async function handleSaveCvSchedule() {
+    if (!activePreviewCandidate) return;
+    const slots = cvProposedSlots.filter(s => s.trim() !== "");
+    if (slots.length === 0) {
+      alert("Please add at least one date/time slot.");
+      return;
+    }
+    setCvSavingSchedule(true);
+
+    const parsed = parseCvNotes(activePreviewCandidate.comments);
+    const updatedInterview: InterviewData = {
+      proposed_slots: slots,
+      selected_slot: parsed.interview?.selected_slot || null,
+      status: parsed.interview?.status || "pending"
+    };
+
+    const updatedNotes = JSON.stringify({ comments: parsed.comments, interview: updatedInterview });
+    const { error } = await supabase
+      .from("cv_database")
+      .update({ comments: updatedNotes })
+      .eq("id", activePreviewCandidate.id);
+
+    if (!error) {
+      setCvs(prev => prev.map(c => c.id === activePreviewCandidate.id ? { ...c, comments: updatedNotes } : c));
+      setActivePreviewCandidate(prev => prev ? { ...prev, comments: updatedNotes } : null);
+      setCvProposedSlots(slots);
+      alert("Scheduling slots updated successfully!");
+    } else {
+      alert("Failed to save scheduling settings: " + error.message);
+    }
+    setCvSavingSchedule(false);
+  }
+
+  async function handleCancelCvSchedule() {
+    if (!activePreviewCandidate) return;
+    if (!confirm("Are you sure you want to cancel and delete the interview setup?")) return;
+    setCvSavingSchedule(true);
+
+    const parsed = parseCvNotes(activePreviewCandidate.comments);
+    const updatedNotes = JSON.stringify({ comments: parsed.comments, interview: null });
+    const { error } = await supabase
+      .from("cv_database")
+      .update({ comments: updatedNotes })
+      .eq("id", activePreviewCandidate.id);
+
+    if (!error) {
+      setCvs(prev => prev.map(c => c.id === activePreviewCandidate.id ? { ...c, comments: updatedNotes } : c));
+      setActivePreviewCandidate(prev => prev ? { ...prev, comments: updatedNotes } : null);
+      setCvProposedSlots([""]);
+    } else {
+      alert("Failed to cancel schedule: " + error.message);
+    }
+    setCvSavingSchedule(false);
   }
 
   /* ── Admin Users CRUD ── */
@@ -890,7 +1009,11 @@ export default function AdminPage() {
                             <tr
                               key={cv.id}
                               className="group cursor-pointer"
-                              onClick={() => setActivePreviewCandidate(cv)}
+                              onClick={() => {
+                                setActivePreviewCandidate(cv);
+                                const parsed = parseCvNotes(cv.comments);
+                                setCvProposedSlots(parsed.interview?.proposed_slots || [""]);
+                              }}
                             >
                               <td>
                                 <div className="flex items-center gap-3">
@@ -1082,6 +1205,111 @@ export default function AdminPage() {
                     </select>
                   </div>
 
+                  {/* Interview Scheduler Configuration */}
+                  <div className="border-t border-zinc-900 pt-6 flex flex-col gap-5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-blue-400" />
+                      <span>Interview Scheduling desk</span>
+                    </label>
+
+                    {parseCvNotes(activePreviewCandidate.comments).interview && parseCvNotes(activePreviewCandidate.comments).interview?.status === "scheduled" && (
+                      <div className="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-2xl flex items-center gap-3 text-sm font-bold text-emerald-450 shadow-sm animate-pulse-slow">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span>Confirmed Slot: {formatDateTime(parseCvNotes(activePreviewCandidate.comments).interview?.selected_slot!)}</span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-3.5">
+                      <div className="flex flex-col gap-2.5">
+                        {cvProposedSlots.map((slot, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <input
+                              type="datetime-local"
+                              value={slot}
+                              onChange={e => {
+                                const updated = [...cvProposedSlots];
+                                updated[idx] = e.target.value;
+                                setCvProposedSlots(updated);
+                              }}
+                              className="flex-1 rounded-xl border border-zinc-800 p-3.5 text-sm text-white focus:outline-none focus:border-blue-500/80 bg-zinc-900/60"
+                            />
+                            <button
+                              onClick={() => {
+                                const updated = cvProposedSlots.filter((_, i) => i !== idx);
+                                setCvProposedSlots(updated.length === 0 ? [""] : updated);
+                              }}
+                              className="p-3.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-400 hover:text-rose-350 rounded-xl cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-3 justify-between items-center">
+                        <button
+                          onClick={() => setCvProposedSlots([...cvProposedSlots, ""])}
+                          className="flex items-center gap-2 py-3 px-4 border border-dashed border-blue-900 hover:bg-blue-955/20 text-blue-400 font-bold text-xs rounded-xl cursor-pointer transition-all"
+                        >
+                          <Plus className="w-4 h-4" /> Add Slot Option
+                        </button>
+                        
+                        <button
+                          disabled={cvSavingSchedule}
+                          onClick={handleSaveCvSchedule}
+                          className="py-3 px-5 bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs rounded-xl cursor-pointer transition-all shadow-sm"
+                        >
+                          {cvSavingSchedule ? "Saving..." : "Save proposed slots"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {parseCvNotes(activePreviewCandidate.comments).interview && (
+                      <div className="bg-zinc-900/40 border border-zinc-850 rounded-2xl p-5 flex flex-col gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Booking URL</span>
+                          <div className="flex gap-3 mt-1.5">
+                            <input
+                              type="text"
+                              readOnly
+                              value={`${window.location.origin}/schedule/${activePreviewCandidate.id}`}
+                              onClick={e => (e.target as HTMLInputElement).select()}
+                              className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-xs text-zinc-400 focus:outline-none"
+                            />
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(`${window.location.origin}/schedule/${activePreviewCandidate.id}`);
+                                setCvCopied(true);
+                                setTimeout(() => setCvCopied(false), 2000);
+                              }}
+                              className={`flex items-center gap-1.5 px-4 border rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                                cvCopied ? "bg-emerald-950/30 border-emerald-900/50 text-emerald-450" : "bg-zinc-900/60 hover:bg-zinc-900 border-zinc-800 text-zinc-300"
+                              }`}
+                            >
+                              {cvCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                              <span>{cvCopied ? "Copied" : "Copy"}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3 w-full">
+                          <a
+                            href={getCvMailtoUrl(activePreviewCandidate.name, `${window.location.origin}/schedule/${activePreviewCandidate.id}`, activePreviewCandidate.email)}
+                            className="flex-1 flex items-center justify-center gap-2 py-3 border border-blue-900 bg-blue-950/20 hover:bg-blue-955/40 text-blue-450 hover:text-blue-400 text-sm font-bold rounded-xl text-decoration-none transition-all cursor-pointer"
+                          >
+                            <Mail className="w-4 h-4" /> Email Link
+                          </a>
+                          <button
+                            onClick={handleCancelCvSchedule}
+                            className="px-4 py-3 border border-zinc-805 border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-rose-500 font-bold text-sm rounded-xl cursor-pointer transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Slack-style Remarks thread timeline */}
                   <div className="flex flex-col gap-4">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
@@ -1090,10 +1318,10 @@ export default function AdminPage() {
                     </label>
 
                     <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-1 premium-scrollbar">
-                      {parseComments(activePreviewCandidate.comments).length === 0 ? (
+                      {parseCvNotes(activePreviewCandidate.comments).comments.length === 0 ? (
                         <p className="text-xs text-zinc-500 italic">No notes created. Write a comment below to index evaluation logs.</p>
                       ) : (
-                        parseComments(activePreviewCandidate.comments).map(comment => (
+                        parseCvNotes(activePreviewCandidate.comments).comments.map(comment => (
                           <div key={comment.id} className="comment-bubble p-4 rounded-2xl relative flex flex-col gap-1.5">
                             <div className="flex justify-between items-center">
                               <span className="text-xs font-bold text-blue-400">{comment.author.split("@")[0]}</span>
@@ -1105,8 +1333,10 @@ export default function AdminPage() {
                             <button
                               onClick={async () => {
                                   if (confirm("Delete this remark?")) {
-                                    const freshComments = parseComments(activePreviewCandidate.comments).filter(c => c.id !== comment.id);
-                                    await handleUpdateCvComments(activePreviewCandidate.id, JSON.stringify(freshComments));
+                                    const parsed = parseCvNotes(activePreviewCandidate.comments);
+                                    const freshComments = parsed.comments.filter(c => c.id !== comment.id);
+                                    const updatedNotes = JSON.stringify({ comments: freshComments, interview: parsed.interview });
+                                    await handleUpdateCvComments(activePreviewCandidate.id, updatedNotes);
                                   }
                                 }}
                               className="absolute top-3.5 right-3.5 text-zinc-500 hover:text-rose-500 cursor-pointer transition-colors border-none bg-none"
@@ -1141,8 +1371,10 @@ export default function AdminPage() {
                         created_at: new Date().toISOString(),
                         author: session?.user?.email ?? "Admin",
                       };
-                      const updated = [...parseComments(activePreviewCandidate.comments), newComment];
-                      await handleUpdateCvComments(activePreviewCandidate.id, JSON.stringify(updated));
+                      const parsed = parseCvNotes(activePreviewCandidate.comments);
+                      const updatedComments = [...parsed.comments, newComment];
+                      const updatedNotes = JSON.stringify({ comments: updatedComments, interview: parsed.interview });
+                      await handleUpdateCvComments(activePreviewCandidate.id, updatedNotes);
                       setCvCommentValues(v => ({ ...v, [activePreviewCandidate.id]: "" }));
                     }}
                     className="bg-white hover:bg-zinc-100 text-zinc-950 rounded-xl px-5 py-3 text-sm font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm self-end"
