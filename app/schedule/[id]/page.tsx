@@ -45,7 +45,8 @@ function parseNotes(raw: string | null | undefined): NotesData {
 
 export default function CandidateSchedulingPage() {
   const params = useParams<{ id: string }>();
-  const id = params?.id;
+  const rawId = params?.id;
+  const id = typeof rawId === "string" ? rawId.trim().replace(/\/$/, "") : rawId;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,60 +65,28 @@ export default function CandidateSchedulingPage() {
   useEffect(() => {
     if (!id || id === "[id]") return;
 
-    // Validate UUID format before querying database to avoid Postgres errors
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(id)) {
-      setError("We couldn't find this scheduling invitation. Please check the URL or contact your recruiter.");
-      setLoading(false);
-      return;
-    }
-
     async function load() {
       setLoading(true);
       setError(null); // Clear any previous errors
       try {
-        const { data: appData, error: appError } = await supabase
-          .from("applications")
-          .select("*")
-          .eq("id", id)
-          .single();
+        const response = await fetch(`/api/schedule/${id}`);
+        const result = await response.json();
 
-        let record = appData;
-        let isCv = false;
-
-        if (appError || !appData) {
-          // Check cv_database
-          const { data: cvData, error: cvError } = await supabase
-            .from("cv_database")
-            .select("*")
-            .eq("id", id)
-            .single();
-
-          if (cvError || !cvData) {
-            setError("We couldn't find this scheduling invitation. Please check the URL or contact your recruiter.");
-            setLoading(false);
-            return;
-          }
-          record = cvData;
-          isCv = true;
+        if (!response.ok) {
+          setError(result.error || "We couldn't find this scheduling invitation. Please check the URL or contact your recruiter.");
+          setLoading(false);
+          return;
         }
+
+        const { app: record, job: jobData, isCvDb: isCv } = result;
 
         setApp(record);
         setIsCvDb(isCv);
+        if (jobData) setJob(jobData);
 
         const parsed = parseNotes(record.notes || record.comments);
         if (parsed.interview?.status === "scheduled" && parsed.interview?.selected_slot) {
           setConfirmedSlot(parsed.interview.selected_slot);
-        }
-
-        if (record.job_id) {
-          const { data: jobData } = await supabase
-            .from("jobs")
-            .select("*")
-            .eq("id", record.job_id)
-            .single();
-
-          if (jobData) setJob(jobData);
         }
       } catch (err) {
         setError("An unexpected error occurred while loading your invitation details.");
@@ -192,25 +161,15 @@ export default function CandidateSchedulingPage() {
     setConfirming(true);
 
     try {
-      const parsed = parseNotes(app.notes || app.comments);
-      const updatedInterview: InterviewData = {
-        proposed_slots: parsed.interview?.proposed_slots || [],
-        selected_slot: selectedSlot,
-        status: "scheduled"
-      };
-
-      const notesPayload = JSON.stringify({
-        comments: parsed.comments,
-        interview: updatedInterview
+      const response = await fetch(`/api/schedule/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedSlot })
       });
+      const result = await response.json();
 
-      const { error: updateError } = await supabase
-        .from(isCvDb ? "cv_database" : "applications")
-        .update(isCvDb ? { comments: notesPayload } : { notes: notesPayload })
-        .eq("id", app.id);
-
-      if (updateError) {
-        alert("Failed to confirm slot: " + updateError.message);
+      if (!response.ok) {
+        alert("Failed to confirm slot: " + (result.error || "Unknown error"));
       } else {
         playChime();
         setConfirmedSlot(selectedSlot);
