@@ -62,9 +62,19 @@ export default function CandidateSchedulingPage() {
   const proposedSlots = interview?.proposed_slots || [];
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || id === "[id]") return;
+
+    // Validate UUID format before querying database to avoid Postgres errors
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      setError("We couldn't find this scheduling invitation. Please check the URL or contact your recruiter.");
+      setLoading(false);
+      return;
+    }
+
     async function load() {
       setLoading(true);
+      setError(null); // Clear any previous errors
       try {
         const { data: appData, error: appError } = await supabase
           .from("applications")

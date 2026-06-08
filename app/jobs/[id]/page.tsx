@@ -86,7 +86,13 @@ export default function JobDetailsPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { fetchJob(); }, []);
+  useEffect(() => {
+    if (!id || id === "[id]") return;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) return;
+
+    fetchJob();
+  }, [id]);
 
   async function fetchJob() {
     const { data } = await supabase.from("jobs").select("*").eq("id", id).single();
