@@ -73,7 +73,9 @@ export default function CandidateSchedulingPage() {
         const result = await response.json();
 
         if (!response.ok) {
-          setError(result.error || "We couldn't find this scheduling invitation. Please check the URL or contact your recruiter.");
+          const errMsg = result.error || "We couldn't find this scheduling invitation. Please check the URL or contact your recruiter.";
+          console.error("[schedule page] API error:", response.status, errMsg);
+          setError(errMsg);
           setLoading(false);
           return;
         }

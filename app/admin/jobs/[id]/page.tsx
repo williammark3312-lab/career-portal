@@ -13,6 +13,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
 import GlassBackground from "../../../../src/components/GlassBackground";
+import { getAppBaseUrl } from "../../../../src/lib/appUrl";
 
 /* ─── Types ─── */
 interface Job {
@@ -739,13 +740,13 @@ export default function JobScreeningPage() {
                             <input
                               type="text"
                               readOnly
-                              value={`${window.location.origin}/schedule/${activePreviewApp.id}`}
+                              value={`${getAppBaseUrl()}/schedule/${activePreviewApp.id}`}
                               onClick={e => (e.target as HTMLInputElement).select()}
                               className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-xs text-zinc-400 focus:outline-none"
                             />
                             <button
                               onClick={() => {
-                                navigator.clipboard.writeText(`${window.location.origin}/schedule/${activePreviewApp.id}`);
+                                navigator.clipboard.writeText(`${getAppBaseUrl()}/schedule/${activePreviewApp.id}`);
                                 setCopied(true);
                                 setTimeout(() => setCopied(false), 2000);
                               }}
@@ -761,7 +762,7 @@ export default function JobScreeningPage() {
 
                         <div className="flex gap-3 w-full">
                           <a
-                            href={getMailtoUrl(activePreviewApp.name, job?.title || "Job Opening", `${window.location.origin}/schedule/${activePreviewApp.id}`, activePreviewApp.email)}
+                            href={getMailtoUrl(activePreviewApp.name, job?.title || "Job Opening", `${getAppBaseUrl()}/schedule/${activePreviewApp.id}`, activePreviewApp.email)}
                             className="flex-1 flex items-center justify-center gap-2 py-3 border border-blue-900 bg-blue-950/20 hover:bg-blue-955/40 text-blue-450 hover:text-blue-400 text-sm font-bold rounded-xl text-decoration-none transition-all cursor-pointer"
                           >
                             <Mail className="w-4 h-4" /> Email Link
