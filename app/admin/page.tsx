@@ -8,13 +8,12 @@ import {
   Plus, MapPin, Briefcase, FileText, X, ExternalLink,
   CheckCircle2, Upload, MessageSquare, Send, Users,
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
-  Copy, Eye, Lock, Search, LogOut, Shield, ChevronRight,
-  User, Mail, Phone, Calendar, Loader2, Check
+  Copy, Lock, Search, LogOut, Shield, ChevronRight,
+  Mail, Phone, Calendar, Check
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
 import GlassBackground from "../../src/components/GlassBackground";
-import KineticText from "../../src/components/KineticText";
 import { getAppBaseUrl } from "../../src/lib/appUrl";
 
 /* ─── Interfaces ─── */
@@ -39,15 +38,6 @@ interface CvNotesData {
 }
 
 /* ─── Helpers ─── */
-function parseComments(raw: string | null | undefined): Comment[] {
-  if (!raw) return [];
-  try {
-    const p = JSON.parse(raw);
-    if (Array.isArray(p)) return p;
-  } catch { /* ignore */ }
-  return [{ id: "legacy", text: raw, created_at: new Date().toISOString(), author: "Admin" }];
-}
-
 function parseCvNotes(raw: string | null | undefined): CvNotesData {
   if (!raw) return { comments: [], interview: null };
   try {
@@ -121,7 +111,7 @@ export default function AdminPage() {
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    setMounted(true);
+    setTimeout(() => setMounted(true), 0);
   }, []);
 
   /* Jobs state */
@@ -164,7 +154,7 @@ export default function AdminPage() {
   const [cvCopied, setCvCopied] = useState(false);
 
   /* CV Viewer modal state (fallback/independent view) */
-  const [selectedCV, setSelectedCV] = useState("");
+  const [selectedCV] = useState("");
   const [cvOpen, setCvOpen] = useState(false);
 
   /* Admin Users state */
@@ -224,14 +214,15 @@ export default function AdminPage() {
       loadCvs();
       loadStats();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === "users" && !usersLoaded) {
       loadAdminUsers();
-      setUsersLoaded(true);
+      setTimeout(() => setUsersLoaded(true), 0);
     }
-  }, [activeTab]);
+  }, [activeTab, usersLoaded]);
 
   /* ── Data loaders ── */
   async function loadJobs() {
@@ -887,7 +878,7 @@ export default function AdminPage() {
               {jobs.length === 0 ? (
                 <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
                   <Briefcase className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-400 font-semibold">No job listings published. Click "Create Opening" to start.</p>
+                  <p className="text-sm text-zinc-400 font-semibold">No job listings published. Click &quot;Create Opening&quot; to start.</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -1216,7 +1207,7 @@ export default function AdminPage() {
                     {parseCvNotes(activePreviewCandidate.comments).interview && parseCvNotes(activePreviewCandidate.comments).interview?.status === "scheduled" && (
                       <div className="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-2xl flex items-center gap-3 text-sm font-bold text-emerald-450 shadow-sm animate-pulse-slow">
                         <CheckCircle2 className="w-5 h-5" />
-                        <span>Confirmed Slot: {formatDateTime(parseCvNotes(activePreviewCandidate.comments).interview?.selected_slot!)}</span>
+                        <span>Confirmed Slot: {formatDateTime(parseCvNotes(activePreviewCandidate.comments).interview?.selected_slot || "")}</span>
                       </div>
                     )}
 

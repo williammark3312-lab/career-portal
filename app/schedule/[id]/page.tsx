@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "../../../src/lib/supabase";
+import { motion } from "framer-motion";
 import {
   Calendar, CheckCircle2, Clock, AlertTriangle, Loader2, Sparkles, Check
 } from "lucide-react";
@@ -43,6 +42,23 @@ function parseNotes(raw: string | null | undefined): NotesData {
   };
 }
 
+interface ApplicationRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  notes?: string;
+  comments?: string;
+}
+
+interface JobRecord {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  description: string;
+}
+
 export default function CandidateSchedulingPage() {
   const params = useParams<{ id: string }>();
   const rawId = params?.id;
@@ -50,12 +66,11 @@ export default function CandidateSchedulingPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [app, setApp] = useState<any | null>(null);
-  const [job, setJob] = useState<any | null>(null);
+  const [app, setApp] = useState<ApplicationRecord | null>(null);
+  const [job, setJob] = useState<JobRecord | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmedSlot, setConfirmedSlot] = useState<string | null>(null);
-  const [isCvDb, setIsCvDb] = useState(false);
 
   // Parse notes data
   const notesData = app ? parseNotes(app.notes || app.comments) : null;
@@ -80,17 +95,16 @@ export default function CandidateSchedulingPage() {
           return;
         }
 
-        const { app: record, job: jobData, isCvDb: isCv } = result;
+        const { app: record, job: jobData } = result;
 
         setApp(record);
-        setIsCvDb(isCv);
         if (jobData) setJob(jobData);
 
         const parsed = parseNotes(record.notes || record.comments);
         if (parsed.interview?.status === "scheduled" && parsed.interview?.selected_slot) {
           setConfirmedSlot(parsed.interview.selected_slot);
         }
-      } catch (err) {
+      } catch {
         setError("An unexpected error occurred while loading your invitation details.");
       }
       setLoading(false);
@@ -124,7 +138,7 @@ export default function CandidateSchedulingPage() {
 
   function playChime() {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       
@@ -187,12 +201,13 @@ export default function CandidateSchedulingPage() {
             jobTitle: job?.title || "Role Discussion",
             dateTime: selectedSlot
           })
-        }).catch(err => {
+        }).catch((err) => {
           console.error("Email API fetch failed:", err);
         });
       }
-    } catch (err: any) {
-      alert("Error confirming slot: " + err.message);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      alert("Error confirming slot: " + errMsg);
     } finally {
       setConfirming(false);
     }

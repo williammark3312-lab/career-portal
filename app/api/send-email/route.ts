@@ -235,10 +235,11 @@ export async function POST(request: Request) {
       message: "Email dispatch logged (Credentials are missing in local .env.local).",
       mocked: true
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Email dispatch failed:", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Internal server error. Failed to send email confirmation: " + error.message },
+      { error: "Internal server error. Failed to send email confirmation: " + errMsg },
       { status: 500 }
     );
   }

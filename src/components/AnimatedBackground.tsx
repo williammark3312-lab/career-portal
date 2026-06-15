@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 /**
  * AnimatedBackground — Google Antigravity / Material You
@@ -8,9 +8,6 @@ import React, { useEffect, useState } from "react";
  * Google 4-color palette: blue, red, yellow, green.
  */
 export default function AnimatedBackground() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
 
   return (
     <div

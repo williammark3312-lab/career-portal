@@ -46,8 +46,9 @@ export async function POST(request: Request) {
       email: data.user.email,
       created_at: data.user.created_at,
     });
-  } catch (err: any) {
-    return Response.json({ error: err.message || "Internal server error." }, { status: 500 });
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Internal server error.";
+    return Response.json({ error: errMsg }, { status: 500 });
   }
 }
 
@@ -65,8 +66,9 @@ export async function GET() {
         last_sign_in_at: u.last_sign_in_at,
       })),
     });
-  } catch (err: any) {
-    return Response.json({ error: err.message || "Internal server error." }, { status: 500 });
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Internal server error.";
+    return Response.json({ error: errMsg }, { status: 500 });
   }
 }
 
@@ -83,8 +85,9 @@ export async function DELETE(request: Request) {
       return Response.json({ error: error.message }, { status: 400 });
     }
     return Response.json({ success: true });
-  } catch (err: any) {
-    return Response.json({ error: err.message || "Internal server error." }, { status: 500 });
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Internal server error.";
+    return Response.json({ error: errMsg }, { status: 500 });
   }
 }
 

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../src/lib/supabase";
-import { ArrowRight, MapPin, Briefcase, Search, X, Sparkles } from "lucide-react";
+import { ArrowRight, MapPin, Briefcase, Search, X } from "lucide-react";
 import Header from "../../src/components/Header";
 import Footer from "../../src/components/Footer";
 import GlassBackground from "../../src/components/GlassBackground";
@@ -67,17 +67,19 @@ export default function JobsPage() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    fetchJobs();
-  }, []);
-
   async function fetchJobs() {
     setLoading(true);
     const { data, error } = await supabase.from("jobs").select("*").order("created_at", { ascending: false });
     if (!error && data) setJobs(data);
     setLoading(false);
   }
+
+  useEffect(() => {
+    setTimeout(() => {
+      setMounted(true);
+      fetchJobs();
+    }, 0);
+  }, []);
 
   const departments = ["All", ...Array.from(new Set(jobs.map((j) => j.department))).filter(Boolean)];
 

@@ -5,9 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../../../src/lib/supabase";
 import {
-  ArrowLeft, FileText, MapPin, Briefcase, ExternalLink, X,
+  ArrowLeft, MapPin, ExternalLink, X,
   MessageSquare, Send, Users, ChevronRight, Loader2, Trash2,
-  CheckCircle2, Clock, Eye, UserX, Search, Database, Sparkles,
+  CheckCircle2, Clock, Eye, UserX, Search, Database,
   Calendar, Mail, Plus, Copy, Check, Phone
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
@@ -66,18 +66,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   Rejected:    { label: "Rejected",    color: "#f87171", bg: "rgba(248, 113, 113, 0.15)", border: "rgba(248, 113, 113, 0.3)", dot: "#f87171", icon: <UserX className="w-3.5 h-3.5" /> },
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, color: "#71717a", bg: "#f4f4f5", border: "#e4e4e7", dot: "#a1a1aa", icon: null };
-  return (
-    <span
-      style={{ color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-xs font-bold whitespace-nowrap"
-    >
-      {cfg.icon}
-      <span>{cfg.label}</span>
-    </span>
-  );
-}
 
 /* ─── Main Job Screening Workspace ─── */
 export default function JobScreeningPage() {
@@ -87,7 +75,7 @@ export default function JobScreeningPage() {
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    setMounted(true);
+    setTimeout(() => setMounted(true), 0);
   }, []);
 
   const [session, setSession] = useState<Session | null>(null);
@@ -113,7 +101,7 @@ export default function JobScreeningPage() {
   
   /* CV Viewer independent modal (fallback view) */
   const [cvOpen, setCvOpen] = useState(false);
-  const [selectedCV, setSelectedCV] = useState("");
+  const [selectedCV] = useState("");
 
   /* Move to CV DB states */
   const [movingToDb, setMovingToDb] = useState<Record<string, boolean>>({});
@@ -190,7 +178,7 @@ export default function JobScreeningPage() {
       if (jobData) {
         setJob(jobData);
       } else if (appsData && appsData.length > 0) {
-        const firstApp = appsData[0] as any;
+        const firstApp = appsData[0] as unknown as { jobs?: Job | Job[] | null; job?: Job | Job[] | null };
         const joinedJob = firstApp.jobs || firstApp.job;
         if (joinedJob) {
           setJob(Array.isArray(joinedJob) ? (joinedJob[0] || null) : joinedJob);
@@ -209,6 +197,7 @@ export default function JobScreeningPage() {
       setLoading(false);
     }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, jobId]);
 
   /* Status update database call */
@@ -254,8 +243,9 @@ export default function JobScreeningPage() {
       } else {
         setMovedToDb(prev => ({ ...prev, [app.id]: true }));
       }
-    } catch (e: any) {
-      alert("Error moving to database: " + e.message);
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      alert("Error moving to database: " + errMsg);
     } finally {
       setMovingToDb(prev => ({ ...prev, [app.id]: false }));
     }
@@ -683,7 +673,7 @@ export default function JobScreeningPage() {
                     {parseNotes(activePreviewApp.notes).interview && parseNotes(activePreviewApp.notes).interview?.status === "scheduled" && (
                       <div className="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-2xl flex items-center gap-3 text-sm font-bold text-emerald-450 shadow-sm animate-pulse-slow">
                         <CheckCircle2 className="w-5 h-5" />
-                        <span>Confirmed Slot: {formatDateTime(parseNotes(activePreviewApp.notes).interview?.selected_slot!)}</span>
+                        <span>Confirmed Slot: {formatDateTime(parseNotes(activePreviewApp.notes).interview?.selected_slot || "")}</span>
                       </div>
                     )}
 

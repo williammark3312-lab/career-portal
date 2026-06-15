@@ -91,13 +91,13 @@ export default function JobDetailsPage() {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) return;
 
+    async function fetchJob() {
+      const { data } = await supabase.from("jobs").select("*").eq("id", id).single();
+      if (data) setJob(data);
+    }
+
     fetchJob();
   }, [id]);
-
-  async function fetchJob() {
-    const { data } = await supabase.from("jobs").select("*").eq("id", id).single();
-    if (data) setJob(data);
-  }
 
   async function handleDownloadPDF() {
     if (!receiptRef.current) return;

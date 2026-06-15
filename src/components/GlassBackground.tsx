@@ -19,7 +19,7 @@ export default function GlassBackground() {
   const mouseRef = useRef({ x: -1000, y: -1000, active: false });
 
   useEffect(() => {
-    setMounted(true);
+    setTimeout(() => setMounted(true), 0);
   }, []);
 
   useEffect(() => {

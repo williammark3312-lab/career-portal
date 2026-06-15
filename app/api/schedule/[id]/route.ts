@@ -120,9 +120,10 @@ export async function GET(
     }
 
     return NextResponse.json({ error: "We couldn't find this scheduling invitation." }, { status: 404 });
-  } catch (err: any) {
+  } catch (err) {
     console.error("[schedule GET] unexpected error:", err);
-    return NextResponse.json({ error: err.message || "Internal server error." }, { status: 500 });
+    const errMsg = err instanceof Error ? err.message : "Internal server error.";
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }
 
@@ -224,8 +225,9 @@ export async function POST(
     }
 
     return NextResponse.json({ error: "Invitation not found." }, { status: 404 });
-  } catch (err: any) {
+  } catch (err) {
     console.error("[schedule POST] unexpected error:", err);
-    return NextResponse.json({ error: err.message || "Internal server error." }, { status: 500 });
+    const errMsg = err instanceof Error ? err.message : "Internal server error.";
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }
