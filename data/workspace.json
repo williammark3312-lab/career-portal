@@ -1,0 +1,106 @@
+{
+  "fnf": [
+    {
+      "id": "fnf-1",
+      "employeeName": "John Doe",
+      "department": "Engineering",
+      "resignationDate": "2026-05-10",
+      "lastWorkingDay": "2026-06-10",
+      "settlementStatus": "Completed",
+      "amount": 8500,
+      "remarks": "All clearances received. Assets returned in good condition. Gratuity and pending leaves paid out.",
+      "tasks": [
+        { "id": "t1", "name": "IT Asset Return Check", "completed": true, "section": "Assets" },
+        { "id": "t2", "name": "Revoke Email & Slack Accounts", "completed": true, "section": "IT" },
+        { "id": "t3", "name": "Verify Pending Gratuity / Leaves", "completed": true, "section": "HR" },
+        { "id": "t4", "name": "Final Salary & Tax Calculation", "completed": true, "section": "Finance" }
+      ],
+      "createdAt": "2026-05-10T10:00:00.000Z"
+    },
+    {
+      "id": "fnf-2",
+      "employeeName": "Alice Smith",
+      "department": "Human Resources",
+      "resignationDate": "2026-06-01",
+      "lastWorkingDay": "2026-07-01",
+      "settlementStatus": "Draft",
+      "amount": 5200,
+      "remarks": "Pending clearance from IT department for the company-issued phone.",
+      "tasks": [
+        { "id": "t1", "name": "IT Asset Return Check", "completed": false, "section": "Assets" },
+        { "id": "t2", "name": "Revoke Email & Slack Accounts", "completed": false, "section": "IT" },
+        { "id": "t3", "name": "Verify Pending Gratuity / Leaves", "completed": true, "section": "HR" },
+        { "id": "t4", "name": "Final Salary & Tax Calculation", "completed": false, "section": "Finance" }
+      ],
+      "createdAt": "2026-06-01T14:30:00.000Z"
+    }
+  ],
+  "onboardings": [
+    {
+      "id": "onb-1",
+      "candidateName": "Bob Johnson",
+      "role": "Senior Frontend Developer",
+      "startDate": "2026-05-15",
+      "status": "Completed",
+      "mentor": "Sarah Jenkins",
+      "email": "bob.johnson@company.com",
+      "tasks": [
+        { "id": "o1", "name": "Educational Document Verification", "completed": true },
+        { "id": "o2", "name": "Laptop & IT Hardware Delivery", "completed": true },
+        { "id": "o3", "name": "Generate Corporate Email Address", "completed": true },
+        { "id": "o4", "name": "Send Welcome Mail & Agenda", "completed": true },
+        { "id": "o5", "name": "Conduct Day 1 Orientation Session", "completed": true }
+      ],
+      "createdAt": "2026-05-01T09:00:00.000Z"
+    },
+    {
+      "id": "onb-2",
+      "candidateName": "Claire Patel",
+      "role": "Product Designer",
+      "startDate": "2026-06-15",
+      "status": "In Progress",
+      "mentor": "Emma Watson",
+      "email": "claire.patel@company.com",
+      "tasks": [
+        { "id": "o1", "name": "Educational Document Verification", "completed": true },
+        { "id": "o2", "name": "Laptop & IT Hardware Delivery", "completed": false },
+        { "id": "o3", "name": "Generate Corporate Email Address", "completed": true },
+        { "id": "o4", "name": "Send Welcome Mail & Agenda", "completed": false },
+        { "id": "o5", "name": "Conduct Day 1 Orientation Session", "completed": false }
+      ],
+      "createdAt": "2026-06-01T11:15:00.000Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "tsk-1",
+      "title": "Prepare FNF statement for Alice Smith",
+      "assignedTo": "Sarah Jenkins",
+      "dueDate": "2026-06-25",
+      "priority": "High",
+      "status": "In Progress",
+      "category": "FNF",
+      "createdAt": "2026-06-15T09:00:00.000Z"
+    },
+    {
+      "id": "tsk-2",
+      "title": "Verify Claire Patel's educational docs",
+      "assignedTo": "Emma Watson",
+      "dueDate": "2026-06-14",
+      "priority": "Medium",
+      "status": "Done",
+      "category": "Onboarding",
+      "createdAt": "2026-06-10T10:00:00.000Z"
+    },
+    {
+      "id": "tsk-3",
+      "title": "Update standard welcome email template",
+      "assignedTo": "Admin",
+      "dueDate": "2026-06-30",
+      "priority": "Low",
+      "status": "To Do",
+      "category": "General",
+      "createdAt": "2026-06-17T08:30:00.000Z"
+    }
+  ]
+}

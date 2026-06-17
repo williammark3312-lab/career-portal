@@ -9,7 +9,7 @@ import {
   CheckCircle2, Upload, MessageSquare, Send, Users,
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
   Copy, Lock, Search, LogOut, Shield, ChevronRight,
-  Mail, Phone, Calendar, Check
+  Mail, Phone, Calendar, Check, Layers
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -223,6 +223,16 @@ export default function AdminPage() {
       setTimeout(() => setUsersLoaded(true), 0);
     }
   }, [activeTab, usersLoaded]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "jobs" || tab === "cvs" || tab === "users") {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
 
   /* ── Data loaders ── */
   async function loadJobs() {
@@ -731,15 +741,20 @@ export default function AdminPage() {
             {([
               { key: "jobs", label: "Openings & Reviews", icon: <Briefcase className="w-4 h-4" />, count: stats.totalJobs },
               { key: "cvs", label: "Talent Index", icon: <FileText className="w-4 h-4" />, count: stats.totalCVs },
+              { key: "workspace", label: "Workspace", icon: <Layers className="w-4 h-4" />, count: undefined },
               { key: "users", label: "Supervisor Accounts", icon: <Users className="w-4 h-4" />, count: adminUsers.length },
             ] as const).map(t => {
-              const isActive = activeTab === t.key;
+              const isActive = activeTab === (t.key as any);
               return (
                 <button
                    key={t.key}
                    onClick={() => {
-                     setActiveTab(t.key);
-                     setActivePreviewCandidate(null);
+                     if (t.key === "workspace") {
+                       router.push("/admin/workspace");
+                     } else {
+                       setActiveTab(t.key as any);
+                       setActivePreviewCandidate(null);
+                     }
                    }}
                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                      isActive
@@ -787,16 +802,21 @@ export default function AdminPage() {
           {([
             { key: "jobs", label: "Openings", icon: <Briefcase className="w-3.5 h-3.5" /> },
             { key: "cvs", label: "Talent Index", icon: <FileText className="w-3.5 h-3.5" /> },
+            { key: "workspace", label: "Workspace", icon: <Layers className="w-3.5 h-3.5" /> },
             { key: "users", label: "Supervisors", icon: <Users className="w-3.5 h-3.5" /> },
           ] as const).map(t => (
             <button
               key={t.key}
               onClick={() => {
-                setActiveTab(t.key);
-                setActivePreviewCandidate(null);
+                if (t.key === "workspace") {
+                  router.push("/admin/workspace");
+                } else {
+                  setActiveTab(t.key as any);
+                  setActivePreviewCandidate(null);
+                }
               }}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-200 ${
-                activeTab === t.key
+                activeTab === (t.key as any)
                   ? "bg-white text-zinc-950 shadow-sm"
                   : "text-zinc-400 bg-zinc-900 hover:bg-zinc-800"
               }`}
