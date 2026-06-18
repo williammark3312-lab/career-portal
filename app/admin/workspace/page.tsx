@@ -5,10 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../src/lib/supabase";
 import {
-  Briefcase, FileText, X, ExternalLink, CheckCircle2, Users, UserPlus,
-  ArrowRight, Clock, Trash2, Sparkles, Lock, Search, LogOut, Shield,
-  ChevronRight, Mail, Calendar, Check, Layers, AlertCircle, DollarSign,
-  Activity, ClipboardList, Plus, Edit2
+  Briefcase, FileText, X, ChevronRight, Mail, Calendar, Check, Layers,
+  AlertCircle, DollarSign, Activity, Users, UserPlus, Trash2, Plus, Clock,
+  Shield, ClipboardList, LogOut
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../src/components/Header";
@@ -74,6 +73,90 @@ export default function WorkspacePage() {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
+
+  /* Excel Export function */
+  const exportToExcel = (data: any[], filename: string) => {
+    if (!data || data.length === 0) {
+      alert("No data available to export.");
+      return;
+    }
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(row => 
+      Object.values(row).map(val => {
+        let str = String(val === null || val === undefined ? "" : val);
+        str = str.replace(/"/g, '""');
+        if (str.includes(",") || str.includes("\n") || str.includes('"')) {
+          str = `"${str}"`;
+        }
+        return str;
+      }).join(",")
+    );
+    const csvContent = [headers, ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportFnf = () => {
+    if (workspace.fnf.length === 0) {
+      alert("No FNF settlements data to export.");
+      return;
+    }
+    const dataToExport = workspace.fnf.map(f => ({
+      ID: f.id,
+      EmployeeName: f.employeeName,
+      Department: f.department,
+      ResignationDate: f.resignationDate,
+      LastWorkingDay: f.lastWorkingDay,
+      SettlementStatus: f.settlementStatus,
+      AmountINR: f.amount,
+      Remarks: f.remarks,
+      ClearedTasks: `${f.tasks.filter(t => t.completed).length}/${f.tasks.length}`
+    }));
+    exportToExcel(dataToExport, "FNF_Settlements.csv");
+  };
+
+  const handleExportOnboarding = () => {
+    if (workspace.onboardings.length === 0) {
+      alert("No onboarding data to export.");
+      return;
+    }
+    const dataToExport = workspace.onboardings.map(o => ({
+      ID: o.id,
+      CandidateName: o.candidateName,
+      Role: o.role,
+      StartDate: o.startDate,
+      Status: o.status,
+      Mentor: o.mentor,
+      Email: o.email,
+      CompletedTasks: `${o.tasks.filter(t => t.completed).length}/${o.tasks.length}`
+    }));
+    exportToExcel(dataToExport, "Onboarding_Trackers.csv");
+  };
+
+  const handleExportTasks = () => {
+    if (workspace.tasks.length === 0) {
+      alert("No tasks data to export.");
+      return;
+    }
+    const dataToExport = workspace.tasks.map(t => ({
+      ID: t.id,
+      Title: t.title,
+      AssignedTo: t.assignedTo,
+      DueDate: t.dueDate,
+      Priority: t.priority,
+      Status: t.status,
+      Category: t.category
+    }));
+    exportToExcel(dataToExport, "Tasks_Desk.csv");
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -286,7 +369,6 @@ export default function WorkspacePage() {
     await triggerWorkspaceAction("delete_task", { id });
   };
 
-  /* Verification of Recruiter Status */
   const isRecruiter =
     session?.user?.app_metadata?.role === "admin" ||
     session?.user?.user_metadata?.role === "admin" ||
@@ -294,11 +376,14 @@ export default function WorkspacePage() {
 
   if ((!mounted || authLoading) && !session) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#09090b] text-white relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white relative overflow-hidden font-sans">
         <GlassBackground />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-          <p className="text-sm font-bold text-zinc-400 tracking-wide">Initializing Supervisor Workspace...</p>
+          <div className="admin-logo-mark w-9 h-9" />
+          <div className="flex gap-1.5">
+            {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse-slow" style={{animationDelay:`${i*0.18}s`}} />)}
+          </div>
+          <p className="text-[10px] font-semibold text-zinc-500 tracking-widest uppercase">Loading Workspace</p>
         </div>
       </main>
     );
@@ -306,32 +391,29 @@ export default function WorkspacePage() {
 
   if (session && !isRecruiter) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#09090b] relative overflow-hidden p-4">
+      <main className="min-h-screen flex items-center justify-center bg-[#050505] text-white relative overflow-hidden p-4 font-sans">
+        <GlassBackground />
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md border border-rose-955 rounded-[32px] p-10 sm:p-12 bg-zinc-950/80 backdrop-blur-3xl shadow-2xl relative z-10 text-center flex flex-col items-center"
+          className="w-full max-w-sm bg-zinc-950 border border-zinc-900 rounded-3xl p-8 relative z-10 text-center flex flex-col items-center gap-5 shadow-2xl"
         >
-          <div className="w-14 h-14 bg-rose-955/30 border border-rose-900 text-rose-500 rounded-full flex items-center justify-center mb-6 shadow-inner">
-            <Shield className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-rose-450 animate-pulse-slow"
+            style={{background:'rgba(244,63,94,0.07)',border:'1px solid rgba(244,63,94,0.15)'}}>
+            <Shield className="w-5 h-5" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-3">Access Denied</h1>
-          <p className="text-sm text-zinc-400 font-semibold leading-relaxed mb-8">
-            You are signed in as <span className="text-blue-400">{session.user.email}</span>. Only supervisor accounts are authorized to access the Workspace.
-          </p>
-
-          <div className="flex flex-col gap-3 w-full">
-            <button
-              onClick={handleLogout}
-              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer"
-            >
-              Sign Out & Relogin
+          <div>
+            <h1 className="text-base font-700 text-white tracking-tight mb-1">Access Denied</h1>
+            <p className="text-xs text-zinc-450 font-medium leading-relaxed">
+              Signed in as <span className="text-indigo-400 font-semibold">{session.user.email}</span>. Only supervisors may access this workspace.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 w-full">
+            <button onClick={handleLogout} className="w-full py-2.5 px-4 rounded-xl font-700 text-xs text-white bg-rose-500 hover:bg-rose-600 cursor-pointer transition-all active:scale-[0.98]">
+              Sign Out & Try Again
             </button>
-            <button
-              onClick={() => router.push("/")}
-              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer"
-            >
-              Return to Home
+            <button onClick={() => router.push("/")} className="w-full py-2.5 px-4 rounded-xl font-600 text-xs text-zinc-300 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer">
+              Back to Home
             </button>
           </div>
         </motion.div>
@@ -339,115 +421,89 @@ export default function WorkspacePage() {
     );
   }
 
-  // Calculate stats values for overview
   const totalFnf = workspace.fnf.length;
   const activeOnboardings = workspace.onboardings.filter(o => o.status !== "Completed").length;
   const pendingClearances = workspace.fnf.filter(f => f.settlementStatus !== "Completed").length;
   const pendingTasks = workspace.tasks.filter(t => t.status !== "Done").length;
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-white relative z-10 flex flex-col lg:flex-row overflow-hidden">
+    <main className="min-h-screen bg-[#050505] text-white relative z-10 flex flex-col lg:flex-row overflow-hidden font-sans">
       <GlassBackground />
+      {/* subtle dot-grid texture */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-20%,rgba(99,102,241,0.02),transparent)] pointer-events-none z-0" />
 
-      {/* ── Desktop Sidebar ── */}
-      <aside className="w-72 bg-zinc-950 border-r border-zinc-900/80 hidden lg:flex flex-col justify-between p-6 fixed h-screen z-20">
-        <div className="flex flex-col gap-8">
-          {/* Logo Branding */}
-          <div className="flex items-center gap-3 px-2 py-1 cursor-pointer" onClick={() => router.push("/jobs")}>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/10">
-              <Sparkles className="w-4 h-4" />
+      {/* ── Premium Sidebar ── */}
+      <aside className="admin-sidebar w-[260px] hidden lg:flex flex-col justify-between py-6 px-4 fixed h-screen z-20">
+        <div className="flex flex-col gap-7">
+          {/* Logo */}
+          <div className="flex items-center gap-3 px-2 cursor-pointer" onClick={() => router.push("/jobs")}>
+            <div className="admin-logo-mark">
+              <Layers className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white tracking-tight leading-none">Antigravity</h1>
-              <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Supervisor Space</span>
+              <h1 className="text-[14px] font-700 text-white tracking-tight leading-none">Antigravity</h1>
+              <span className="text-[9px] font-600 text-zinc-500 uppercase tracking-[0.12em] mt-0.5 block">Workspace</span>
             </div>
           </div>
 
-          {/* User Profile Info */}
-          <div className="bg-zinc-900/40 rounded-xl p-3 border border-zinc-850 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-extrabold text-xs">
-              {session?.user?.email?.[0].toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest">Signed In</p>
-              <p className="text-xs font-bold text-zinc-300 truncate" title={session?.user?.email}>{session?.user?.email}</p>
+          {/* User card */}
+          <div className="px-2">
+            <div className="rounded-xl p-3 flex items-center gap-3" style={{background:'var(--s-muted)',border:'1px solid var(--b-subtle)'}}>
+              <div className="admin-avatar">{session?.user?.email?.[0].toUpperCase()}</div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-600 text-zinc-500 uppercase tracking-widest">Signed in as</p>
+                <p className="text-xs font-600 text-zinc-300 truncate mt-0.5" title={session?.user?.email}>{session?.user?.email}</p>
+              </div>
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background:'#059669',boxShadow:'0 0 5px rgba(5,150,105,0.6)'}} />
             </div>
           </div>
 
-          {/* Navigation links targeting /admin sub-areas */}
-          <nav className="flex flex-col gap-1">
+          {/* Navigation */}
+          <nav className="flex flex-col gap-0.5 px-1">
+            <p className="text-[9px] font-700 text-zinc-500 uppercase tracking-[0.12em] px-3 mb-2">Navigation</p>
             {([
-              { key: "jobs", label: "Openings & Reviews", icon: <Briefcase className="w-4 h-4" />, count: stats.totalJobs, route: "/admin?tab=jobs" },
-              { key: "cvs", label: "Talent Index", icon: <FileText className="w-4 h-4" />, count: stats.totalCVs, route: "/admin?tab=cvs" },
-              { key: "workspace", label: "Workspace", icon: <Layers className="w-4 h-4" />, count: undefined, route: "/admin/workspace" },
-              { key: "users", label: "Supervisor Accounts", icon: <Users className="w-4 h-4" />, count: stats.totalUsers, route: "/admin?tab=users" },
+              { key: "jobs",      label: "Openings & Reviews", icon: <Briefcase className="w-[15px] h-[15px]" />, count: stats.totalJobs,  route: "/admin?tab=jobs" },
+              { key: "cvs",       label: "Talent Index",       icon: <FileText  className="w-[15px] h-[15px]" />, count: stats.totalCVs,  route: "/admin?tab=cvs" },
+              { key: "workspace", label: "Workspace",           icon: <Layers    className="w-[15px] h-[15px]" />, count: undefined,       route: "/admin/workspace" },
+              { key: "users",     label: "Supervisor Accounts", icon: <Users     className="w-[15px] h-[15px]" />, count: stats.totalUsers, route: "/admin?tab=users" },
             ] as const).map(t => {
               const isActive = t.key === "workspace";
               return (
-                <button
-                  key={t.key}
-                  onClick={() => router.push(t.route)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    isActive
-                      ? "text-white bg-zinc-900 border border-zinc-850"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    {t.icon}
-                    <span>{t.label}</span>
-                  </div>
-                  {t.count !== undefined && (
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
-                      isActive ? "bg-zinc-800 text-zinc-200" : "bg-zinc-900 text-zinc-500"
-                    }`}>
-                      {t.count}
-                    </span>
-                  )}
+                <button key={t.key} onClick={() => router.push(t.route)} className={`admin-nav-item ${isActive ? "active" : ""}`}>
+                  <div className="flex items-center gap-2.5 nav-icon">{t.icon}<span>{t.label}</span></div>
+                  {t.count !== undefined && <span className="nav-badge">{t.count}</span>}
                 </button>
               );
             })}
           </nav>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold text-rose-450 hover:bg-rose-955/20 border border-transparent hover:border-rose-950 transition-all cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+        <div className="flex flex-col gap-3 px-1">
+          <div className="divider-glow" />
+          <button onClick={handleLogout} className="admin-nav-item text-rose-500 hover:text-rose-400 hover:bg-rose-955/20">
+            <div className="flex items-center gap-2.5"><LogOut className="w-[15px] h-[15px]" /><span>Sign Out</span></div>
           </button>
-          <div className="text-[10px] text-zinc-650 font-semibold px-3">
-            © {new Date().getFullYear()} Google Antigravity
-          </div>
+          <p className="text-[9px] text-zinc-650 font-600 px-3">© {new Date().getFullYear()} Antigravity</p>
         </div>
       </aside>
 
       {/* ── Mobile Layout header ── */}
       <div className="lg:hidden w-full relative z-30">
         <Header session={session} handleLogout={handleLogout} />
-        {/* Mobile menu navigation tab strip */}
-        <div className="bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900/80 px-4 py-2 flex gap-1 overflow-x-auto">
+        <div className="bg-zinc-950 border-b border-zinc-900 px-4 py-2 flex gap-1 overflow-x-auto">
           {([
-            { key: "jobs", label: "Openings", icon: <Briefcase className="w-3.5 h-3.5" />, route: "/admin?tab=jobs" },
-            { key: "cvs", label: "Talent Index", icon: <FileText className="w-3.5 h-3.5" />, route: "/admin?tab=cvs" },
-            { key: "workspace", label: "Workspace", icon: <Layers className="w-3.5 h-3.5" />, route: "/admin/workspace" },
-            { key: "users", label: "Supervisors", icon: <Users className="w-3.5 h-3.5" />, route: "/admin?tab=users" },
+            { key: "jobs",      label: "Openings",   icon: <Briefcase className="w-3.5 h-3.5" />, route: "/admin?tab=jobs" },
+            { key: "cvs",       label: "Talent Index",icon: <FileText  className="w-3.5 h-3.5" />, route: "/admin?tab=cvs" },
+            { key: "workspace", label: "Workspace",   icon: <Layers    className="w-3.5 h-3.5" />, route: "/admin/workspace" },
+            { key: "users",     label: "Supervisors", icon: <Users     className="w-3.5 h-3.5" />, route: "/admin?tab=users" },
           ] as const).map(t => {
             const isActive = t.key === "workspace";
             return (
-              <button
-                key={t.key}
-                onClick={() => router.push(t.route)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-200 ${
-                  isActive
-                    ? "bg-white text-zinc-955 shadow-sm"
-                    : "text-zinc-400 bg-zinc-900 hover:bg-zinc-800"
-                }`}
-              >
-                {t.icon}
-                {t.label}
+              <button key={t.key} onClick={() => router.push(t.route)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-600 whitespace-nowrap cursor-pointer transition-all ${
+                  isActive ? "bg-white text-black font-bold shadow-sm" : "text-zinc-400 bg-zinc-900/40 hover:bg-zinc-900"
+                }`}>
+                {t.icon}{t.label}
               </button>
             );
           })}
@@ -455,78 +511,78 @@ export default function WorkspacePage() {
       </div>
 
       {/* ── Main content pane ── */}
-      <div className="flex-1 lg:ml-72 min-h-screen flex flex-col p-4 sm:p-8 lg:p-10 relative z-10 pt-20 lg:pt-10 overflow-y-auto">
+      <div className="flex-1 lg:ml-[260px] min-h-screen flex flex-col px-5 sm:px-8 lg:px-10 py-8 relative z-10 pt-20 lg:pt-8 overflow-y-auto">
         <div className="max-w-5xl w-full mx-auto flex flex-col gap-6 flex-grow pb-16">
           
-          {/* Header Panel */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-850">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                <span>Console</span>
-                <ChevronRight className="w-3 h-3" />
-                <span className="text-zinc-400 font-semibold">Workspace</span>
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-5 pb-6 border-b border-zinc-900">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-600 text-zinc-500 uppercase tracking-[0.1em]">
+                <span>Console</span><span>›</span><span>Workspace</span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-none">
-                HR Operations desk
-              </h1>
+              <h1 className="text-[22px] font-700 text-white tracking-tight leading-none">HR Operations Desk</h1>
             </div>
 
-            {/* Quick Header buttons based on Active Tab */}
             <div className="flex items-center gap-2">
               {activeTab === "fnf" && (
-                <button
-                  onClick={() => setShowFnfModal(true)}
-                  className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-950 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" /> Start FNF Process
-                </button>
+                <>
+                  <button onClick={handleExportFnf} className="px-3.5 py-2 rounded-lg border border-zinc-800 bg-zinc-950 text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                    Export to Excel
+                  </button>
+                  <button onClick={() => setShowFnfModal(true)} className="btn-cta">
+                    <Plus className="w-3.5 h-3.5" /> Start FNF
+                  </button>
+                </>
               )}
               {activeTab === "onboarding" && (
-                <button
-                  onClick={() => setShowOnboardingModal(true)}
-                  className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-950 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  <UserPlus className="w-4 h-4" /> Start Onboarding
-                </button>
+                <>
+                  <button onClick={handleExportOnboarding} className="px-3.5 py-2 rounded-lg border border-zinc-800 bg-zinc-950 text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                    Export to Excel
+                  </button>
+                  <button onClick={() => setShowOnboardingModal(true)} className="btn-cta">
+                    <UserPlus className="w-3.5 h-3.5" /> Start Onboarding
+                  </button>
+                </>
               )}
               {activeTab === "tasks" && (
-                <button
-                  onClick={() => setShowTaskModal(true)}
-                  className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-950 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" /> Create Task
-                </button>
+                <>
+                  <button onClick={handleExportTasks} className="px-3.5 py-2 rounded-lg border border-zinc-800 bg-zinc-950 text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                    Export to Excel
+                  </button>
+                  <button onClick={() => setShowTaskModal(true)} className="btn-cta">
+                    <Plus className="w-3.5 h-3.5" /> Create Task
+                  </button>
+                </>
               )}
             </div>
           </div>
 
-          {/* Sub Tab selection bar */}
-          <div className="flex gap-2 border-b border-zinc-900 pb-3">
+          {/* Sub Tab bar */}
+          <div className="flex gap-1 pb-1">
             {([
-              { id: "overview", label: "Overview", icon: <Activity className="w-3.5 h-3.5" /> },
-              { id: "fnf", label: "FNF Settlement", icon: <DollarSign className="w-3.5 h-3.5" /> },
-              { id: "onboarding", label: "Onboardings", icon: <UserPlus className="w-3.5 h-3.5" /> },
-              { id: "tasks", label: "Tasks Desk", icon: <ClipboardList className="w-3.5 h-3.5" /> },
+              { id: "overview",   label: "Overview",       icon: <Activity      className="w-3.5 h-3.5" /> },
+              { id: "fnf",        label: "FNF Settlement", icon: <DollarSign    className="w-3.5 h-3.5" /> },
+              { id: "onboarding", label: "Onboardings",    icon: <UserPlus      className="w-3.5 h-3.5" /> },
+              { id: "tasks",      label: "Tasks Desk",     icon: <ClipboardList className="w-3.5 h-3.5" /> },
             ] as const).map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-600 transition-all cursor-pointer border ${
                   activeTab === tab.id
-                    ? "bg-zinc-900 text-white border border-zinc-800"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30"
+                    ? "bg-white text-black border-white"
+                    : "text-zinc-400 hover:text-white border-zinc-900 hover:bg-zinc-900/60"
                 }`}
               >
-                {tab.icon}
-                {tab.label}
+                {tab.icon}{tab.label}
               </button>
             ))}
           </div>
 
           {loadingWorkspace ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-              <p className="text-xs text-zinc-500 font-bold">Synchronizing workspace files...</p>
+              <div className="w-5 h-5 border-2 border-zinc-800 border-t-blue-500 rounded-full animate-spin" />
+              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Loading files...</p>
             </div>
           ) : (
             <AnimatePresence mode="wait">
@@ -534,98 +590,83 @@ export default function WorkspacePage() {
               {activeTab === "overview" && (
                 <motion.div
                   key="overview"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
                 >
-                  <div className="border border-zinc-850/80 rounded-2xl p-5 bg-zinc-950/40 backdrop-blur-md relative overflow-hidden flex flex-col gap-2">
-                    <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Active Onboardings</span>
-                    <span className="text-3xl font-extrabold tracking-tight text-white">{activeOnboardings}</span>
-                    <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1 mt-2">
-                      <CheckCircle2 className="w-3 h-3" /> Ready to engage
-                    </span>
-                  </div>
-
-                  <div className="border border-zinc-850/80 rounded-2xl p-5 bg-zinc-950/40 backdrop-blur-md relative overflow-hidden flex flex-col gap-2">
-                    <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Settlements Handled</span>
-                    <span className="text-3xl font-extrabold tracking-tight text-white">{totalFnf}</span>
-                    <span className="text-[10px] font-bold text-zinc-400 flex items-center gap-1 mt-2">
-                      <Clock className="w-3 h-3" /> FNF Lifecycle
-                    </span>
-                  </div>
-
-                  <div className="border border-zinc-850/80 rounded-2xl p-5 bg-zinc-950/40 backdrop-blur-md relative overflow-hidden flex flex-col gap-2">
-                    <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Pending Clearance</span>
-                    <span className="text-3xl font-extrabold tracking-tight text-rose-400">{pendingClearances}</span>
-                    <span className="text-[10px] font-bold text-rose-400/80 flex items-center gap-1 mt-2">
-                      <AlertCircle className="w-3 h-3" /> Action required
-                    </span>
-                  </div>
-
-                  <div className="border border-zinc-850/80 rounded-2xl p-5 bg-zinc-950/40 backdrop-blur-md relative overflow-hidden flex flex-col gap-2">
-                    <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Operational Tasks</span>
-                    <span className="text-3xl font-extrabold tracking-tight text-amber-400">{pendingTasks}</span>
-                    <span className="text-[10px] font-bold text-amber-400/85 flex items-center gap-1 mt-2">
-                      <Clock className="w-3 h-3" /> Assigned to teams
-                    </span>
-                  </div>
+                  {[
+                    { label: "Active Onboardings", value: activeOnboardings, desc: "Ready to engage", accent: "accent-indigo" },
+                    { label: "Settlements Handled", value: totalFnf, desc: "Lifecycle logs", accent: "" },
+                    { label: "Pending Clearance", value: pendingClearances, desc: "Needs evaluation", accent: "accent-rose" },
+                    { label: "Operational Tasks", value: pendingTasks, desc: "Open directives", accent: "accent-amber" }
+                  ].map((stat, idx) => (
+                    <div key={idx} className={`stat-card ${stat.accent}`}>
+                      <div className="stat-label">{stat.label}</div>
+                      <div className="stat-value">{stat.value}</div>
+                      <div className="text-[9px] font-bold text-zinc-500 mt-1.5 uppercase tracking-wide">{stat.desc}</div>
+                    </div>
+                  ))}
 
                   {/* Summary lists on Overview page */}
-                  <div className="col-span-1 md:col-span-2 border border-zinc-850/60 rounded-3xl p-6 bg-zinc-950/30 backdrop-blur-sm mt-4">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400 mb-4 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-blue-400" /> Recent FNF Clearances
-                    </h3>
-                    <div className="flex flex-col gap-3">
+                  <div className="col-span-1 md:col-span-2 border border-zinc-900 bg-zinc-950/20 rounded-xl p-5 shadow-sm mt-2">
+                    <div className="flex justify-between items-center mb-3.5">
+                      <h3 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-zinc-500" /> Recent FNF Clearances
+                      </h3>
+                      <button onClick={handleExportFnf} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-950 text-[10px] font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                        Export FNF
+                      </button>
+                    </div>
+                    <div className="flex flex-col gap-2">
                       {workspace.fnf.slice(0, 3).map(f => {
                         const cleared = f.tasks.filter(t => t.completed).length;
                         const total = f.tasks.length;
                         return (
-                          <div key={f.id} className="flex justify-between items-center p-3 rounded-xl bg-zinc-900/40 border border-zinc-900">
+                          <div key={f.id} className="flex justify-between items-center py-2.5 px-3 rounded-lg border border-zinc-900 bg-zinc-900/40 text-xs">
                             <div>
-                              <h4 className="text-xs font-bold text-white">{f.employeeName}</h4>
-                              <p className="text-[10px] text-zinc-500">{f.department} • Last Day: {f.lastWorkingDay}</p>
+                              <h4 className="font-bold text-white">{f.employeeName}</h4>
+                              <p className="text-[9px] font-600 uppercase text-zinc-400 mt-0.5">{f.department} • LWD: {f.lastWorkingDay}</p>
                             </div>
-                            <div className="text-right">
-                              <span className="text-[10px] font-extrabold text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800">
-                                {cleared}/{total} cleared
-                              </span>
-                            </div>
+                            <span className="text-[9px] font-bold text-zinc-400 bg-zinc-950 border border-zinc-850 px-2 py-0.5 rounded">
+                              {cleared}/{total} cleared
+                            </span>
                           </div>
                         );
                       })}
                       {workspace.fnf.length === 0 && (
-                        <p className="text-xs text-zinc-500 py-4 text-center">No resignation clearances recorded.</p>
+                        <p className="text-[11px] text-zinc-500 italic py-4 text-center">No resignation clearances recorded.</p>
                       )}
                     </div>
                   </div>
 
-                  <div className="col-span-1 md:col-span-2 border border-zinc-850/60 rounded-3xl p-6 bg-zinc-950/30 backdrop-blur-sm mt-4">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400 mb-4 flex items-center gap-2">
-                      <UserPlus className="w-4 h-4 text-indigo-400" /> Onboarding Trackers
-                    </h3>
-                    <div className="flex flex-col gap-3">
+                  <div className="col-span-1 md:col-span-2 border border-zinc-900 bg-zinc-950/20 rounded-xl p-5 shadow-sm mt-2">
+                    <div className="flex justify-between items-center mb-3.5">
+                      <h3 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+                        <UserPlus className="w-3.5 h-3.5 text-zinc-500" /> Onboarding Trackers
+                      </h3>
+                      <button onClick={handleExportOnboarding} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-950 text-[10px] font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                        Export Onboarding
+                      </button>
+                    </div>
+                    <div className="flex flex-col gap-2">
                       {workspace.onboardings.slice(0, 3).map(o => {
                         const done = o.tasks.filter(t => t.completed).length;
                         const total = o.tasks.length;
                         return (
-                          <div key={o.id} className="flex justify-between items-center p-3 rounded-xl bg-zinc-900/40 border border-zinc-900">
+                          <div key={o.id} className="flex justify-between items-center py-2.5 px-3 rounded-lg border border-zinc-900 bg-zinc-900/40 text-xs">
                             <div>
-                              <h4 className="text-xs font-bold text-white">{o.candidateName}</h4>
-                              <p className="text-[10px] text-zinc-500">{o.role} • Start: {o.startDate}</p>
+                              <h4 className="font-bold text-white">{o.candidateName}</h4>
+                              <p className="text-[9px] font-600 uppercase text-zinc-400 mt-0.5">{o.role} • Start: {o.startDate}</p>
                             </div>
-                            <div className="text-right">
-                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                                o.status === "Completed" ? "bg-emerald-950/50 text-emerald-400 border border-emerald-900" : "bg-blue-950/50 text-blue-400 border border-blue-900"
-                              }`}>
-                                {o.status} ({done}/{total})
-                              </span>
-                            </div>
+                            <span className="text-[9px] font-bold text-zinc-400 bg-zinc-950 border border-zinc-850 px-2 py-0.5 rounded">
+                              {o.status} ({done}/{total})
+                            </span>
                           </div>
                         );
                       })}
                       {workspace.onboardings.length === 0 && (
-                        <p className="text-xs text-zinc-500 py-4 text-center">No onboarding tracks recorded.</p>
+                        <p className="text-[11px] text-zinc-500 italic py-4 text-center">No onboarding tracks recorded.</p>
                       )}
                     </div>
                   </div>
@@ -636,136 +677,105 @@ export default function WorkspacePage() {
               {activeTab === "fnf" && (
                 <motion.div
                   key="fnf"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   className="flex flex-col gap-4"
                 >
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-bold tracking-wider text-zinc-400 uppercase">Resignee Lifecycle</h3>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
+                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden shadow-sm">
                     {workspace.fnf.map(f => {
                       const isExpanded = expandedFnf === f.id;
                       const completedCount = f.tasks.filter(t => t.completed).length;
-                      const progressPercentage = Math.round((completedCount / f.tasks.length) * 100) || 0;
+                      const totalCount = f.tasks.length;
+
+                      const dotColor = f.settlementStatus === "Completed" ? "var(--green)" : f.settlementStatus === "Paid" ? "var(--a-500)" : "var(--t-muted)";
 
                       return (
-                        <div key={f.id} className="border border-zinc-850 rounded-2xl bg-zinc-950/20 overflow-hidden transition-all duration-300">
-                          {/* Main Row summary card */}
+                        <div key={f.id} className="w-full border-b border-zinc-900 last:border-b-0">
+                          {/* Row Summary */}
                           <div
                             onClick={() => setExpandedFnf(isExpanded ? null : f.id)}
-                            className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-zinc-900/40 transition-colors"
+                            className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer hover:bg-zinc-900/40 transition-colors"
                           >
-                            <div className="flex flex-col gap-1">
-                              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <div className="flex flex-col">
+                              <h4 className="text-xs font-bold text-white flex items-center gap-2">
                                 {f.employeeName}
-                                <span className="text-[10px] font-semibold text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                                <span className="text-[9px] font-bold text-zinc-355 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded">
                                   {f.department}
                                 </span>
                               </h4>
-                              <p className="text-xs text-zinc-400 flex items-center gap-3">
+                              <p className="text-[10px] text-zinc-500 mt-1 flex items-center gap-2">
                                 <span>Resigned: {f.resignationDate}</span>
-                                <span className="text-zinc-650">•</span>
-                                <span>Last Day: {f.lastWorkingDay}</span>
+                                <span>•</span>
+                                <span>LWD: {f.lastWorkingDay}</span>
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-6">
-                              {/* Progress bar */}
-                              <div className="flex flex-col gap-1 w-28 md:w-36">
-                                <div className="flex justify-between text-[10px] font-bold text-zinc-400">
-                                  <span>Clearance</span>
-                                  <span>{progressPercentage}%</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                                    style={{ width: `${progressPercentage}%` }}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-3">
-                                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border ${
-                                  f.settlementStatus === "Completed"
-                                    ? "bg-emerald-950/40 border-emerald-900 text-emerald-400"
-                                    : f.settlementStatus === "Paid"
-                                    ? "bg-blue-950/40 border-blue-900 text-blue-400"
-                                    : "bg-zinc-900/60 border-zinc-800 text-zinc-400"
-                                }`}>
-                                  {f.settlementStatus}
+                            <div className="flex items-center gap-5">
+                              <span className="text-[10px] font-semibold text-zinc-400">
+                                {completedCount}/{totalCount} Cleared
+                              </span>
+                              
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5">
+                                  <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">{f.settlementStatus}</span>
                                 </span>
-                                <ChevronRight className={`w-4 h-4 text-zinc-500 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                                <ChevronRight className={`w-3.5 h-3.5 text-zinc-500 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                               </div>
                             </div>
                           </div>
 
-                          {/* Expanded detail panel */}
+                          {/* Expanded clearances */}
                           {isExpanded && (
-                            <div className="px-5 pb-5 border-t border-zinc-900 bg-zinc-950/50 flex flex-col gap-6 pt-5 animate-slide-down">
+                            <div className="px-4 pb-5 pt-3 border-t border-zinc-900 bg-zinc-955/40 flex flex-col gap-5">
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {/* Details & Info */}
-                                <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-4 text-xs">
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Calculated Amount</label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-zinc-400 text-xs">$</span>
-                                      <input
-                                        type="number"
-                                        defaultValue={f.amount}
-                                        onBlur={(e) => handleUpdateFnfAmount(f.id, e.target.value)}
-                                        className="bg-zinc-900/80 border border-zinc-800 rounded-lg text-white text-sm px-2.5 py-1.5 outline-none focus:border-blue-500 w-28 font-bold"
-                                      />
-                                    </div>
-                                    <p className="text-[10px] text-zinc-500 mt-1">Updates on blur</p>
+                                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Settlement Value (₹)</span>
+                                    <input
+                                      type="number"
+                                      defaultValue={f.amount}
+                                      onBlur={(e) => handleUpdateFnfAmount(f.id, e.target.value)}
+                                      className="admin-input mt-1 w-32"
+                                    />
                                   </div>
 
-                                  <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Remarks & Notes</label>
-                                    <p className="text-xs text-zinc-300 bg-zinc-900/40 border border-zinc-900 rounded-lg p-3 italic">
-                                      {f.remarks || "No remarks provided."}
-                                    </p>
-                                  </div>
-
-                                  <div className="flex flex-col gap-2 mt-2">
-                                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Lifecycle Status</label>
+                                  <div className="flex flex-col gap-1 mt-1">
+                                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Status Protocol</span>
                                     <select
                                       value={f.settlementStatus}
                                       onChange={(e) => handleUpdateFnfStatus(f.id, e.target.value as any)}
-                                      className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold text-white p-2.5 outline-none focus:border-blue-500 w-full"
+                                      className="admin-input mt-1"
                                     >
                                       <option value="Draft">Draft (Clearances pending)</option>
                                       <option value="Approved">Approved (Clearances ok)</option>
                                       <option value="Paid">Paid (Finance executed)</option>
-                                      <option value="Completed">Completed (Final settlement closed)</option>
+                                      <option value="Completed">Completed (Settlement closed)</option>
                                     </select>
                                   </div>
                                 </div>
 
-                                {/* Checklist details */}
                                 <div className="md:col-span-2 flex flex-col gap-3">
-                                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Clearance checklist</label>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Clearance checklist</span>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {f.tasks.map(t => (
                                       <button
                                         key={t.id}
                                         onClick={() => handleToggleFnfTask(f.id, t.id, !t.completed)}
-                                        className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                        className={`flex items-center gap-2.5 p-2.5 rounded-lg border text-left transition-colors ${
                                           t.completed
-                                            ? "bg-emerald-950/10 border-emerald-900/40 text-white"
-                                            : "bg-zinc-900/30 border-zinc-850 text-zinc-400 hover:border-zinc-700"
+                                            ? "bg-indigo-955/20 border-indigo-900/50 text-indigo-400"
+                                            : "bg-zinc-900/60 border-zinc-855 text-zinc-400 hover:border-zinc-700"
                                         }`}
                                       >
-                                        <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border ${
-                                          t.completed ? "bg-emerald-500 border-emerald-400 text-zinc-950" : "border-zinc-700"
+                                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${
+                                          t.completed ? "bg-indigo-600 border-transparent text-white" : "border-zinc-700"
                                         }`}>
-                                          {t.completed && <Check className="w-3 h-3 stroke-[3]" />}
+                                          {t.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                                         </div>
-                                        <div>
-                                          <p className="text-xs font-bold leading-tight">{t.name}</p>
-                                          <span className="text-[9px] font-bold text-zinc-500 uppercase">{t.section}</span>
+                                        <div className="min-w-0">
+                                          <p className="text-[11px] font-bold truncate leading-none">{t.name}</p>
                                         </div>
                                       </button>
                                     ))}
@@ -774,9 +784,9 @@ export default function WorkspacePage() {
                                   <div className="flex justify-end mt-4">
                                     <button
                                       onClick={() => handleDeleteFnf(f.id)}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-950/20 border border-transparent hover:border-rose-950 transition-all cursor-pointer"
+                                      className="btn-danger"
                                     >
-                                      <Trash2 className="w-3.5 h-3.5" /> Delete Clearance Lifecycle
+                                      <Trash2 className="w-3.5 h-3.5" /> Remove settlement
                                     </button>
                                   </div>
                                 </div>
@@ -787,8 +797,8 @@ export default function WorkspacePage() {
                       );
                     })}
                     {workspace.fnf.length === 0 && (
-                      <div className="text-center py-12 border border-dashed border-zinc-800 rounded-2xl">
-                        <p className="text-sm text-zinc-500">No resignation clearances started. Click "Start FNF Process" above to launch one.</p>
+                      <div className="text-center py-12">
+                        <p className="text-xs text-zinc-500">No resignation clearances initialized.</p>
                       </div>
                     )}
                   </div>
@@ -799,101 +809,73 @@ export default function WorkspacePage() {
               {activeTab === "onboarding" && (
                 <motion.div
                   key="onboarding"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   className="flex flex-col gap-4"
                 >
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-bold tracking-wider text-zinc-400 uppercase">Onboarding Trackers</h3>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
+                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden shadow-sm">
                     {workspace.onboardings.map(o => {
                       const isExpanded = expandedOnb === o.id;
                       const doneCount = o.tasks.filter(t => t.completed).length;
                       const totalCount = o.tasks.length;
-                      const progressPercentage = Math.round((doneCount / totalCount) * 100) || 0;
+
+                      const dotColor = o.status === "Completed" ? "var(--green)" : o.status === "In Progress" ? "var(--a-500)" : "var(--t-muted)";
 
                       return (
-                        <div key={o.id} className="border border-zinc-850 rounded-2xl bg-zinc-950/20 overflow-hidden transition-all duration-300">
-                          {/* Title summary row */}
+                        <div key={o.id} className="w-full border-b border-zinc-900 last:border-b-0">
+                          {/* Row Summary */}
                           <div
                             onClick={() => setExpandedOnb(isExpanded ? null : o.id)}
-                            className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-zinc-900/40 transition-colors"
+                            className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer hover:bg-zinc-900/40 transition-colors"
                           >
-                            <div className="flex flex-col gap-1">
-                              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <div className="flex flex-col">
+                              <h4 className="text-xs font-bold text-white flex items-center gap-2">
                                 {o.candidateName}
-                                <span className="text-[10px] font-semibold text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                                <span className="text-[9px] font-bold text-zinc-350 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded">
                                   {o.role}
                                 </span>
                               </h4>
-                              <p className="text-xs text-zinc-400 flex items-center gap-3">
-                                <span>Start Date: {o.startDate}</span>
-                                <span className="text-zinc-650">•</span>
-                                <span>Buddy: {o.mentor}</span>
+                              <p className="text-[10px] text-zinc-500 mt-1 flex items-center gap-2">
+                                <span>Start: {o.startDate}</span>
+                                <span>•</span>
+                                <span>Mentor: {o.mentor}</span>
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-6">
-                              {/* Progress bar */}
-                              <div className="flex flex-col gap-1 w-28 md:w-36">
-                                <div className="flex justify-between text-[10px] font-bold text-zinc-400">
-                                  <span>Task List</span>
-                                  <span>{doneCount}/{totalCount}</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-indigo-500 rounded-full transition-all duration-300"
-                                    style={{ width: `${progressPercentage}%` }}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-3">
-                                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border ${
-                                  o.status === "Completed"
-                                    ? "bg-emerald-950/40 border-emerald-900 text-emerald-400"
-                                    : o.status === "In Progress"
-                                    ? "bg-blue-950/40 border-blue-900 text-blue-400"
-                                    : "bg-zinc-900/60 border-zinc-800 text-zinc-400"
-                                }`}>
-                                  {o.status}
+                            <div className="flex items-center gap-5">
+                              <span className="text-[10px] font-semibold text-zinc-400">
+                                {doneCount}/{totalCount} Done
+                              </span>
+                              
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5">
+                                  <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">{o.status}</span>
                                 </span>
-                                <ChevronRight className={`w-4 h-4 text-zinc-500 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                                <ChevronRight className={`w-3.5 h-3.5 text-zinc-500 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                               </div>
                             </div>
                           </div>
 
-                          {/* Expanded detail section */}
+                          {/* Expanded checklists */}
                           {isExpanded && (
-                            <div className="px-5 pb-5 border-t border-zinc-900 bg-zinc-950/50 flex flex-col gap-6 pt-5 animate-slide-down">
+                            <div className="px-4 pb-5 pt-3 border-t border-zinc-900 bg-zinc-950/40 flex flex-col gap-5">
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {/* Onboarding details */}
-                                <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-4 text-xs">
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Corporate Email</label>
-                                    <div className="text-xs text-white font-mono bg-zinc-900 p-2.5 rounded-lg border border-zinc-800 flex items-center gap-1.5">
-                                      <Mail className="w-3.5 h-3.5 text-zinc-500" />
-                                      {o.email || "Pending creation"}
+                                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Email Address</span>
+                                    <div className="text-[11px] text-zinc-400 font-mono mt-1 pr-2 truncate">
+                                      {o.email || "Pending registration"}
                                     </div>
                                   </div>
 
                                   <div className="flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Assigned Mentor</label>
-                                    <div className="text-xs text-white bg-zinc-900 p-2.5 rounded-lg border border-zinc-800 flex items-center gap-1.5">
-                                      <Users className="w-3.5 h-3.5 text-zinc-500" />
-                                      {o.mentor}
-                                    </div>
-                                  </div>
-
-                                  <div className="flex flex-col gap-2 mt-2">
-                                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Onboarding Status</label>
+                                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Status Select</span>
                                     <select
                                       value={o.status}
                                       onChange={(e) => handleUpdateOnbStatus(o.id, e.target.value as any)}
-                                      className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold text-white p-2.5 outline-none focus:border-blue-500 w-full"
+                                      className="admin-input mt-1"
                                     >
                                       <option value="Not Started">Not Started</option>
                                       <option value="In Progress">In Progress</option>
@@ -902,26 +884,25 @@ export default function WorkspacePage() {
                                   </div>
                                 </div>
 
-                                {/* Task Checklist */}
                                 <div className="md:col-span-2 flex flex-col gap-3">
-                                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Onboarding checklist</label>
-                                  <div className="flex flex-col gap-2 mt-1">
+                                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Onboarding checklist</span>
+                                  <div className="flex flex-col gap-1.5">
                                     {o.tasks.map(t => (
                                       <button
                                         key={t.id}
                                         onClick={() => handleToggleOnbTask(o.id, t.id, !t.completed)}
-                                        className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                        className={`flex items-center gap-3 p-2 rounded-lg border text-left transition-colors ${
                                           t.completed
-                                            ? "bg-indigo-950/10 border-indigo-900/40 text-white"
-                                            : "bg-zinc-900/30 border-zinc-850 text-zinc-400 hover:border-zinc-700"
+                                            ? "bg-indigo-955/20 border-indigo-900/50 text-indigo-400"
+                                            : "bg-zinc-900/60 border-zinc-855 text-zinc-400 hover:border-zinc-700"
                                         }`}
                                       >
-                                        <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border ${
-                                          t.completed ? "bg-indigo-500 border-indigo-400 text-white" : "border-zinc-700"
+                                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${
+                                          t.completed ? "bg-indigo-600 border-transparent text-white" : "border-zinc-700"
                                         }`}>
-                                          {t.completed && <Check className="w-3 h-3 stroke-[3]" />}
+                                          {t.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                                         </div>
-                                        <span className="text-xs font-bold">{t.name}</span>
+                                        <span className="text-[11px] font-semibold">{t.name}</span>
                                       </button>
                                     ))}
                                   </div>
@@ -929,9 +910,9 @@ export default function WorkspacePage() {
                                   <div className="flex justify-end mt-4">
                                     <button
                                       onClick={() => handleDeleteOnboarding(o.id)}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-955/20 border border-transparent hover:border-rose-950 transition-all cursor-pointer"
+                                      className="btn-danger"
                                     >
-                                      <Trash2 className="w-3.5 h-3.5" /> Remove Onboarding Record
+                                      <Trash2 className="w-3.5 h-3.5" /> Remove tracker
                                     </button>
                                   </div>
                                 </div>
@@ -942,8 +923,8 @@ export default function WorkspacePage() {
                       );
                     })}
                     {workspace.onboardings.length === 0 && (
-                      <div className="text-center py-12 border border-dashed border-zinc-800 rounded-2xl">
-                        <p className="text-sm text-zinc-500">No candidate onboardings configured. Click "Start Onboarding" above.</p>
+                      <div className="text-center py-12">
+                        <p className="text-xs text-zinc-500">No candidate onboarding guides active.</p>
                       </div>
                     )}
                   </div>
@@ -954,147 +935,82 @@ export default function WorkspacePage() {
               {activeTab === "tasks" && (
                 <motion.div
                   key="tasks"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex flex-col gap-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-6"
                 >
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-bold tracking-wider text-zinc-400 uppercase font-mono">Operations Tasks Checklist</h3>
-                  </div>
-
-                  {/* Columns for Task Board */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* TO DO COLUMN */}
-                    <div className="flex flex-col gap-3 bg-zinc-950/20 border border-zinc-900 rounded-2xl p-4">
-                      <div className="flex items-center justify-between border-b border-zinc-900 pb-2 mb-1">
-                        <span className="text-xs font-extrabold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-zinc-600" /> To Do
+                  {/* Columns */}
+                  {[
+                    { title: "To Do", key: "To Do", dot: "bg-zinc-500" },
+                    { title: "In Progress", key: "In Progress", dot: "bg-indigo-500" },
+                    { title: "Completed", key: "Done", dot: "bg-emerald-500" }
+                  ].map(col => (
+                    <div key={col.title} className="flex flex-col gap-3 bg-zinc-950/20 border border-zinc-900 rounded-xl p-4 shadow-sm">
+                      <div className="flex items-center justify-between border-b border-zinc-900 pb-2 mb-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                        <span className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${col.dot}`} /> {col.title}
                         </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-zinc-900 text-zinc-500">
-                          {workspace.tasks.filter(t => t.status === "To Do").length}
-                        </span>
+                        <span>{workspace.tasks.filter(t => t.status === col.key).length}</span>
                       </div>
-                      <div className="flex flex-col gap-2.5">
-                        {workspace.tasks.filter(t => t.status === "To Do").map(t => (
-                          <div key={t.id} className="p-4 border border-zinc-850 rounded-xl bg-zinc-900/20 flex flex-col gap-3 hover:border-zinc-800 transition-colors">
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[8px] font-extrabold uppercase tracking-widest text-blue-400">{t.category}</span>
-                              <h4 className="text-xs font-bold text-white leading-tight">{t.title}</h4>
-                            </div>
-                            <div className="flex flex-col gap-1.5 border-t border-zinc-900/60 pt-2.5 text-[10px] text-zinc-400 font-semibold">
-                              <p className="truncate">Assigned: {t.assignedTo}</p>
-                              <p>Due: {t.dueDate}</p>
-                            </div>
-                            <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2.5">
-                              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                                t.priority === "High" ? "bg-rose-950/50 text-rose-400 border border-rose-900" : t.priority === "Medium" ? "bg-amber-950/50 text-amber-400 border border-amber-900" : "bg-zinc-900 text-zinc-500"
-                              }`}>
-                                {t.priority}
-                              </span>
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  onClick={() => handleUpdateTaskStatus(t.id, "In Progress")}
-                                  className="text-[9px] font-bold text-blue-400 hover:text-blue-300 bg-blue-950/40 border border-blue-900/60 px-2 py-0.5 rounded cursor-pointer"
-                                >
-                                  Start
-                                </button>
-                                <button onClick={() => handleDeleteTask(t.id)} className="text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer">
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* IN PROGRESS COLUMN */}
-                    <div className="flex flex-col gap-3 bg-zinc-950/20 border border-zinc-900 rounded-2xl p-4">
-                      <div className="flex items-center justify-between border-b border-zinc-900 pb-2 mb-1">
-                        <span className="text-xs font-extrabold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-blue-500" /> In Progress
-                        </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-zinc-900 text-zinc-500">
-                          {workspace.tasks.filter(t => t.status === "In Progress").length}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-2.5">
-                        {workspace.tasks.filter(t => t.status === "In Progress").map(t => (
-                          <div key={t.id} className="p-4 border border-zinc-800 rounded-xl bg-zinc-900/40 flex flex-col gap-3 hover:border-zinc-750 transition-colors">
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[8px] font-extrabold uppercase tracking-widest text-blue-400">{t.category}</span>
-                              <h4 className="text-xs font-bold text-white leading-tight">{t.title}</h4>
-                            </div>
-                            <div className="flex flex-col gap-1.5 border-t border-zinc-900/60 pt-2.5 text-[10px] text-zinc-400 font-semibold">
-                              <p className="truncate">Assigned: {t.assignedTo}</p>
-                              <p>Due: {t.dueDate}</p>
-                            </div>
-                            <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2.5">
-                              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                                t.priority === "High" ? "bg-rose-950/50 text-rose-400 border border-rose-900" : t.priority === "Medium" ? "bg-amber-950/50 text-amber-400 border border-amber-900" : "bg-zinc-900 text-zinc-500"
-                              }`}>
-                                {t.priority}
-                              </span>
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  onClick={() => handleUpdateTaskStatus(t.id, "Done")}
-                                  className="text-[9px] font-bold text-emerald-450 hover:text-emerald-300 bg-emerald-950/40 border border-emerald-900/60 px-2 py-0.5 rounded cursor-pointer"
-                                >
-                                  Complete
-                                </button>
-                                <button onClick={() => handleDeleteTask(t.id)} className="text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer">
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* DONE COLUMN */}
-                    <div className="flex flex-col gap-3 bg-zinc-950/20 border border-zinc-900 rounded-2xl p-4">
-                      <div className="flex items-center justify-between border-b border-zinc-900 pb-2 mb-1">
-                        <span className="text-xs font-extrabold text-emerald-450 uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Completed
-                        </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-zinc-900 text-zinc-500">
-                          {workspace.tasks.filter(t => t.status === "Done").length}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-2.5">
-                        {workspace.tasks.filter(t => t.status === "Done").map(t => (
-                          <div key={t.id} className="p-4 border border-zinc-900 rounded-xl bg-zinc-950/30 flex flex-col gap-3 hover:border-zinc-800 transition-colors opacity-75">
-                            <div className="flex flex-col gap-1">
+                      
+                      <div className="flex flex-col gap-2">
+                        {workspace.tasks.filter(t => t.status === col.key).map(t => (
+                          <div key={t.id} className="p-3 border border-zinc-900 bg-zinc-900/40 rounded-lg flex flex-col gap-2.5 hover:border-zinc-700 transition-colors">
+                            <div>
                               <span className="text-[8px] font-extrabold uppercase tracking-widest text-zinc-500">{t.category}</span>
-                              <h4 className="text-xs font-bold text-zinc-400 line-through leading-tight">{t.title}</h4>
+                              <h4 className={`text-xs font-bold text-white mt-0.5 leading-tight ${t.status === "Done" ? "line-through text-zinc-500" : ""}`}>
+                                {t.title}
+                              </h4>
                             </div>
-                            <div className="flex flex-col gap-1.5 border-t border-zinc-900/60 pt-2.5 text-[10px] text-zinc-500 font-semibold">
-                              <p className="truncate">Assigned: {t.assignedTo}</p>
-                              <p>Due: {t.dueDate}</p>
+                            
+                            <div className="text-[9px] text-zinc-400 border-t border-zinc-900 pt-2 flex flex-col gap-0.5 uppercase tracking-wide">
+                              <span>User: {t.assignedTo}</span>
+                              <span>Due: {t.dueDate}</span>
                             </div>
-                            <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2.5">
-                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-600">
-                                {t.priority}
-                              </span>
+
+                            <div className="flex items-center justify-between border-t border-zinc-900 pt-2 text-[9px] font-bold">
+                              <span className="text-zinc-500 uppercase tracking-wide">{t.priority} priority</span>
                               <div className="flex items-center gap-1.5">
-                                <button
-                                  onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
-                                  className="text-[9px] font-bold text-zinc-400 hover:text-zinc-350 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded cursor-pointer"
-                                >
-                                  Reopen
-                                </button>
-                                <button onClick={() => handleDeleteTask(t.id)} className="text-zinc-500 hover:text-rose-450 transition-colors cursor-pointer">
+                                {t.status === "To Do" && (
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(t.id, "In Progress")}
+                                    className="text-[9px] font-bold text-indigo-400 hover:bg-indigo-950/30 border border-transparent px-1.5 py-0.5 rounded cursor-pointer"
+                                  >
+                                    Start
+                                  </button>
+                                )}
+                                {t.status === "In Progress" && (
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(t.id, "Done")}
+                                    className="text-[9px] font-bold text-emerald-400 hover:bg-emerald-955/30 border border-transparent px-1.5 py-0.5 rounded cursor-pointer"
+                                  >
+                                    Finish
+                                  </button>
+                                )}
+                                {t.status === "Done" && (
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
+                                    className="text-[9px] font-bold text-zinc-450 hover:bg-zinc-900 border border-transparent px-1.5 py-0.5 rounded cursor-pointer"
+                                  >
+                                    Reopen
+                                  </button>
+                                )}
+                                <button onClick={() => handleDeleteTask(t.id)} className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors">
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </div>
                           </div>
                         ))}
+                        {workspace.tasks.filter(t => t.status === col.key).length === 0 && (
+                          <div className="text-center py-6 border border-dashed border-zinc-900 rounded-lg">
+                            <p className="text-[10px] text-zinc-550 italic">No tasks in column</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1104,93 +1020,84 @@ export default function WorkspacePage() {
 
       {/* ─── FNF LAUNCH MODAL ─── */}
       {showFnfModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#000]/60 backdrop-blur-sm" onClick={() => setShowFnfModal(false)} />
+        <div className="admin-modal-backdrop" onClick={() => setShowFnfModal(false)}>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#09090b] border border-zinc-800 rounded-3xl p-8 max-w-lg w-full relative z-10 shadow-2xl flex flex-col gap-6"
+            exit={{ opacity: 0, scale: 0.95 }}
+            onClick={(e) => e.stopPropagation()}
+            className="admin-modal p-6 max-w-sm flex flex-col gap-5"
           >
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white tracking-tight">Launch FNF Settlement</h3>
-              <button onClick={() => setShowFnfModal(false)} className="text-zinc-400 hover:text-white"><X className="w-5 h-5" /></button>
+            <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Start FNF Process</h3>
+              <button onClick={() => setShowFnfModal(false)} className="text-zinc-400 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
 
             <form onSubmit={handleAddFnf} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Employee Name</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Employee Name</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. John Doe"
+                  placeholder="John Doe"
                   value={fnfForm.employeeName}
                   onChange={(e) => setFnfForm({ ...fnfForm, employeeName: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                  className="admin-input mt-1"
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Department</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Department</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Technology"
+                  placeholder="Technology"
                   value={fnfForm.department}
                   onChange={(e) => setFnfForm({ ...fnfForm, department: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                  className="admin-input mt-1"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Resignation Date</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Resignation</label>
                   <input
                     type="date"
                     required
                     value={fnfForm.resignationDate}
                     onChange={(e) => setFnfForm({ ...fnfForm, resignationDate: e.target.value })}
-                    className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                    className="admin-input mt-1"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Last Working Day</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Last Day</label>
                   <input
                     type="date"
                     required
                     value={fnfForm.lastWorkingDay}
                     onChange={(e) => setFnfForm({ ...fnfForm, lastWorkingDay: e.target.value })}
-                    className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                    className="admin-input mt-1"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Settlement Amount ($)</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Settlement Estimate (₹)</label>
                 <input
                   type="number"
-                  placeholder="Estimated settlement value"
+                  placeholder="8500"
                   value={fnfForm.amount}
                   onChange={(e) => setFnfForm({ ...fnfForm, amount: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Remarks</label>
-                <textarea
-                  placeholder="Notes on resignation details"
-                  value={fnfForm.remarks}
-                  onChange={(e) => setFnfForm({ ...fnfForm, remarks: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors h-20 resize-none"
+                  className="admin-input mt-1"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-white hover:bg-zinc-150 text-zinc-950 font-bold py-3.5 rounded-xl text-xs tracking-wide active:scale-[0.98] transition-all cursor-pointer shadow-lg mt-2"
+                className="btn-cta w-full justify-center mt-2"
               >
-                Initiate FNF Protocol
+                Initiate FNF Process
               </button>
             </form>
           </motion.div>
@@ -1199,81 +1106,82 @@ export default function WorkspacePage() {
 
       {/* ─── ONBOARDING LAUNCH MODAL ─── */}
       {showOnboardingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#000]/60 backdrop-blur-sm" onClick={() => setShowOnboardingModal(false)} />
+        <div className="admin-modal-backdrop" onClick={() => setShowOnboardingModal(false)}>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#09090b] border border-zinc-800 rounded-3xl p-8 max-w-lg w-full relative z-10 shadow-2xl flex flex-col gap-6"
+            exit={{ opacity: 0, scale: 0.95 }}
+            onClick={(e) => e.stopPropagation()}
+            className="admin-modal p-6 max-w-sm flex flex-col gap-5"
           >
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white tracking-tight">Initiate Onboarding Tracker</h3>
-              <button onClick={() => setShowOnboardingModal(false)} className="text-zinc-400 hover:text-white"><X className="w-5 h-5" /></button>
+            <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Start Onboarding</h3>
+              <button onClick={() => setShowOnboardingModal(false)} className="text-zinc-400 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
 
             <form onSubmit={handleAddOnboarding} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Candidate Name</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Candidate Name</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Alice Cooper"
+                  placeholder="Alice Cooper"
                   value={onbForm.candidateName}
                   onChange={(e) => setOnbForm({ ...onbForm, candidateName: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                  className="admin-input mt-1"
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Job Role Title</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Role Title</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Senior DevOps Specialist"
+                  placeholder="DevOps Specialist"
                   value={onbForm.role}
                   onChange={(e) => setOnbForm({ ...onbForm, role: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                  className="admin-input mt-1"
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Corporate Email address</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Corporate Email</label>
                 <input
                   type="email"
-                  placeholder="e.g. alice.cooper@company.com"
+                  placeholder="alice@company.com"
                   value={onbForm.email}
                   onChange={(e) => setOnbForm({ ...onbForm, email: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                  className="admin-input mt-1"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Scheduled Start Date</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Start Date</label>
                   <input
                     type="date"
                     required
                     value={onbForm.startDate}
                     onChange={(e) => setOnbForm({ ...onbForm, startDate: e.target.value })}
-                    className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                    className="admin-input mt-1"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Onboarding Mentor / Buddy</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Assigned Mentor</label>
                   <input
                     type="text"
-                    placeholder="e.g. Sarah Jenkins"
+                    placeholder="Emma Watson"
                     value={onbForm.mentor}
                     onChange={(e) => setOnbForm({ ...onbForm, mentor: e.target.value })}
-                    className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                    className="admin-input mt-1"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-white hover:bg-zinc-150 text-zinc-950 font-bold py-3.5 rounded-xl text-xs tracking-wide active:scale-[0.98] transition-all cursor-pointer shadow-lg mt-2"
+                className="btn-cta w-full justify-center mt-2"
               >
                 Launch Onboarding Track
               </button>
@@ -1284,60 +1192,61 @@ export default function WorkspacePage() {
 
       {/* ─── TASK ADD MODAL ─── */}
       {showTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#000]/60 backdrop-blur-sm" onClick={() => setShowTaskModal(false)} />
+        <div className="admin-modal-backdrop" onClick={() => setShowTaskModal(false)}>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#09090b] border border-zinc-800 rounded-3xl p-8 max-w-lg w-full relative z-10 shadow-2xl flex flex-col gap-6"
+            exit={{ opacity: 0, scale: 0.95 }}
+            onClick={(e) => e.stopPropagation()}
+            className="admin-modal p-6 max-w-sm flex flex-col gap-5"
           >
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white tracking-tight">Create Operations Task</h3>
-              <button onClick={() => setShowTaskModal(false)} className="text-zinc-400 hover:text-white"><X className="w-5 h-5" /></button>
+            <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Create Task</h3>
+              <button onClick={() => setShowTaskModal(false)} className="text-zinc-400 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
 
             <form onSubmit={handleAddTask} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Task Title</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Task Title</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Revoke AWS IAM credentials for resigning engineer"
+                  placeholder="Revoke credentials..."
                   value={taskForm.title}
                   onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                  className="admin-input mt-1"
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Assigned To (Name)</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Assignee</label>
                 <input
                   type="text"
-                  placeholder="e.g. HR Admin / IT Team"
+                  placeholder="IT Team"
                   value={taskForm.assignedTo}
                   onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                  className="admin-input mt-1"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Due Date</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Due Date</label>
                   <input
                     type="date"
                     required
                     value={taskForm.dueDate}
                     onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-                    className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                    className="admin-input mt-1"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Category</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Category</label>
                   <select
                     value={taskForm.category}
                     onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value as any })}
-                    className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                    className="admin-input mt-1"
                   >
                     <option value="General">General Ops</option>
                     <option value="Onboarding">Onboarding</option>
@@ -1347,12 +1256,12 @@ export default function WorkspacePage() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Priority Level</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Priority Level</label>
                 <select
                   value={taskForm.priority}
                   onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as any })}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs font-semibold outline-none focus:border-blue-500 transition-colors"
+                  className="admin-input mt-1"
                 >
                   <option value="Low">Low Priority</option>
                   <option value="Medium">Medium Priority</option>
@@ -1362,9 +1271,9 @@ export default function WorkspacePage() {
 
               <button
                 type="submit"
-                className="w-full bg-white hover:bg-zinc-150 text-zinc-950 font-bold py-3.5 rounded-xl text-xs tracking-wide active:scale-[0.98] transition-all cursor-pointer shadow-lg mt-2"
+                className="btn-cta w-full justify-center mt-2"
               >
-                Provision Task Check
+                Create Task
               </button>
             </form>
           </motion.div>

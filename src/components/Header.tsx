@@ -107,7 +107,7 @@ export default function Header({ session, handleLogout }: HeaderProps) {
                 <button
                   onClick={() => router.push("/jobs")}
                   className={`relative z-10 flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors ${
-                    pathname === "/jobs" ? "text-[#1a3bbd]" : "text-white/75 hover:text-white hover:bg-white/10"
+                    pathname === "/jobs" ? "text-[#2563eb]" : "text-white/75 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   {pathname === "/jobs" && (

@@ -555,7 +555,7 @@ export default function AdminPage() {
   /* ── Spinner loading state ── */
   if ((!mounted || authLoading) && !loginSuccess) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#09090b] text-white relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white relative overflow-hidden">
         <GlassBackground />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
@@ -568,7 +568,7 @@ export default function AdminPage() {
   /* ── Auth Success Animation ── */
   if (loginSuccess) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#09090b] text-white relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white relative overflow-hidden">
         <GlassBackground />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -595,7 +595,7 @@ export default function AdminPage() {
   /* ── Sleek Dark Login screen ── */
   if (!session) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#09090b] relative overflow-hidden p-4">
+      <main className="min-h-screen flex items-center justify-center bg-[#050505] relative overflow-hidden p-4">
         {/* Deep, glowing background rings */}
         <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-violet-500/10 blur-[120px] pointer-events-none" />
@@ -673,7 +673,7 @@ export default function AdminPage() {
 
   if (session && !isRecruiter) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#09090b] relative overflow-hidden p-4">
+      <main className="min-h-screen flex items-center justify-center bg-[#050505] relative overflow-hidden p-4">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -707,7 +707,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-white relative z-10 flex flex-col lg:flex-row overflow-hidden">
+    <main className="min-h-screen bg-[#050505] text-white relative z-10 flex flex-col lg:flex-row overflow-hidden">
       <GlassBackground />
 
       {/* ── Midnight-Dark Sidebar (Stripe Style) ── */}
@@ -960,25 +960,27 @@ export default function AdminPage() {
 
           {/* ── Talent Index (DataTable Layout) ── */}
           {activeTab === "cvs" && (
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-4">
+            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-5">
               
               {/* Search Toolbar */}
-              <div className="bg-zinc-900/85 border border-zinc-800/80 rounded-2xl p-4 shadow-2xl flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="flex flex-col sm:flex-row gap-3.5 items-stretch">
+                {/* Search Box */}
+                <div className="relative flex-1 flex items-center bg-zinc-950/80 rounded-xl border border-zinc-900 px-3.5 py-2.5">
+                  <Search className="w-4 h-4 mr-2.5 text-zinc-600" />
                   <input
                     type="text"
                     placeholder="Search candidate registry database..."
                     value={cvSearch}
                     onChange={e => setCvSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-zinc-805 border-zinc-800 bg-zinc-950/80 text-xs font-semibold focus:outline-none focus:border-blue-500 transition-colors text-zinc-200"
+                    className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
                   />
                 </div>
                 
+                {/* Status Dropdown */}
                 <select
                   value={cvFilter}
                   onChange={e => setCvFilter(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-zinc-800 bg-zinc-950 text-xs font-bold text-zinc-350 focus:outline-none cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-zinc-900 bg-zinc-950/50 text-xs font-bold text-zinc-400 focus:outline-none focus:border-zinc-700 cursor-pointer"
                 >
                   <option value="All">All Statuses</option>
                   <option value="Not Called">Not Called</option>
@@ -988,103 +990,91 @@ export default function AdminPage() {
                 </select>
               </div>
 
-              {/* Data Table */}
+              {/* Data Rows */}
               {cvs.length === 0 ? (
-                <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
-                  <FileText className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-400 font-semibold">No candidate profile files indexed.</p>
+                <div className="py-20 flex flex-col items-center gap-3 animate-pulse-slow" style={{border:'1px dashed rgba(255,255,255,0.06)',borderRadius:'16px'}}>
+                  <FileText className="w-7 h-7" style={{color:'rgba(255,255,255,0.12)'}} />
+                  <p className="text-sm font-semibold text-zinc-500">No candidate profile files indexed.</p>
                 </div>
               ) : (
-                <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-2xl">
-                  <div className="overflow-x-auto">
-                    <table className="premium-table">
-                      <thead>
-                        <tr>
-                          <th>Candidate</th>
-                          <th>Status</th>
-                          <th>Indexed Date</th>
-                          <th className="text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {cvs.filter(c => {
-                          const matchesFilter = cvFilter === "All" || c.status === cvFilter;
-                          const matchesSearch = !cvSearch.trim() ||
-                            c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
-                            (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase()));
-                          return matchesFilter && matchesSearch;
-                        }).map((cv) => {
-                          const statusStyle = getStatusStyle(cv.status);
-                          const initials = cv.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+                <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
+                  {cvs.filter(c => {
+                    const matchesFilter = cvFilter === "All" || c.status === cvFilter;
+                    const matchesSearch = !cvSearch.trim() ||
+                      c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
+                      (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase()));
+                    return matchesFilter && matchesSearch;
+                  }).map((cv) => {
+                    const statusStyle = getStatusStyle(cv.status);
+                    const initials = cv.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+                    
+                    return (
+                      <div
+                        key={cv.id}
+                        onClick={() => {
+                          setActivePreviewCandidate(cv);
+                          const parsed = parseCvNotes(cv.comments);
+                          setCvProposedSlots(parsed.interview?.proposed_slots || [""]);
+                        }}
+                        className="w-full flex justify-between items-center py-5 px-6 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-4 min-w-0 pr-4">
+                          <div className="w-9 h-9 rounded-xl bg-zinc-950/40 border border-zinc-900 flex items-center justify-center text-zinc-300 font-extrabold text-[11px] shrink-0">
+                            {initials}
+                          </div>
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <h2 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-300 transition-colors truncate">
+                              {cv.name}
+                            </h2>
+                            <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                              <span>{cv.email || "No email handle"}</span>
+                              <span>•</span>
+                              <span>Indexed {new Date(cv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 shrink-0">
+                          <span 
+                            style={{ color: statusStyle.color, borderColor: statusStyle.color + "30" }}
+                            className="text-[10px] font-semibold bg-zinc-950/40 border px-3 py-1 rounded-md"
+                          >
+                            {cv.status}
+                          </span>
                           
-                          return (
-                            <tr
-                              key={cv.id}
-                              className="group cursor-pointer"
+                          <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                            <button
                               onClick={() => {
-                                setActivePreviewCandidate(cv);
-                                const parsed = parseCvNotes(cv.comments);
-                                setCvProposedSlots(parsed.interview?.proposed_slots || [""]);
+                                setEditingCv(cv);
+                                setCvName(cv.name);
+                                setCvEmail(cv.email || "");
+                                setCvPhone(cv.phone || "");
+                                setShowCvModal(true);
                               }}
+                              className="p-2 bg-zinc-950/40 border border-zinc-900 hover:border-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-all cursor-pointer"
+                              title="Edit Candidate"
                             >
-                              <td>
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300 font-bold text-[11px] border border-zinc-700">
-                                    {initials}
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-white">{cv.name}</span>
-                                    <span className="text-xs text-zinc-400 font-semibold">{cv.email || "No email handle"}</span>
-                                  </div>
-                                </div>
-                              </td>
-                              <td>
-                                <span className="inline-flex items-center gap-1.5">
-                                  <span style={{ backgroundColor: statusStyle.dot }} className="w-1.5 h-1.5 rounded-full" />
-                                  <span style={{ color: statusStyle.color }} className="text-xs font-bold">{cv.status}</span>
-                                </span>
-                              </td>
-                              <td className="text-xs font-semibold text-zinc-450">
-                                {new Date(cv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                              </td>
-                              <td>
-                                <div className="flex gap-1.5 justify-end" onClick={e => e.stopPropagation()}>
-                                  <button
-                                    onClick={() => {
-                                      setEditingCv(cv);
-                                      setCvName(cv.name);
-                                      setCvEmail(cv.email || "");
-                                      setCvPhone(cv.phone || "");
-                                      setShowCvModal(true);
-                                    }}
-                                    className="p-1.5 bg-zinc-950/80 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-white rounded-lg transition-all cursor-pointer"
-                                    title="Edit Candidate"
-                                  >
-                                    <Edit2 className="w-3 h-3" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteCv(cv.id)}
-                                    className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-400 rounded-lg transition-all cursor-pointer"
-                                    title="Delete Record"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCv(cv.id)}
+                              className="p-2 bg-rose-950/10 hover:bg-rose-955/25 border border-rose-900/40 hover:border-rose-900/80 text-rose-450 rounded-lg transition-all cursor-pointer"
+                              title="Delete Record"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </motion.section>
           )}
 
-          {/* ── Supervisor Accounts Tab ── */}
           {activeTab === "users" && (
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
+            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-4">
               {adminUsers.length === 0 ? (
                 <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
                   <Users className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
@@ -1097,28 +1087,28 @@ export default function AdminPage() {
                     return (
                       <div
                         key={u.id}
-                        className="bg-[#121214]/60 backdrop-blur-xl border border-zinc-800/80 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between gap-5 shadow-lg hover:border-zinc-700/80 transition-all"
+                        className="border border-zinc-900 bg-zinc-950/20 hover:bg-zinc-900/30 transition-colors rounded-2xl p-6 relative flex flex-col justify-between gap-5 shadow-sm"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-850 flex items-center justify-center text-white font-extrabold text-sm shadow-md">
+                          <div className="w-9 h-9 rounded-xl bg-zinc-950/40 border border-zinc-900 flex items-center justify-center text-zinc-300 font-extrabold text-xs shrink-0">
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-bold text-white truncate leading-none">
-                              {u.name || <span className="italic text-zinc-500 font-semibold">Unnamed Admin</span>}
+                            <p className="font-bold text-white truncate text-sm leading-none">
+                              {u.name || <span className="italic text-zinc-650">Unnamed Admin</span>}
                             </p>
-                            <p className="text-xs text-zinc-550 text-zinc-400 font-semibold mt-0.5">{u.email}</p>
+                            <p className="text-[10px] text-zinc-500 font-bold uppercase mt-1.5 tracking-wider">{u.email}</p>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-1.5 border-t border-zinc-800/60 pt-4 text-[11px] font-semibold text-zinc-400">
+                        <div className="flex flex-col gap-2 border-t border-zinc-900/60 pt-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                           <div className="flex justify-between">
                             <span>Key Provisioned:</span>
-                            <span className="text-zinc-300">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                            <span className="text-zinc-400">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Last Sign-In:</span>
-                            <span className="text-zinc-300">
+                            <span className="text-zinc-400">
                               {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
                             </span>
                           </div>
@@ -1127,7 +1117,7 @@ export default function AdminPage() {
                         {/* Revoke account button */}
                         <button
                           onClick={() => handleDeleteAdminUser(u.id)}
-                          className="absolute top-4 right-4 p-2 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/50 text-rose-400 rounded-xl cursor-pointer transition-all"
+                          className="absolute top-5 right-5 p-2 border border-zinc-900 hover:border-rose-900/80 bg-zinc-950/40 hover:bg-rose-955/20 text-zinc-550 hover:text-rose-450 rounded-lg cursor-pointer transition-colors"
                           title="Revoke access key"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

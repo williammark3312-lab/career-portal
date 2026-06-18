@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import {
-  Calendar, CheckCircle2, Clock, AlertTriangle, Loader2, Sparkles, Check
-} from "lucide-react";
+import { Calendar, CheckCircle2, Clock, AlertTriangle, Loader2, Check } from "lucide-react";
 import GlassBackground from "../../../src/components/GlassBackground";
 
 /* ─── Interfaces ─── */
@@ -72,7 +70,6 @@ export default function CandidateSchedulingPage() {
   const [confirming, setConfirming] = useState(false);
   const [confirmedSlot, setConfirmedSlot] = useState<string | null>(null);
 
-  // Parse notes data
   const notesData = app ? parseNotes(app.notes || app.comments) : null;
   const interview = notesData?.interview || null;
   const proposedSlots = interview?.proposed_slots || [];
@@ -82,7 +79,7 @@ export default function CandidateSchedulingPage() {
 
     async function load() {
       setLoading(true);
-      setError(null); // Clear any previous errors
+      setError(null);
       try {
         const response = await fetch(`/api/schedule/${id}`);
         const result = await response.json();
@@ -142,23 +139,21 @@ export default function CandidateSchedulingPage() {
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       
-      // Note 1 (E5)
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = "sine";
-      osc1.frequency.setValueAtTime(659.25, ctx.currentTime); // E5
-      gain1.gain.setValueAtTime(0.15, ctx.currentTime);
+      osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
+      gain1.gain.setValueAtTime(0.12, ctx.currentTime);
       gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
       
-      // Note 2 (A5) after 120ms
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = "sine";
-      osc2.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12); // A5
+      osc2.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12);
       gain2.gain.setValueAtTime(0.0, ctx.currentTime);
-      gain2.gain.setValueAtTime(0.15, ctx.currentTime + 0.12);
+      gain2.gain.setValueAtTime(0.12, ctx.currentTime + 0.12);
       gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
@@ -167,9 +162,7 @@ export default function CandidateSchedulingPage() {
       osc1.stop(ctx.currentTime + 0.85);
       osc2.start(ctx.currentTime + 0.12);
       osc2.stop(ctx.currentTime + 0.95);
-    } catch (err) {
-      console.warn("Failed to play chime:", err);
-    }
+    } catch {}
   }
 
   async function handleConfirmSlot() {
@@ -190,7 +183,6 @@ export default function CandidateSchedulingPage() {
         playChime();
         setConfirmedSlot(selectedSlot);
 
-        // Dispatch Confirmation Email to Candidate's Gmail
         fetch("/api/send-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -206,8 +198,7 @@ export default function CandidateSchedulingPage() {
         });
       }
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      alert("Error confirming slot: " + errMsg);
+      alert("Error confirming slot: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setConfirming(false);
     }
@@ -215,131 +206,126 @@ export default function CandidateSchedulingPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#09090b] relative overflow-hidden">
+      <main className="min-h-screen flex items-center justify-center bg-[#050505] relative overflow-hidden">
         <GlassBackground />
-        <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin relative z-10" />
+        <div className="w-6 h-6 border-2 border-zinc-800 border-t-zinc-450 animate-spin relative z-10" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen flex flex-col justify-between bg-[#09090b] text-white relative z-10 overflow-hidden">
+    <main className="min-h-screen flex flex-col justify-between bg-[#050505] text-white relative z-10 overflow-hidden">
       <GlassBackground />
 
-      {/* Decorative Header Banner */}
-      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-rose-500 z-20" />
-
-      <div className="flex-1 w-full max-w-lg mx-auto px-6 pt-24 pb-16 flex flex-col justify-center relative z-10">
+      <div className="flex-1 w-full max-w-md mx-auto px-6 pt-24 pb-16 flex flex-col justify-center relative z-10">
         
         {error ? (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-zinc-900 border border-red-950/50 rounded-3xl p-8 text-center shadow-xl shadow-red-950/2"
+            className="bg-zinc-950/20 border border-zinc-900 rounded-2xl p-8 text-center shadow-lg"
           >
-            <div className="w-14 h-14 rounded-full bg-red-950/30 text-red-400 flex items-center justify-center mx-auto mb-5 border border-red-900/50">
-              <AlertTriangle className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-850 text-rose-500 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-bold text-white mb-2">Unable to Load Scheduling Page</h2>
-            <p className="text-xs font-semibold text-zinc-400 leading-relaxed">{error}</p>
+            <h2 className="text-sm font-bold text-white mb-2">Unable to Load Scheduling Page</h2>
+            <p className="text-xs text-zinc-500 leading-relaxed font-semibold">{error}</p>
           </motion.div>
         ) : confirmedSlot ? (
           <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 border border-zinc-800/80 rounded-[32px] p-8 text-center shadow-2xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-zinc-950/20 border border-zinc-900 rounded-2xl p-8 text-center shadow-lg flex flex-col gap-6"
           >
-            <div className="w-16 h-16 rounded-full bg-emerald-950/30 text-emerald-450 flex items-center justify-center mx-auto mb-6 border border-emerald-900/50 shadow-inner animate-pulse-slow">
-              <CheckCircle2 className="w-8 h-8" />
+            <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-850 text-white flex items-center justify-center mx-auto shadow-sm">
+              <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
             
-            <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
-              Interview Confirmed!
-            </h1>
-            <p className="text-xs font-semibold text-zinc-400 leading-relaxed max-w-[280px] mx-auto mb-8">
-              Hi {app?.name}, your discussion slot has been finalized with the recruitment team.
-            </p>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-white mb-1.5">
+                Interview Confirmed
+              </h1>
+              <p className="text-xs text-zinc-500 font-semibold leading-relaxed max-w-[260px] mx-auto">
+                Hi {app?.name}, your discussion slot has been finalized with the recruitment team.
+              </p>
+            </div>
 
-            <div className="bg-emerald-950/20 border border-emerald-900/50 rounded-2xl p-6 text-left mb-8 shadow-sm">
-              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-2">
+            <div className="bg-zinc-900/40 border border-zinc-900 rounded-xl p-5 text-left shadow-sm flex flex-col gap-2">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">
                 Confirmed Meeting Info
               </span>
-              <h3 className="text-base font-bold text-white mb-1">
-                {job?.title || "Role Interview"}
-              </h3>
-              <p className="text-xs font-semibold text-zinc-450 mb-4">
-                Recruitment Candidate Evaluation
-              </p>
-              <div className="flex gap-2.5 items-start text-xs font-bold text-zinc-200">
-                <Calendar className="w-4.5 h-4.5 text-emerald-450 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-xs font-bold text-white">
+                  {job?.title || "Role Interview"}
+                </h3>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase mt-0.5">
+                  Recruitment Candidate Evaluation
+                </p>
+              </div>
+              <div className="flex gap-2 items-center text-xs font-semibold text-zinc-200 mt-2 border-t border-zinc-900/60 pt-3">
+                <Calendar className="w-4 h-4 text-zinc-400 shrink-0" />
                 <span>{formatDateTime(confirmedSlot)}</span>
               </div>
             </div>
 
-            <p className="text-[11px] text-zinc-400 font-semibold leading-relaxed">
-              We have dispatched a calendar invitation to <strong className="text-zinc-300 font-bold">{app?.email}</strong>. We look forward to speaking with you!
+            <p className="text-[10px] text-zinc-500 font-semibold leading-relaxed">
+              We have dispatched a calendar invitation to <strong className="text-zinc-350">{app?.email}</strong>.
             </p>
           </motion.div>
         ) : proposedSlots.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-zinc-900 border border-zinc-800/80 rounded-[32px] p-8 text-center shadow-2xl"
+            className="bg-zinc-950/20 border border-zinc-900 rounded-2xl p-8 text-center shadow-lg"
           >
-            <div className="w-14 h-14 rounded-full bg-blue-950/30 text-blue-400 flex items-center justify-center mx-auto mb-5 border border-blue-900/50">
-              <Clock className="w-6 h-6 animate-pulse-slow" />
+            <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-850 text-zinc-500 flex items-center justify-center mx-auto mb-4">
+              <Clock className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-bold text-white mb-2">No Time Slots Offered</h2>
-            <p className="text-xs font-semibold text-zinc-400 leading-relaxed">
-              Our team has not proposed scheduling options for this applicant profile yet. Reach out to your coordinator to set up your meeting window.
+            <h2 className="text-sm font-bold text-white mb-2">No Time Slots Offered</h2>
+            <p className="text-xs text-zinc-500 font-semibold leading-relaxed">
+              Our team has not proposed scheduling options for this applicant profile yet.
             </p>
           </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-zinc-900 border border-zinc-800/80 rounded-[32px] p-8 shadow-2xl"
+            className="bg-zinc-950/20 border border-zinc-900 rounded-2xl p-6 sm:p-8 shadow-lg flex flex-col gap-6"
           >
-            <div className="mb-6 text-center sm:text-left">
-              <span className="text-[9px] font-bold text-blue-400 bg-blue-950/30 border border-blue-900/50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-3.5 inline-block">
+            <div>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">
                 Choose a time
               </span>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-1.5">
+              <h1 className="text-lg font-bold tracking-tight text-white mb-1">
                 Select Interview Slot
               </h1>
-              <p className="text-xs font-semibold text-zinc-400 leading-relaxed">
+              <p className="text-xs text-zinc-500 font-semibold leading-relaxed">
                 Hi {app?.name}, please choose a convenient slot from the proposed options below:
               </p>
             </div>
 
-            <div className="flex flex-col gap-3.5 mb-8">
+            <div className="flex flex-col gap-2.5">
               {proposedSlots.map((slot, idx) => {
                 const isSelected = selectedSlot === slot;
                 return (
                   <button
                     key={idx}
                     onClick={() => setSelectedSlot(slot)}
-                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 text-left outline-none cursor-pointer w-full ${
+                    className={`flex items-center justify-between p-3.5 rounded-xl border transition-all text-left outline-none cursor-pointer w-full ${
                       isSelected
-                        ? "border-blue-500 bg-blue-950/25 shadow-sm"
-                        : "border-zinc-800 hover:border-zinc-700 bg-zinc-950/50"
+                        ? "border-white bg-zinc-900/60 shadow-sm"
+                        : "border-zinc-900 hover:border-zinc-850 bg-zinc-950/40 text-zinc-450 hover:text-zinc-350"
                     }`}
                   >
-                    <div className="flex gap-3.5 items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                        isSelected ? "bg-blue-955 bg-blue-950 text-blue-400" : "bg-zinc-900 text-zinc-500"
-                      }`}>
-                        <Calendar className="w-4 h-4" />
-                      </div>
-                      <span className={`text-xs sm:text-sm font-bold ${
-                        isSelected ? "text-zinc-150 text-white" : "text-zinc-300"
-                      }`}>
+                    <div className="flex gap-3 items-center">
+                      <Calendar className={`w-4 h-4 ${isSelected ? "text-white" : "text-zinc-600"}`} />
+                      <span className={`text-xs font-semibold ${isSelected ? "text-white" : "text-zinc-400"}`}>
                         {formatDateTime(slot)}
                       </span>
                     </div>
                     {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/10">
-                        <Check className="w-3.5 h-3.5" />
+                      <div className="w-4.5 h-4.5 rounded-full bg-white flex items-center justify-center text-black shadow-sm">
+                        <Check className="w-3 h-3 stroke-[3]" />
                       </div>
                     )}
                   </button>
@@ -350,27 +336,22 @@ export default function CandidateSchedulingPage() {
             <button
               disabled={!selectedSlot || confirming}
               onClick={handleConfirmSlot}
-              className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs cursor-pointer border-none flex items-center justify-center gap-2 transition-all duration-200 ${
+              className={`w-full py-3 px-4 rounded-xl font-bold text-xs cursor-pointer border transition-all flex items-center justify-center gap-2 ${
                 selectedSlot 
-                  ? "bg-white text-zinc-950 hover:bg-zinc-100 shadow-md" 
-                  : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                  ? "bg-white text-black hover:bg-zinc-200 border-transparent shadow-sm" 
+                  : "bg-zinc-950 text-zinc-600 border-zinc-900 cursor-not-allowed"
               }`}
             >
-              {confirming ? (
-                <Loader2 className="w-4.5 h-4.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-4.5 h-4.5" />
-              )}
+              {confirming && <Loader2 className="w-4 h-4 animate-spin" />}
               Confirm Interview Slot
             </button>
           </motion.div>
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-900 py-6 bg-zinc-950/40 backdrop-blur-md mt-auto z-15">
-        <div className="max-w-lg mx-auto px-6 flex justify-between items-center text-[11px] text-zinc-500 font-semibold">
-          <p>© {new Date().getFullYear()} Google Antigravity. All rights reserved.</p>
+      <footer className="border-t border-zinc-900 py-6 bg-transparent mt-auto z-15">
+        <div className="max-w-md mx-auto px-6 flex justify-between items-center text-[10px] text-zinc-600 font-bold uppercase tracking-wider">
+          <p>© {new Date().getFullYear()} Google Antigravity</p>
         </div>
       </footer>
     </main>
