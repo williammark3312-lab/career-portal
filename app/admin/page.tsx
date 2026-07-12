@@ -158,13 +158,14 @@ export default function AdminPage() {
   const [cvOpen, setCvOpen] = useState(false);
 
   /* Admin Users state */
-  interface AdminUser { id: string; email: string; name: string | null; created_at: string; last_sign_in_at?: string; }
+  interface AdminUser { id: string; email: string; name: string | null; role: string; created_at: string; last_sign_in_at?: string; }
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [showUserModal, setShowUserModal] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPass, setNewUserPass] = useState("");
   const [newUserConfirm, setNewUserConfirm] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "superuser">("admin");
   const [showPass, setShowPass] = useState(false);
   const [savingUser, setSavingUser] = useState(false);
   const [usersLoaded, setUsersLoaded] = useState(false);
@@ -496,9 +497,23 @@ export default function AdminPage() {
     setCvSavingSchedule(false);
   }
 
+  const isSuperuser =
+    session?.user?.app_metadata?.role === "superuser" ||
+    session?.user?.user_metadata?.role === "superuser" ||
+    session?.user?.email === "williammark3312@gmail.com" ||
+    session?.user?.email === "anandugirish3312@gmail.com";
+
+  const isRecruiter =
+    session?.user?.app_metadata?.role === "admin" ||
+    session?.user?.user_metadata?.role === "admin" ||
+    session?.user?.app_metadata?.role === "superuser" ||
+    session?.user?.user_metadata?.role === "superuser" ||
+    session?.user?.email === "williammark3312@gmail.com" ||
+    session?.user?.email === "anandugirish3312@gmail.com";
+
   /* ── Admin Users CRUD ── */
   function resetUserForm() {
-    setNewUserName(""); setNewUserEmail(""); setNewUserPass(""); setNewUserConfirm(""); setShowPass(false);
+    setNewUserName(""); setNewUserEmail(""); setNewUserPass(""); setNewUserConfirm(""); setNewUserRole("admin"); setShowPass(false);
   }
 
   async function handleCreateAdminUser() {
@@ -510,11 +525,11 @@ export default function AdminPage() {
       const res = await fetch("/api/create-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newUserEmail.trim(), password: newUserPass, name: newUserName.trim() }),
+        body: JSON.stringify({ email: newUserEmail.trim(), password: newUserPass, name: newUserName.trim(), role: newUserRole }),
       });
       const json = await res.json();
       if (!res.ok) { alert(json.error ?? "Failed to create user."); return; }
-      setCreatedUser({ id: json.id, email: json.email, name: newUserName.trim() || null, created_at: json.created_at });
+      setCreatedUser({ id: json.id, email: json.email, name: newUserName.trim() || null, role: newUserRole, created_at: json.created_at });
       resetUserForm();
       setUsersLoaded(false);
       loadAdminUsers();
@@ -532,6 +547,24 @@ export default function AdminPage() {
       loadAdminUsers();
     } catch {
       alert("Failed to delete user due to network error.");
+    }
+  }
+
+  async function handleToggleRole(userId: string, currentRole: string) {
+    if (!isSuperuser) { alert("Only superusers can change roles."); return; }
+    const targetRole = currentRole === "superuser" ? "admin" : "superuser";
+    if (!confirm(`Are you sure you want to change this user's role to ${targetRole}?`)) return;
+    try {
+      const res = await fetch("/api/create-admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: userId, role: targetRole }),
+      });
+      const json = await res.json();
+      if (!res.ok) { alert(json.error ?? "Failed to update role."); return; }
+      loadAdminUsers();
+    } catch {
+      alert("Failed to update role due to network error.");
     }
   }
 
@@ -666,11 +699,7 @@ export default function AdminPage() {
     );
   }
 
-  const isRecruiter =
-    session?.user?.app_metadata?.role === "admin" ||
-    session?.user?.user_metadata?.role === "admin" ||
-    session?.user?.email === "williammark3312@gmail.com" ||
-    session?.user?.email === "anandugirish3312@gmail.com";
+
 
   if (session && !isRecruiter) {
     return (
@@ -863,7 +892,7 @@ export default function AdminPage() {
                 <Upload className="w-4 h-4" /> Upload CV File
               </button>
             )}
-            {activeTab === "users" && (
+            {activeTab === "users" && isSuperuser && (
               <button
                 onClick={() => setShowUserModal(true)}
                 className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-955 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
@@ -1076,6 +1105,11 @@ export default function AdminPage() {
 
           {activeTab === "users" && (
             <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-4">
+              {!isSuperuser && (
+                <div className="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl text-center text-xs text-zinc-400 font-semibold mb-2">
+                  ℹ️ Only superusers are authorized to provision new accounts, revoke access, or modify roles.
+                </div>
+              )}
               {adminUsers.length === 0 ? (
                 <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
                   <Users className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
@@ -1098,7 +1132,16 @@ export default function AdminPage() {
                             <p className="font-bold text-white truncate text-sm leading-none">
                               {u.name || <span className="italic text-zinc-650">Unnamed Admin</span>}
                             </p>
-                            <p className="text-[10px] text-zinc-500 font-bold uppercase mt-1.5 tracking-wider">{u.email}</p>
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{u.email}</p>
+                              <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider leading-none ${
+                                u.role === "superuser"
+                                  ? "bg-violet-950/40 border border-violet-900/60 text-violet-400"
+                                  : "bg-zinc-900 border border-zinc-800 text-zinc-400"
+                              }`}>
+                                {u.role === "superuser" ? "Superuser" : "Admin"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -1115,14 +1158,29 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        {/* Revoke account button */}
-                        <button
-                          onClick={() => handleDeleteAdminUser(u.id)}
-                          className="absolute top-5 right-5 p-2 border border-zinc-900 hover:border-rose-900/80 bg-zinc-950/40 hover:bg-rose-955/20 text-zinc-550 hover:text-rose-450 rounded-lg cursor-pointer transition-colors"
-                          title="Revoke access key"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="absolute top-5 right-5 flex items-center gap-1.5">
+                          {/* Toggle role button */}
+                          {isSuperuser && (
+                            <button
+                              onClick={() => handleToggleRole(u.id, u.role)}
+                              className="p-2 border border-zinc-900 hover:border-violet-900/80 bg-zinc-950/40 hover:bg-violet-955/20 text-zinc-550 hover:text-violet-450 rounded-lg cursor-pointer transition-colors"
+                              title="Toggle privileges (Admin / Superuser)"
+                            >
+                              <Shield className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {/* Revoke account button */}
+                          {isSuperuser && (
+                            <button
+                              onClick={() => handleDeleteAdminUser(u.id)}
+                              className="p-2 border border-zinc-900 hover:border-rose-900/80 bg-zinc-950/40 hover:bg-rose-955/20 text-zinc-550 hover:text-rose-450 rounded-lg cursor-pointer transition-colors"
+                              title="Revoke access key"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1630,6 +1688,10 @@ export default function AdminPage() {
                       <span className="text-[10px] font-bold text-zinc-555 text-zinc-500 uppercase tracking-widest">Email Handle</span>
                       <p className="font-bold text-white mt-0.5">{createdUser.email}</p>
                     </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-zinc-555 text-zinc-500 uppercase tracking-widest">Privilege Role</span>
+                      <p className="font-bold text-white mt-0.5 uppercase">{createdUser.role}</p>
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-2 w-full mt-2">
@@ -1715,6 +1777,17 @@ export default function AdminPage() {
                         type={showPass ? "text" : "password"}
                         className="w-full border border-zinc-850 border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-650"
                       />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Role Privilege *</label>
+                      <select
+                        value={newUserRole}
+                        onChange={e => setNewUserRole(e.target.value as any)}
+                        className="w-full border border-zinc-800 focus:border-blue-500/80 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-zinc-350 bg-zinc-950 rounded-xl outline-none cursor-pointer"
+                      >
+                        <option value="admin">Admin (Standard)</option>
+                        <option value="superuser">Superuser (Full Control)</option>
+                      </select>
                     </div>
                   </div>
 

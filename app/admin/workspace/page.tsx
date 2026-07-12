@@ -372,6 +372,8 @@ export default function WorkspacePage() {
   const isRecruiter =
     session?.user?.app_metadata?.role === "admin" ||
     session?.user?.user_metadata?.role === "admin" ||
+    session?.user?.app_metadata?.role === "superuser" ||
+    session?.user?.user_metadata?.role === "superuser" ||
     session?.user?.email === "williammark3312@gmail.com" ||
     session?.user?.email === "anandugirish3312@gmail.com";
 
