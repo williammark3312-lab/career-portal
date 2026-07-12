@@ -669,7 +669,8 @@ export default function AdminPage() {
   const isRecruiter =
     session?.user?.app_metadata?.role === "admin" ||
     session?.user?.user_metadata?.role === "admin" ||
-    session?.user?.email === "williammark3312@gmail.com";
+    session?.user?.email === "williammark3312@gmail.com" ||
+    session?.user?.email === "anandugirish3312@gmail.com";
 
   if (session && !isRecruiter) {
     return (
