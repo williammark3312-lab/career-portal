@@ -471,7 +471,7 @@ export default function WorkspacePage() {
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white tracking-tight leading-none">Antigravity</h1>
+              <h1 className="text-sm font-bold text-white tracking-tight leading-none">Workspace</h1>
               <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Supervisor Space</span>
             </div>
           </div>
@@ -533,7 +533,7 @@ export default function WorkspacePage() {
             <span>Sign Out</span>
           </button>
           <div className="text-[10px] text-zinc-650 font-semibold px-3">
-            © {new Date().getFullYear()} Google Antigravity
+            © {new Date().getFullYear()} Workspace
           </div>
         </div>
       </aside>
