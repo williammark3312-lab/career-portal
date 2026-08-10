@@ -1,43 +1,43 @@
 {
-  "fnf": [
+  "fnf": [],
+  "onboardings": [
     {
-      "id": "fnf-1781722903168",
-      "employeeName": "Anandu",
-      "department": "HR",
-      "resignationDate": "2026-06-10",
-      "lastWorkingDay": "2026-06-19",
-      "settlementStatus": "Completed",
-      "amount": 12000,
-      "remarks": "",
+      "id": "onb-1786375733029",
+      "candidateName": "Anandu",
+      "role": "HR",
+      "startDate": "2026-08-01",
+      "status": "Completed",
+      "mentor": "Unassigned",
+      "email": "anandugirish@gmail.com",
       "tasks": [
         {
-          "id": "t1",
-          "name": "IT Asset Return Check",
-          "completed": true,
-          "section": "Assets"
+          "id": "o1",
+          "name": "Educational Document Verification",
+          "completed": true
         },
         {
-          "id": "t2",
-          "name": "Revoke Email & Slack Accounts",
-          "completed": true,
-          "section": "IT"
+          "id": "o2",
+          "name": "Laptop & IT Hardware Delivery",
+          "completed": true
         },
         {
-          "id": "t3",
-          "name": "Verify Pending Gratuity / Leaves",
-          "completed": true,
-          "section": "HR"
+          "id": "o3",
+          "name": "Generate Corporate Email Address",
+          "completed": true
         },
         {
-          "id": "t4",
-          "name": "Final Salary & Tax Calculation",
-          "completed": true,
-          "section": "Finance"
+          "id": "o4",
+          "name": "Send Welcome Mail & Agenda",
+          "completed": true
+        },
+        {
+          "id": "o5",
+          "name": "Conduct Day 1 Orientation Session",
+          "completed": true
         }
       ],
-      "createdAt": "2026-06-17T19:01:43.168Z"
+      "createdAt": "2026-08-10T15:28:53.029Z"
     }
   ],
-  "onboardings": [],
   "tasks": []
 }

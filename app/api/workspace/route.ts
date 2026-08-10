@@ -1,10 +1,17 @@
 import { promises as fs } from "fs";
 import path from "path";
 
+interface FnfTaskItem { id: string; name: string; completed: boolean; section: string; }
+interface FnfRecordItem { id: string; employeeName: string; department: string; resignationDate: string; lastWorkingDay: string; settlementStatus: string; amount: number; remarks: string; tasks: FnfTaskItem[]; createdAt: string; }
+interface OnboardingTaskItem { id: string; name: string; completed: boolean; }
+interface OnboardingRecordItem { id: string; candidateName: string; role: string; startDate: string; status: string; mentor: string; email: string; tasks: OnboardingTaskItem[]; createdAt: string; }
+interface TaskItemRecord { id: string; title: string; assignedTo: string; dueDate: string; priority: string; status: string; category: string; createdAt: string; }
+interface WorkspaceStore { fnf: FnfRecordItem[]; onboardings: OnboardingRecordItem[]; tasks: TaskItemRecord[]; }
+
 const jsonPath = path.join(process.cwd(), "data", "workspace.json");
 
 // Helper to read data from workspace.json
-async function readData() {
+async function readData(): Promise<WorkspaceStore> {
   try {
     const fileContent = await fs.readFile(jsonPath, "utf-8");
     return JSON.parse(fileContent);
@@ -14,7 +21,7 @@ async function readData() {
 }
 
 // Helper to write data back to workspace.json
-async function writeData(data: any) {
+async function writeData(data: WorkspaceStore) {
   // Ensure the directory exists
   const dir = path.dirname(jsonPath);
   await fs.mkdir(dir, { recursive: true });
@@ -68,7 +75,7 @@ export async function POST(request: Request) {
 
       case "update_fnf": {
         const { id, settlementStatus, amount, remarks, resignationDate, lastWorkingDay } = payload;
-        const index = data.fnf.findIndex((f: any) => f.id === id);
+        const index = data.fnf.findIndex((f: FnfRecordItem) => f.id === id);
         if (index !== -1) {
           data.fnf[index] = {
             ...data.fnf[index],
@@ -84,20 +91,20 @@ export async function POST(request: Request) {
 
       case "delete_fnf": {
         const { id } = payload;
-        data.fnf = data.fnf.filter((f: any) => f.id !== id);
+        data.fnf = data.fnf.filter((f: FnfRecordItem) => f.id !== id);
         break;
       }
 
       case "toggle_fnf_task": {
         const { fnfId, taskId, completed } = payload;
-        const fnf = data.fnf.find((f: any) => f.id === fnfId);
+        const fnf = data.fnf.find((f: FnfRecordItem) => f.id === fnfId);
         if (fnf) {
-          const task = fnf.tasks.find((t: any) => t.id === taskId);
+          const task = fnf.tasks.find((t: FnfTaskItem) => t.id === taskId);
           if (task) {
             task.completed = completed;
             
             // Auto update status if all are completed
-            const allDone = fnf.tasks.every((t: any) => t.completed);
+            const allDone = fnf.tasks.every((t: FnfTaskItem) => t.completed);
             if (allDone && fnf.settlementStatus === "Draft") {
               fnf.settlementStatus = "Approved";
             } else if (!allDone && fnf.settlementStatus === "Approved") {
@@ -134,7 +141,7 @@ export async function POST(request: Request) {
 
       case "update_onboarding": {
         const { id, status, mentor, email, startDate, role } = payload;
-        const index = data.onboardings.findIndex((o: any) => o.id === id);
+        const index = data.onboardings.findIndex((o: OnboardingRecordItem) => o.id === id);
         if (index !== -1) {
           data.onboardings[index] = {
             ...data.onboardings[index],
@@ -150,20 +157,20 @@ export async function POST(request: Request) {
 
       case "delete_onboarding": {
         const { id } = payload;
-        data.onboardings = data.onboardings.filter((o: any) => o.id !== id);
+        data.onboardings = data.onboardings.filter((o: OnboardingRecordItem) => o.id !== id);
         break;
       }
 
       case "toggle_onboarding_task": {
         const { onboardingId, taskId, completed } = payload;
-        const onboarding = data.onboardings.find((o: any) => o.id === onboardingId);
+        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => o.id === onboardingId);
         if (onboarding) {
-          const task = onboarding.tasks.find((t: any) => t.id === taskId);
+          const task = onboarding.tasks.find((t: OnboardingTaskItem) => t.id === taskId);
           if (task) {
             task.completed = completed;
 
             // Auto update status based on checklist progression
-            const doneCount = onboarding.tasks.filter((t: any) => t.completed).length;
+            const doneCount = onboarding.tasks.filter((t: OnboardingTaskItem) => t.completed).length;
             const total = onboarding.tasks.length;
             if (doneCount === total) {
               onboarding.status = "Completed";
@@ -196,7 +203,7 @@ export async function POST(request: Request) {
 
       case "update_task": {
         const { id, title, assignedTo, dueDate, priority, status, category } = payload;
-        const index = data.tasks.findIndex((t: any) => t.id === id);
+        const index = data.tasks.findIndex((t: TaskItemRecord) => t.id === id);
         if (index !== -1) {
           data.tasks[index] = {
             ...data.tasks[index],
@@ -213,7 +220,7 @@ export async function POST(request: Request) {
 
       case "delete_task": {
         const { id } = payload;
-        data.tasks = data.tasks.filter((t: any) => t.id !== id);
+        data.tasks = data.tasks.filter((t: TaskItemRecord) => t.id !== id);
         break;
       }
 
