@@ -7,7 +7,8 @@ import { supabase } from "../../../src/lib/supabase";
 import {
   Briefcase, FileText, X, ChevronRight, Check, Layers,
   DollarSign, Activity, Users, UserPlus, Trash2, Plus, Clock,
-  Shield, ClipboardList, LogOut, Sparkles
+  Shield, ClipboardList, LogOut, Sparkles, Search, Filter,
+  List, Kanban, ChevronDown, CheckCircle2
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../src/components/Header";
@@ -198,6 +199,30 @@ export default function WorkspacePage() {
   const [taskForm, setTaskForm] = useState({
     title: "", assignedTo: "", dueDate: "", priority: "Medium" as WorkspaceTask["priority"], category: "General" as WorkspaceTask["category"]
   });
+
+  /* Google Tasks Efficiency States */
+  const [taskViewMode, setTaskViewMode] = useState<"list" | "board">("list");
+  const [quickTaskTitle, setQuickTaskTitle] = useState("");
+  const [quickTaskCategory, setQuickTaskCategory] = useState<WorkspaceTask["category"]>("General");
+  const [quickTaskPriority, setQuickTaskPriority] = useState<WorkspaceTask["priority"]>("Medium");
+  const [quickTaskDueDate, setQuickTaskDueDate] = useState("");
+  const [taskFilterCategory, setTaskFilterCategory] = useState<string>("All");
+  const [taskSearchQuery, setTaskSearchQuery] = useState("");
+  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
+
+  const handleQuickAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickTaskTitle.trim()) return;
+    const payload = {
+      title: quickTaskTitle.trim(),
+      assignedTo: session?.user?.email?.split("@")[0] || "Admin",
+      dueDate: quickTaskDueDate || new Date().toISOString().split("T")[0],
+      priority: quickTaskPriority,
+      category: quickTaskCategory
+    };
+    setQuickTaskTitle("");
+    await triggerWorkspaceAction("add_task", payload);
+  };
 
   async function loadStats() {
     try {
@@ -997,95 +1022,367 @@ export default function WorkspacePage() {
                   </div>
                 </motion.div>
               )}
+                    {/* ─── TASKS DESK TAB (GOOGLE TASKS HYPER-EFFICIENT UX) ─── */}
+              {activeTab === "tasks" && (() => {
+                const filteredTasks = workspace.tasks.filter(t => {
+                  const matchCat = taskFilterCategory === "All" || t.category === taskFilterCategory;
+                  const matchQuery = !taskSearchQuery.trim() || 
+                    t.title.toLowerCase().includes(taskSearchQuery.toLowerCase()) || 
+                    t.assignedTo.toLowerCase().includes(taskSearchQuery.toLowerCase());
+                  return matchCat && matchQuery;
+                });
 
-              {/* ─── TASKS DESK TAB ─── */}
-              {activeTab === "tasks" && (
-                <motion.div
-                  key="tasks"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-6"
-                >
-                  {/* Columns */}
-                  {[
-                    { title: "To Do", key: "To Do", dot: "bg-zinc-500" },
-                    { title: "In Progress", key: "In Progress", dot: "bg-blue-500" },
-                    { title: "Completed", key: "Done", dot: "bg-emerald-500" }
-                  ].map(col => (
-                    <div key={col.title} className="flex flex-col gap-3 bg-zinc-950/80 border border-zinc-850 rounded-2xl p-4 shadow-xl">
-                      <div className="flex items-center justify-between border-b border-zinc-850 pb-2 mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                        <span className="flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${col.dot}`} /> {col.title}
-                        </span>
-                        <span className="text-blue-400 font-bold">{workspace.tasks.filter(t => t.status === col.key).length}</span>
+                const activeTasks = filteredTasks.filter(t => t.status !== "Done");
+                const completedTasks = filteredTasks.filter(t => t.status === "Done");
+
+                return (
+                  <motion.div
+                    key="tasks"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col gap-5"
+                  >
+                    {/* ── Google Tasks Toolbar & View Switcher ── */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-zinc-950/80 border border-zinc-850 p-3 rounded-2xl shadow-xl">
+                      {/* Search Bar */}
+                      <div className="relative flex-1 w-full sm:w-auto min-w-[220px]">
+                        <Search className="w-3.5 h-3.5 text-blue-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          placeholder="Search tasks or assignees..."
+                          value={taskSearchQuery}
+                          onChange={(e) => setTaskSearchQuery(e.target.value)}
+                          className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-blue-500 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white outline-none transition-all placeholder-zinc-500"
+                        />
                       </div>
-                      
-                      <div className="flex flex-col gap-2">
-                        {workspace.tasks.filter(t => t.status === col.key).map(t => (
-                          <div key={t.id} className="p-3.5 border border-zinc-850 bg-zinc-900/40 rounded-xl flex flex-col gap-2.5 hover:border-blue-900/50 transition-colors shadow-sm group">
-                            <div>
-                              <span className="text-[9px] font-extrabold uppercase tracking-widest text-blue-400">{t.category}</span>
-                              <h4 className={`text-xs font-bold text-white group-hover:text-blue-300 transition-colors mt-0.5 leading-tight ${t.status === "Done" ? "line-through text-zinc-500" : ""}`}>
-                                {t.title}
-                              </h4>
-                            </div>
-                            
-                            <div className="text-[10px] text-zinc-400 border-t border-zinc-850/60 pt-2 flex flex-col gap-0.5 uppercase tracking-wide">
-                              <span>User: <span className="text-blue-300/80">{t.assignedTo}</span></span>
-                              <span>Due: {t.dueDate}</span>
-                            </div>
 
-                            <div className="flex items-center justify-between border-t border-zinc-850/60 pt-2 text-[10px] font-bold">
-                              <span className="text-blue-400 uppercase tracking-widest">{t.priority} priority</span>
-                              <div className="flex items-center gap-1.5">
-                                {t.status === "To Do" && (
-                                  <button
-                                    onClick={() => handleUpdateTaskStatus(t.id, "In Progress")}
-                                    className="text-[10px] font-bold text-blue-400 hover:bg-blue-950/30 border border-transparent px-2 py-0.5 rounded cursor-pointer"
-                                  >
-                                    Start
-                                  </button>
-                                )}
-                                {t.status === "In Progress" && (
-                                  <button
-                                    onClick={() => handleUpdateTaskStatus(t.id, "Done")}
-                                    className="text-[10px] font-bold text-emerald-400 hover:bg-emerald-955/30 border border-transparent px-2 py-0.5 rounded cursor-pointer"
-                                  >
-                                    Finish
-                                  </button>
-                                )}
-                                {t.status === "Done" && (
-                                  <button
-                                    onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
-                                    className="text-[10px] font-bold text-zinc-400 hover:bg-zinc-900 border border-transparent px-2 py-0.5 rounded cursor-pointer"
-                                  >
-                                    Reopen
-                                  </button>
-                                )}
+                      {/* Filter Chips & View Mode Buttons */}
+                      <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+                        {/* Category filter select */}
+                        <div className="flex items-center gap-1.5 bg-zinc-900/60 border border-zinc-800 px-2.5 py-1 rounded-xl">
+                          <Filter className="w-3 h-3 text-blue-400" />
+                          <select
+                            value={taskFilterCategory}
+                            onChange={(e) => setTaskFilterCategory(e.target.value)}
+                            className="bg-transparent text-xs font-bold text-zinc-300 outline-none cursor-pointer"
+                          >
+                            <option value="All" className="bg-zinc-950 text-white">All Categories</option>
+                            <option value="General" className="bg-zinc-950 text-white">General Ops</option>
+                            <option value="Onboarding" className="bg-zinc-950 text-white">Onboarding</option>
+                            <option value="FNF" className="bg-zinc-950 text-white">FNF Clearance</option>
+                            <option value="Recruitment" className="bg-zinc-950 text-white">Recruitment</option>
+                          </select>
+                        </div>
+
+                        {/* View Switcher: List vs Board */}
+                        <div className="flex items-center gap-1 bg-zinc-900/80 border border-zinc-800 p-1 rounded-xl">
+                          <button
+                            onClick={() => setTaskViewMode("list")}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              taskViewMode === "list"
+                                ? "bg-blue-955/50 text-blue-400 border border-blue-800/60 shadow-sm"
+                                : "text-zinc-400 hover:text-zinc-200"
+                            }`}
+                          >
+                            <List className="w-3.5 h-3.5" /> List
+                          </button>
+                          <button
+                            onClick={() => setTaskViewMode("board")}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              taskViewMode === "board"
+                                ? "bg-blue-955/50 text-blue-400 border border-blue-800/60 shadow-sm"
+                                : "text-zinc-400 hover:text-zinc-200"
+                            }`}
+                          >
+                            <Kanban className="w-3.5 h-3.5" /> Board
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Google Tasks Fast Inline Task Creator ── */}
+                    <form
+                      onSubmit={handleQuickAddTask}
+                      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-zinc-950 border border-blue-950/60 focus-within:border-blue-500/80 p-2 sm:p-2.5 rounded-2xl shadow-xl transition-all"
+                    >
+                      <div className="flex items-center gap-2 flex-1 px-2">
+                        <Plus className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                        <input
+                          type="text"
+                          placeholder="Add a task (e.g. Schedule Exit Interview, Revoke AWS Access)..."
+                          value={quickTaskTitle}
+                          onChange={(e) => setQuickTaskTitle(e.target.value)}
+                          className="w-full bg-transparent text-xs font-medium text-white placeholder-zinc-500 outline-none"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-850">
+                        {/* Quick category */}
+                        <select
+                          value={quickTaskCategory}
+                          onChange={(e) => setQuickTaskCategory(e.target.value as WorkspaceTask["category"])}
+                          className="bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-blue-400 px-2 py-1.5 rounded-xl outline-none cursor-pointer"
+                        >
+                          <option value="General" className="bg-zinc-950 text-white">General Ops</option>
+                          <option value="Onboarding" className="bg-zinc-950 text-white">Onboarding</option>
+                          <option value="FNF" className="bg-zinc-950 text-white">FNF Clearance</option>
+                          <option value="Recruitment" className="bg-zinc-950 text-white">Recruitment</option>
+                        </select>
+
+                        {/* Quick priority */}
+                        <select
+                          value={quickTaskPriority}
+                          onChange={(e) => setQuickTaskPriority(e.target.value as WorkspaceTask["priority"])}
+                          className="bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2 py-1.5 rounded-xl outline-none cursor-pointer"
+                        >
+                          <option value="Low" className="bg-zinc-950 text-white">Low Priority</option>
+                          <option value="Medium" className="bg-zinc-950 text-white">Medium Priority</option>
+                          <option value="High" className="bg-zinc-950 text-white">High Priority</option>
+                        </select>
+
+                        {/* Quick due date */}
+                        <input
+                          type="date"
+                          value={quickTaskDueDate}
+                          onChange={(e) => setQuickTaskDueDate(e.target.value)}
+                          className="bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2 py-1 rounded-xl outline-none cursor-pointer"
+                        />
+
+                        {/* Quick Submit */}
+                        <button
+                          type="submit"
+                          disabled={!quickTaskTitle.trim()}
+                          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-600/20"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </form>
+
+                    {/* ── View Render: Google Tasks List View vs Board View ── */}
+                    {taskViewMode === "list" ? (
+                      /* Google Tasks Minimalist List View */
+                      <div className="flex flex-col gap-4">
+                        {/* Active Tasks List */}
+                        <div className="border border-zinc-850 bg-zinc-950/80 rounded-2xl overflow-hidden shadow-xl p-3 flex flex-col gap-2">
+                          <div className="flex justify-between items-center px-2 py-1 border-b border-zinc-850 mb-1">
+                            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-1.5">
+                              <ClipboardList className="w-3.5 h-3.5 text-blue-400" /> Active Tasks ({activeTasks.length})
+                            </span>
+                          </div>
+
+                          {activeTasks.map(t => (
+                            <div
+                              key={t.id}
+                              className="flex items-center justify-between p-3 rounded-xl border border-zinc-850/80 bg-zinc-900/40 hover:bg-zinc-900/80 transition-all group"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                {/* Google Tasks Radio Checkbox */}
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(t.id, "Done")}
+                                  className="w-5 h-5 rounded-full border border-zinc-700 hover:border-blue-400 bg-zinc-950 flex items-center justify-center transition-all cursor-pointer group-hover:scale-105"
+                                  title="Mark as completed"
+                                >
+                                  <Check className="w-3 h-3 text-transparent group-hover:text-blue-400 transition-colors" />
+                                </button>
+
+                                <div className="flex flex-col min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">
+                                      {t.title}
+                                    </span>
+                                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-blue-400 bg-blue-955/50 border border-blue-800/60 px-2 py-0.5 rounded-md">
+                                      {t.category}
+                                    </span>
+                                    {t.priority === "High" && (
+                                      <span className="text-[9px] font-bold text-amber-400 bg-amber-955/40 border border-amber-900/50 px-1.5 py-0.5 rounded">
+                                        High Priority
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[10px] text-zinc-400 mt-0.5 flex items-center gap-2">
+                                    <span>Assigned: <span className="text-blue-300/80">{t.assignedTo}</span></span>
+                                    <span>•</span>
+                                    <span>Due: {t.dueDate}</span>
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(t.id, t.status === "To Do" ? "In Progress" : "Done")}
+                                  className="text-[10px] font-bold text-blue-400 bg-blue-955/40 border border-blue-800/50 hover:bg-blue-900/60 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                                >
+                                  {t.status === "To Do" ? "Start" : "Finish"}
+                                </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeleteTask(t.id);
                                   }}
-                                  className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-0.5"
+                                  className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1.5 rounded-lg hover:bg-rose-955/30 opacity-0 group-hover:opacity-100"
+                                  title="Delete task"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                        {workspace.tasks.filter(t => t.status === col.key).length === 0 && (
-                          <div className="text-center py-6 border border-dashed border-zinc-850 rounded-xl">
-                            <p className="text-[10px] text-zinc-500 italic">No tasks in column</p>
+                          ))}
+
+                          {activeTasks.length === 0 && (
+                            <div className="text-center py-10 border border-dashed border-zinc-850 rounded-xl">
+                              <p className="text-xs text-zinc-500 italic">No active tasks pending. Nice work!</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Collapsible Completed Tasks Accordion (Google Tasks Style) */}
+                        {completedTasks.length > 0 && (
+                          <div className="border border-zinc-850 bg-zinc-950/60 rounded-2xl overflow-hidden shadow-xl">
+                            <button
+                              onClick={() => setShowCompletedTasks(!showCompletedTasks)}
+                              className="w-full p-3.5 flex items-center justify-between bg-zinc-900/40 hover:bg-zinc-900/70 transition-all text-xs font-bold text-zinc-400 cursor-pointer"
+                            >
+                              <span className="flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Completed ({completedTasks.length})
+                              </span>
+                              <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${showCompletedTasks ? "rotate-180" : ""}`} />
+                            </button>
+
+                            {showCompletedTasks && (
+                              <div className="p-3 flex flex-col gap-2 border-t border-zinc-850 bg-zinc-950/40">
+                                {completedTasks.map(t => (
+                                  <div
+                                    key={t.id}
+                                    className="flex items-center justify-between p-3 rounded-xl border border-zinc-850/60 bg-zinc-900/20 group hover:bg-zinc-900/50 transition-all"
+                                  >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <button
+                                        onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
+                                        className="w-5 h-5 rounded-full bg-emerald-500 border border-emerald-500 text-black flex items-center justify-center transition-all cursor-pointer"
+                                        title="Reopen task"
+                                      >
+                                        <Check className="w-3 h-3 stroke-[3]" />
+                                      </button>
+                                      <div className="flex flex-col min-w-0">
+                                        <span className="text-xs font-bold line-through text-zinc-500">
+                                          {t.title}
+                                        </span>
+                                        <span className="text-[9px] font-semibold text-zinc-500">
+                                          Completed • {t.category}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
+                                        className="text-[10px] font-bold text-zinc-400 hover:text-white px-2 py-0.5 rounded cursor-pointer"
+                                      >
+                                        Reopen
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteTask(t.id);
+                                        }}
+                                        className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1 rounded hover:bg-rose-955/30"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </motion.div>
-              )}
+                    ) : (
+                      /* Board View (Kanban) */
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[
+                          { title: "To Do", key: "To Do", dot: "bg-zinc-500" },
+                          { title: "In Progress", key: "In Progress", dot: "bg-blue-500" },
+                          { title: "Completed", key: "Done", dot: "bg-emerald-500" }
+                        ].map(col => (
+                          <div key={col.title} className="flex flex-col gap-3 bg-zinc-950/80 border border-zinc-850 rounded-2xl p-4 shadow-xl">
+                            <div className="flex items-center justify-between border-b border-zinc-850 pb-2 mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                              <span className="flex items-center gap-1.5">
+                                <span className={`w-1.5 h-1.5 rounded-full ${col.dot}`} /> {col.title}
+                              </span>
+                              <span className="text-blue-400 font-bold">{filteredTasks.filter(t => t.status === col.key).length}</span>
+                            </div>
+                            
+                            <div className="flex flex-col gap-2">
+                              {filteredTasks.filter(t => t.status === col.key).map(t => (
+                                <div key={t.id} className="p-3.5 border border-zinc-850 bg-zinc-900/40 rounded-xl flex flex-col gap-2.5 hover:border-blue-900/50 transition-colors shadow-sm group">
+                                  <div>
+                                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-blue-400">{t.category}</span>
+                                    <h4 className={`text-xs font-bold text-white group-hover:text-blue-300 transition-colors mt-0.5 leading-tight ${t.status === "Done" ? "line-through text-zinc-500" : ""}`}>
+                                      {t.title}
+                                    </h4>
+                                  </div>
+                                  
+                                  <div className="text-[10px] text-zinc-400 border-t border-zinc-850/60 pt-2 flex flex-col gap-0.5 uppercase tracking-wide">
+                                    <span>User: <span className="text-blue-300/80">{t.assignedTo}</span></span>
+                                    <span>Due: {t.dueDate}</span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between border-t border-zinc-850/60 pt-2 text-[10px] font-bold">
+                                    <span className="text-blue-400 uppercase tracking-widest">{t.priority} priority</span>
+                                    <div className="flex items-center gap-1.5">
+                                      {t.status === "To Do" && (
+                                        <button
+                                          onClick={() => handleUpdateTaskStatus(t.id, "In Progress")}
+                                          className="text-[10px] font-bold text-blue-400 hover:bg-blue-955/30 border border-transparent px-2 py-0.5 rounded cursor-pointer"
+                                        >
+                                          Start
+                                        </button>
+                                      )}
+                                      {t.status === "In Progress" && (
+                                        <button
+                                          onClick={() => handleUpdateTaskStatus(t.id, "Done")}
+                                          className="text-[10px] font-bold text-emerald-400 hover:bg-emerald-955/30 border border-transparent px-2 py-0.5 rounded cursor-pointer"
+                                        >
+                                          Finish
+                                        </button>
+                                      )}
+                                      {t.status === "Done" && (
+                                        <button
+                                          onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
+                                          className="text-[10px] font-bold text-zinc-400 hover:bg-zinc-900 border border-transparent px-2 py-0.5 rounded cursor-pointer"
+                                        >
+                                          Reopen
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteTask(t.id);
+                                        }}
+                                        className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-0.5"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              {filteredTasks.filter(t => t.status === col.key).length === 0 && (
+                                <div className="text-center py-6 border border-dashed border-zinc-850 rounded-xl">
+                                  <p className="text-[10px] text-zinc-500 italic">No tasks in column</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })()}
             </AnimatePresence>
           )}
         </div>
