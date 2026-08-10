@@ -39,5 +39,26 @@
       "createdAt": "2026-08-10T15:28:53.029Z"
     }
   ],
-  "tasks": []
+  "tasks": [
+    {
+      "id": "tsk-1786377152283",
+      "title": "ME",
+      "assignedTo": "ME",
+      "dueDate": "2026-02-10",
+      "priority": "Medium",
+      "status": "Done",
+      "category": "General",
+      "createdAt": "2026-08-10T15:52:32.283Z"
+    },
+    {
+      "id": "tsk-1786377127472",
+      "title": "FNF",
+      "assignedTo": "ME",
+      "dueDate": "2026-08-10",
+      "priority": "Medium",
+      "status": "Done",
+      "category": "General",
+      "createdAt": "2026-08-10T15:52:07.472Z"
+    }
+  ]
 }

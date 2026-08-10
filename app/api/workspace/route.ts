@@ -120,8 +120,8 @@ export async function POST(request: Request) {
       }
 
       case "delete_fnf": {
-        const { id } = payload;
-        data.fnf = data.fnf.filter((f: FnfRecordItem) => f.id !== id);
+        const { id } = payload as { id: string };
+        data.fnf = data.fnf.filter((f: FnfRecordItem) => String(f.id) !== String(id));
         break;
       }
 
@@ -186,8 +186,8 @@ export async function POST(request: Request) {
       }
 
       case "delete_onboarding": {
-        const { id } = payload;
-        data.onboardings = data.onboardings.filter((o: OnboardingRecordItem) => o.id !== id);
+        const { id } = payload as { id: string };
+        data.onboardings = data.onboardings.filter((o: OnboardingRecordItem) => String(o.id) !== String(id));
         break;
       }
 
@@ -249,8 +249,8 @@ export async function POST(request: Request) {
       }
 
       case "delete_task": {
-        const { id } = payload;
-        data.tasks = data.tasks.filter((t: TaskItemRecord) => t.id !== id);
+        const { id } = payload as { id: string };
+        data.tasks = data.tasks.filter((t: TaskItemRecord) => String(t.id) !== String(id));
         break;
       }
 

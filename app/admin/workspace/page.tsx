@@ -316,7 +316,9 @@ export default function WorkspacePage() {
   };
 
   const handleDeleteFnf = async (id: string) => {
-    if (!confirm("Are you sure you want to cancel/delete this FNF record?")) return;
+    if (typeof window !== "undefined" && window.confirm) {
+      if (!window.confirm("Are you sure you want to cancel/delete this FNF record?")) return;
+    }
     await triggerWorkspaceAction("delete_fnf", { id });
     if (expandedFnf === id) setExpandedFnf(null);
   };
@@ -341,7 +343,9 @@ export default function WorkspacePage() {
   };
 
   const handleDeleteOnboarding = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this onboarding process?")) return;
+    if (typeof window !== "undefined" && window.confirm) {
+      if (!window.confirm("Are you sure you want to delete this onboarding process?")) return;
+    }
     await triggerWorkspaceAction("delete_onboarding", { id });
     if (expandedOnb === id) setExpandedOnb(null);
   };
@@ -362,7 +366,9 @@ export default function WorkspacePage() {
   };
 
   const handleDeleteTask = async (id: string) => {
-    if (!confirm("Delete this task?")) return;
+    if (typeof window !== "undefined" && window.confirm) {
+      if (!window.confirm("Delete this task?")) return;
+    }
     await triggerWorkspaceAction("delete_task", { id });
   };
 
@@ -838,7 +844,10 @@ export default function WorkspacePage() {
 
                                   <div className="flex justify-end mt-4">
                                     <button
-                                      onClick={() => handleDeleteFnf(f.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteFnf(f.id);
+                                      }}
                                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-950/30 border border-rose-900/40 transition-all cursor-pointer"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" /> Remove settlement
@@ -964,7 +973,10 @@ export default function WorkspacePage() {
 
                                   <div className="flex justify-end mt-4">
                                     <button
-                                      onClick={() => handleDeleteOnboarding(o.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteOnboarding(o.id);
+                                      }}
                                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-950/30 border border-rose-900/40 transition-all cursor-pointer"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" /> Remove tracker
@@ -1051,7 +1063,13 @@ export default function WorkspacePage() {
                                     Reopen
                                   </button>
                                 )}
-                                <button onClick={() => handleDeleteTask(t.id)} className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-0.5">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteTask(t.id);
+                                  }}
+                                  className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-0.5"
+                                >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
