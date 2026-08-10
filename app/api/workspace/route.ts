@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import os from "os";
 
 interface FnfTaskItem { id: string; name: string; completed: boolean; section: string; }
 interface FnfRecordItem { id: string; employeeName: string; department: string; resignationDate: string; lastWorkingDay: string; settlementStatus: string; amount: number; remarks: string; tasks: FnfTaskItem[]; createdAt: string; }
@@ -8,24 +9,53 @@ interface OnboardingRecordItem { id: string; candidateName: string; role: string
 interface TaskItemRecord { id: string; title: string; assignedTo: string; dueDate: string; priority: string; status: string; category: string; createdAt: string; }
 interface WorkspaceStore { fnf: FnfRecordItem[]; onboardings: OnboardingRecordItem[]; tasks: TaskItemRecord[]; }
 
-const jsonPath = path.join(process.cwd(), "data", "workspace.json");
+const projectJsonPath = path.join(process.cwd(), "data", "workspace.json");
+const tmpJsonPath = path.join(os.tmpdir(), "workspace.json");
 
-// Helper to read data from workspace.json
+let inMemoryStore: WorkspaceStore | null = null;
+
+// Helper to read data from workspace.json or /tmp in serverless
 async function readData(): Promise<WorkspaceStore> {
+  if (inMemoryStore) {
+    return inMemoryStore;
+  }
+
+  // 1. Try reading from /tmp/workspace.json (modified state in serverless)
   try {
-    const fileContent = await fs.readFile(jsonPath, "utf-8");
-    return JSON.parse(fileContent);
+    const tmpContent = await fs.readFile(tmpJsonPath, "utf-8");
+    inMemoryStore = JSON.parse(tmpContent);
+    return inMemoryStore!;
   } catch {
-    return { fnf: [], onboardings: [], tasks: [] };
+    // 2. Fallback to initial seed data from project data folder
+    try {
+      const fileContent = await fs.readFile(projectJsonPath, "utf-8");
+      inMemoryStore = JSON.parse(fileContent);
+      return inMemoryStore!;
+    } catch {
+      inMemoryStore = { fnf: [], onboardings: [], tasks: [] };
+      return inMemoryStore;
+    }
   }
 }
 
-// Helper to write data back to workspace.json
+// Helper to write data back safely in both local and serverless Vercel environments
 async function writeData(data: WorkspaceStore) {
-  // Ensure the directory exists
-  const dir = path.dirname(jsonPath);
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(jsonPath, JSON.stringify(data, null, 2), "utf-8");
+  inMemoryStore = data;
+
+  // 1. Attempt writing to project path (local dev environment)
+  try {
+    const dir = path.dirname(projectJsonPath);
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(projectJsonPath, JSON.stringify(data, null, 2), "utf-8");
+    return;
+  } catch {
+    // 2. If project dir is read-only (e.g. Vercel serverless /var/task), write to /tmp
+    try {
+      await fs.writeFile(tmpJsonPath, JSON.stringify(data, null, 2), "utf-8");
+    } catch (tmpErr) {
+      console.error("Serverless storage write warning:", tmpErr);
+    }
+  }
 }
 
 export async function GET() {
