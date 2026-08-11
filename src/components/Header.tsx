@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
 import { Briefcase, ExternalLink, ArrowLeft, LogOut, Lock, Menu, X } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
+import DigitalClock from "./DigitalClock";
 
 interface HeaderProps {
   session?: Session | null;
@@ -55,23 +56,29 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
           className="absolute inset-0 z-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
         />
 
-        {/* Logo Section */}
-        <div
-          className="relative z-10 flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
-          onClick={() => router.push(isAdminPage ? "/jobs" : "/")}
-        >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/25 transition-all duration-300 relative overflow-hidden">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-[-50%] bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-30"
-            />
-            <div className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] bg-white rounded-[4px] rotate-45 group-hover:rotate-90 transition-transform duration-500 relative z-10" />
+        {/* Logo & Clock Section */}
+        <div className="relative z-10 flex items-center gap-2 sm:gap-3 shrink-0">
+          <div
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group"
+            onClick={() => router.push(isAdminPage ? "/jobs" : "/")}
+          >
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/25 transition-all duration-300 relative overflow-hidden">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-[-50%] bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-30"
+              />
+              <div className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] bg-white rounded-[4px] rotate-45 group-hover:rotate-90 transition-transform duration-500 relative z-10" />
+            </div>
+            <span className="text-[14px] sm:text-[16px] font-bold text-white tracking-tight flex items-center gap-1.5">
+              Careers Portal
+              {isAdminPage && <span className="text-white/50 font-normal hidden sm:inline">/ Admin</span>}
+            </span>
           </div>
-          <span className="text-[14px] sm:text-[16px] font-bold text-white tracking-tight flex items-center gap-1.5">
-            Careers Portal
-            {isAdminPage && <span className="text-white/50 font-normal hidden sm:inline">/ Admin</span>}
-          </span>
+
+          <div className="hidden sm:block ml-1">
+            <DigitalClock />
+          </div>
         </div>
 
         {/* Desktop Navigation Links */}
