@@ -671,23 +671,19 @@ export default function AdminPage() {
                 className="absolute inset-0 z-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent skew-x-12 pointer-events-none"
               />
 
-              {/* Card top bar with status pill & real-time digital clock */}
-              <div className="relative z-10 flex items-center justify-between w-full gap-2">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1, duration: 0.5 }}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-zinc-400 text-xs font-semibold"
-                >
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
-                    <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  </span>
-                  Supervisor Console
-                </motion.div>
-
-                <DigitalClock />
-              </div>
+              {/* Status pill badge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-zinc-400 text-xs font-semibold self-start relative z-10"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                </span>
+                Supervisor Console
+              </motion.div>
 
               {/* Header Title & Brand Icon */}
               <div className="relative z-10 flex flex-col gap-3">

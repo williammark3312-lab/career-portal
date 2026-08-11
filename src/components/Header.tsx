@@ -76,11 +76,6 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
             </span>
           </div>
 
-          {isAdminPage && (
-            <div className="hidden sm:block ml-1">
-              <DigitalClock />
-            </div>
-          )}
         </div>
 
         {/* Desktop Navigation Links */}
@@ -301,6 +296,13 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Fixed Screen Corner Digital Clock for Admin Side */}
+      {isAdminPage && (
+        <div className="fixed top-4 right-4 sm:top-5 sm:right-6 z-[100] pointer-events-auto">
+          <DigitalClock />
+        </div>
+      )}
     </motion.header>
   );
 }
