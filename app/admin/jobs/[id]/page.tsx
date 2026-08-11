@@ -8,7 +8,7 @@ import {
   ArrowLeft, MapPin, ExternalLink, X,
   MessageSquare, Send, Users, ChevronRight, Loader2, Trash2,
   CheckCircle2, Clock, Eye, UserX, Search, Database,
-  Calendar, Mail, Plus, Copy, Check, Phone, ArrowRight
+  Calendar, Mail, Plus, Copy, Check, Phone, ArrowRight, Shield
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
@@ -429,14 +429,71 @@ export default function JobScreeningPage() {
   }, {});
 
   async function handleLogout() {
+    setSession(null);
     await supabase.auth.signOut();
+    router.replace("/admin");
   }
+
+  const isRecruiter =
+    session?.user?.app_metadata?.role === "admin" ||
+    session?.user?.user_metadata?.role === "admin" ||
+    session?.user?.app_metadata?.role === "superuser" ||
+    session?.user?.user_metadata?.role === "superuser" ||
+    session?.user?.email === "williammark3312@gmail.com" ||
+    session?.user?.email === "anandugirish3312@gmail.com";
 
   if (!mounted || authLoading) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white relative overflow-hidden font-space">
         <GlassBackground />
         <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin relative z-10" />
+      </main>
+    );
+  }
+
+  if (!session || !isRecruiter) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#050505] text-white relative overflow-hidden p-4 font-sans">
+        <GlassBackground />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm bg-zinc-950 border border-zinc-900 rounded-3xl p-8 relative z-10 text-center flex flex-col items-center gap-5 shadow-2xl"
+        >
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-rose-450"
+            style={{ background: "rgba(244,63,94,0.07)", border: "1px solid rgba(244,63,94,0.15)" }}
+          >
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-white tracking-tight mb-1">
+              {!session ? "Authentication Required" : "Access Denied"}
+            </h1>
+            <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+              {!session
+                ? "You must be signed in to view candidate evaluation details."
+                : `Signed in as ${session?.user?.email}. Only authorized recruiters may access this evaluation console.`}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 w-full">
+            <button
+              onClick={() => {
+                if (session) handleLogout();
+                else router.push("/admin");
+              }}
+              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs text-white bg-rose-500 hover:bg-rose-600 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              {session ? "Sign Out & Try Again" : "Sign In to Admin"}
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-zinc-300 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer"
+            >
+              Back to Home
+            </button>
+          </div>
+        </motion.div>
       </main>
     );
   }

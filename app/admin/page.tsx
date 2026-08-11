@@ -591,7 +591,10 @@ export default function AdminPage() {
     if (error) { setAuthError(error.message); setAuthLoading(false); }
     else { setLoginSuccess(true); setAuthLoading(false); setTimeout(() => setLoginSuccess(false), 1500); }
   }
-  async function handleLogout() { await supabase.auth.signOut(); }
+  async function handleLogout() {
+    setSession(null);
+    await supabase.auth.signOut();
+  }
 
   /* ── Spinner loading state ── */
   if ((!mounted || authLoading) && !loginSuccess) {

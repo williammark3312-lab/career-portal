@@ -304,35 +304,36 @@ export default function WorkspacePage() {
   /* Effects */
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
+      if (error || !session) {
         setSession(null);
         setAuthLoading(false);
+        router.replace("/admin");
         return;
       }
       setSession(session);
       setAuthLoading(false);
-      if (session) {
-        loadStats();
-        loadWorkspace();
-      }
+      loadStats();
+      loadWorkspace();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
-      if (s) {
+      if (!s) {
+        setAuthLoading(false);
+        router.replace("/admin");
+      } else {
         loadStats();
         loadWorkspace();
-      } else {
-        setAuthLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   async function handleLogout() {
+    setSession(null);
     await supabase.auth.signOut();
-    router.push("/admin");
+    router.replace("/admin");
   }
 
   /* API mutator helper */
@@ -478,14 +479,16 @@ export default function WorkspacePage() {
     session?.user?.email === "williammark3312@gmail.com" ||
     session?.user?.email === "anandugirish3312@gmail.com";
 
-  if ((!mounted || authLoading) && !session) {
+  if (!mounted || authLoading) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white relative overflow-hidden font-sans">
         <GlassBackground />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="admin-logo-mark w-9 h-9" />
           <div className="flex gap-1.5">
-            {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse-slow" style={{animationDelay:`${i*0.18}s`}} />)}
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse-slow" style={{ animationDelay: `${i * 0.18}s` }} />
+            ))}
           </div>
           <p className="text-[10px] font-semibold text-zinc-500 tracking-widest uppercase">Loading Workspace</p>
         </div>
@@ -493,7 +496,7 @@ export default function WorkspacePage() {
     );
   }
 
-  if (session && !isRecruiter) {
+  if (!session) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#050505] text-white relative overflow-hidden p-4 font-sans">
         <GlassBackground />
@@ -502,21 +505,60 @@ export default function WorkspacePage() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-sm bg-zinc-950 border border-zinc-900 rounded-3xl p-8 relative z-10 text-center flex flex-col items-center gap-5 shadow-2xl"
         >
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-rose-450 animate-pulse-slow"
-            style={{background:'rgba(244,63,94,0.07)',border:'1px solid rgba(244,63,94,0.15)'}}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-indigo-400 bg-indigo-950/30 border border-indigo-900/50">
             <Shield className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-base font-700 text-white tracking-tight mb-1">Access Denied</h1>
+            <h1 className="text-base font-bold text-white tracking-tight mb-1">Authentication Required</h1>
+            <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+              You must be signed in as a supervisor to access the workspace.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 w-full">
+            <button
+              onClick={() => router.push("/admin")}
+              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs text-black bg-white hover:bg-zinc-200 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              Sign In to Admin
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer"
+            >
+              Back to Home
+            </button>
+          </div>
+        </motion.div>
+      </main>
+    );
+  }
+
+  if (!isRecruiter) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#050505] text-white relative overflow-hidden p-4 font-sans">
+        <GlassBackground />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm bg-zinc-950 border border-zinc-900 rounded-3xl p-8 relative z-10 text-center flex flex-col items-center gap-5 shadow-2xl"
+        >
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-rose-450 animate-pulse-slow"
+            style={{ background: "rgba(244,63,94,0.07)", border: "1px solid rgba(244,63,94,0.15)" }}
+          >
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-white tracking-tight mb-1">Access Denied</h1>
             <p className="text-xs text-zinc-450 font-medium leading-relaxed">
               Signed in as <span className="text-indigo-400 font-semibold">{session.user.email}</span>. Only supervisors may access this workspace.
             </p>
           </div>
           <div className="flex flex-col gap-2 w-full">
-            <button onClick={handleLogout} className="w-full py-2.5 px-4 rounded-xl font-700 text-xs text-white bg-rose-500 hover:bg-rose-600 cursor-pointer transition-all active:scale-[0.98]">
+            <button onClick={handleLogout} className="w-full py-2.5 px-4 rounded-xl font-bold text-xs text-white bg-rose-500 hover:bg-rose-600 cursor-pointer transition-all active:scale-[0.98]">
               Sign Out & Try Again
             </button>
-            <button onClick={() => router.push("/")} className="w-full py-2.5 px-4 rounded-xl font-600 text-xs text-zinc-300 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer">
+            <button onClick={() => router.push("/")} className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-zinc-300 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer">
               Back to Home
             </button>
           </div>
