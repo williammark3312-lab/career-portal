@@ -897,164 +897,51 @@ export default function WorkspacePage() {
                   exit={{ opacity: 0 }}
                   className="flex flex-col gap-4"
                 >
-                  <div className="border border-zinc-850 bg-zinc-950/80 rounded-2xl overflow-hidden shadow-xl">
-                    {workspace.onboardings.map(o => {
-                      const isExpanded = expandedOnb === o.id;
-                      const doneCount = o.tasks.filter(t => t.completed).length;
+                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
+                    {workspace.onboardings.map((o) => {
+                      const doneCount = o.tasks.filter((t) => t.completed).length;
                       const totalCount = o.tasks.length;
-
                       const dotColor = o.status === "Completed" ? "#10b981" : o.status === "In Progress" ? "#3b82f6" : "#71717a";
 
                       return (
-                        <div key={o.id} className="w-full border-b border-zinc-850/80 last:border-b-0">
-                          {/* Row Summary */}
-                          <div
-                            onClick={() => setExpandedOnb(isExpanded ? null : o.id)}
-                            className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer hover:bg-zinc-900/40 transition-colors group"
-                          >
-                            <div className="flex flex-col">
-                              <h4 className="text-xs font-bold text-white group-hover:text-zinc-300 transition-colors flex items-center gap-2">
-                                {o.candidateName}
-                                <span className="text-[10px] font-bold text-zinc-300 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">
-                                  {o.role}
-                                </span>
-                              </h4>
-                              <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-2">
-                                <span>Start: {o.startDate}</span>
-                                <span>•</span>
-                                <span>Mentor: {o.mentor}</span>
-                              </p>
-                            </div>
-
-                            <div className="flex items-center gap-5">
-                              <span className="text-xs font-bold text-zinc-300">
-                                {doneCount}/{totalCount} Done
+                        <div
+                          key={o.id}
+                          onClick={() => setExpandedOnb(o.id)}
+                          className="py-5 px-6 border-b border-zinc-900 last:border-b-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer hover:bg-zinc-900/30 transition-colors group"
+                        >
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-300 transition-colors flex items-center gap-2">
+                              {o.candidateName}
+                              <span className="text-[10px] font-semibold text-zinc-450 bg-zinc-950/40 border border-zinc-900 px-2 py-0.5 rounded">
+                                {o.role}
                               </span>
-                              
-                              <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center gap-1.5">
-                                  <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
-                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{o.status}</span>
-                                </span>
-                                <ChevronRight className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-                              </div>
-                            </div>
+                            </h4>
+                            <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-2 mt-0.5">
+                              <span>Start: {o.startDate}</span>
+                              <span>•</span>
+                              <span>Mentor: {o.mentor}</span>
+                            </p>
                           </div>
 
-                          {/* Expanded checklists */}
-                          {isExpanded && (
-                            <div className="px-5 pb-6 pt-4 border-t border-zinc-850 bg-zinc-900/20 flex flex-col gap-5">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="flex flex-col gap-4 text-xs">
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Address</span>
-                                    <div className="text-[11px] text-zinc-300 font-mono mt-1 pr-2 truncate">
-                                      {o.email || "Pending registration"}
-                                    </div>
-                                  </div>
+                          <div className="flex items-center gap-5 shrink-0">
+                            <span className="text-xs font-bold text-zinc-300">
+                              {doneCount}/{totalCount} Done
+                            </span>
 
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status Select</span>
-                                    <select
-                                      value={o.status}
-                                      onChange={(e) => handleUpdateOnbStatus(o.id, e.target.value as OnboardingRecord["status"])}
-                                      className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
-                                    >
-                                      <option value="Not Started">Not Started</option>
-                                      <option value="In Progress">In Progress</option>
-                                      <option value="Completed">Completed</option>
-                                    </select>
-                                  </div>
-                                </div>
-
-                                <div className="md:col-span-2 flex flex-col gap-3">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Onboarding checklist</span>
-                                    <span className="text-[10px] font-semibold text-zinc-500">{o.tasks.filter((t) => t.completed).length} / {o.tasks.length} Checkpoints Done</span>
-                                  </div>
-                                  <div className="flex flex-col gap-1.5">
-                                    {o.tasks.map((t) => (
-                                      <div
-                                        key={t.id}
-                                        className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all group ${
-                                          t.completed
-                                            ? "bg-zinc-900 border-zinc-700 text-white font-bold"
-                                            : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200 font-medium"
-                                        }`}
-                                      >
-                                        <button
-                                          onClick={() => handleToggleOnbTask(o.id, t.id, !t.completed)}
-                                          className="flex items-center gap-3 flex-1 text-left cursor-pointer"
-                                        >
-                                          <div
-                                            className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
-                                              t.completed ? "bg-zinc-100 border-transparent text-zinc-950" : "border-zinc-700"
-                                            }`}
-                                          >
-                                            {t.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                                          </div>
-                                          <span className="text-xs font-semibold">{t.name}</span>
-                                        </button>
-
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteOnbTask(o.id, t.id);
-                                          }}
-                                          className="p-1 text-zinc-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ml-2"
-                                          title="Delete checkpoint"
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-
-                                  {/* Separate section to add custom checkpoints */}
-                                  <form
-                                    onSubmit={(e) => {
-                                      e.preventDefault();
-                                      handleAddOnbTask(o.id);
-                                    }}
-                                    className="flex items-center gap-2 mt-2"
-                                  >
-                                    <input
-                                      type="text"
-                                      placeholder="+ Add custom checkpoint (e.g. Sign NDA, Issue Access Card)..."
-                                      value={newOnbTaskInputs[o.id] || ""}
-                                      onChange={(e) => setNewOnbTaskInputs({ ...newOnbTaskInputs, [o.id]: e.target.value })}
-                                      className="flex-1 bg-zinc-900/60 border border-zinc-800 focus:border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 outline-none transition-all"
-                                    />
-                                    <button
-                                      type="submit"
-                                      disabled={!newOnbTaskInputs[o.id]?.trim()}
-                                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 disabled:opacity-40 transition-all cursor-pointer shadow-sm shrink-0 flex items-center gap-1"
-                                    >
-                                      <Plus className="w-3.5 h-3.5" /> Add Checkpoint
-                                    </button>
-                                  </form>
-
-                                  <div className="flex justify-end mt-4">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteOnboarding(o.id);
-                                      }}
-                                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-950/30 border border-rose-900/40 transition-all cursor-pointer"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" /> Remove tracker
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1.5">
+                                <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
+                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{o.status}</span>
+                              </span>
+                              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:translate-x-1 group-hover:text-white transition-all duration-200" />
                             </div>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
                     {workspace.onboardings.length === 0 && (
-                      <div className="text-center py-12">
-                        <p className="text-xs text-zinc-500">No candidate onboarding guides active.</p>
+                      <div className="p-12 text-center text-zinc-500 text-xs font-semibold">
+                        No candidate onboarding guides active.
                       </div>
                     )}
                   </div>
@@ -1422,6 +1309,156 @@ export default function WorkspacePage() {
           )}
       </section>
       <Footer />
+
+      {/* ─── ONBOARDING DETAILS POPUP MODAL WINDOW ─── */}
+      <AnimatePresence>
+        {expandedOnb && (() => {
+          const o = workspace.onboardings.find((item) => item.id === expandedOnb);
+          if (!o) return null;
+          const doneCount = o.tasks.filter((t) => t.completed).length;
+          const totalCount = o.tasks.length;
+
+          return (
+            <div className="bg-black/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 z-[150] fixed inset-0" onClick={() => setExpandedOnb(null)}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-2xl max-h-[88vh] overflow-y-auto border border-zinc-800 rounded-[28px] p-6 sm:p-8 bg-zinc-950/95 backdrop-blur-2xl shadow-2xl flex flex-col gap-6 text-white"
+              >
+                {/* Modal Header */}
+                <div className="flex justify-between items-start pb-4 border-b border-zinc-850">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-lg font-bold text-white leading-tight">{o.candidateName}</h3>
+                      <span className="text-[10px] font-semibold text-zinc-300 bg-zinc-900 border border-zinc-800 px-2.5 py-0.5 rounded-md">
+                        {o.role}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 flex items-center gap-2 mt-0.5">
+                      <span>Start: {o.startDate}</span>
+                      <span>•</span>
+                      <span>Mentor: {o.mentor}</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setExpandedOnb(null)}
+                    className="text-zinc-400 hover:text-white cursor-pointer p-1.5 rounded-xl hover:bg-zinc-900 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Details Info Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-zinc-900/40 p-4 rounded-2xl border border-zinc-850">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Address</span>
+                    <div className="text-xs text-zinc-200 font-mono font-medium truncate mt-0.5">
+                      {o.email || "Pending registration"}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status Protocol</span>
+                    <select
+                      value={o.status}
+                      onChange={(e) => handleUpdateOnbStatus(o.id, e.target.value as OnboardingRecord["status"])}
+                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3 py-1.5 text-xs text-white outline-none cursor-pointer mt-0.5"
+                    >
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Checklist Section */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Onboarding checklist</span>
+                    <span className="text-[10px] font-semibold text-zinc-400">{doneCount} / {totalCount} Checkpoints Done</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto pr-1">
+                    {o.tasks.map((t) => (
+                      <div
+                        key={t.id}
+                        className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all group ${
+                          t.completed
+                            ? "bg-zinc-900 border-zinc-700 text-white font-bold"
+                            : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200 font-medium"
+                        }`}
+                      >
+                        <button
+                          onClick={() => handleToggleOnbTask(o.id, t.id, !t.completed)}
+                          className="flex items-center gap-3 flex-1 text-left cursor-pointer"
+                        >
+                          <div
+                            className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
+                              t.completed ? "bg-zinc-100 border-transparent text-zinc-950" : "border-zinc-700"
+                            }`}
+                          >
+                            {t.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                          </div>
+                          <span className="text-xs font-semibold">{t.name}</span>
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteOnbTask(o.id, t.id);
+                          }}
+                          className="p-1 text-zinc-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ml-2"
+                          title="Delete checkpoint"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Separate section to add custom checkpoints */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleAddOnbTask(o.id);
+                    }}
+                    className="flex items-center gap-2 mt-2"
+                  >
+                    <input
+                      type="text"
+                      placeholder="+ Add custom checkpoint (e.g. Sign NDA, Issue Access Card)..."
+                      value={newOnbTaskInputs[o.id] || ""}
+                      onChange={(e) => setNewOnbTaskInputs({ ...newOnbTaskInputs, [o.id]: e.target.value })}
+                      className="flex-1 bg-zinc-900/60 border border-zinc-800 focus:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 outline-none transition-all"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newOnbTaskInputs[o.id]?.trim()}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 disabled:opacity-40 transition-all cursor-pointer shadow-sm shrink-0 flex items-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Checkpoint
+                    </button>
+                  </form>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex justify-end pt-4 border-t border-zinc-850 mt-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteOnboarding(o.id);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-950/30 border border-rose-900/40 transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove tracker
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+      </AnimatePresence>
 
       {/* ─── FNF LAUNCH MODAL ─── */}
       {showFnfModal && (
