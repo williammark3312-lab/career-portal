@@ -254,6 +254,16 @@ export async function POST(request: Request) {
         break;
       }
 
+      case "sync_workspace": {
+        if (payload && typeof payload === "object") {
+          const sync = payload as Partial<WorkspaceStore>;
+          if (Array.isArray(sync.fnf)) data.fnf = sync.fnf;
+          if (Array.isArray(sync.onboardings)) data.onboardings = sync.onboardings;
+          if (Array.isArray(sync.tasks)) data.tasks = sync.tasks;
+        }
+        break;
+      }
+
       default:
         return Response.json({ error: "Invalid action" }, { status: 400 });
     }

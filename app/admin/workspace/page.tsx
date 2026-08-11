@@ -224,6 +224,30 @@ export default function WorkspacePage() {
     await triggerWorkspaceAction("add_task", payload);
   };
 
+  const LOCAL_STORAGE_KEY = "career_portal_workspace_v2";
+
+  function saveWorkspaceToCache(data: WorkspaceData) {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.warn("localStorage write warning:", e);
+      }
+    }
+  }
+
+  function getWorkspaceFromCache(): WorkspaceData | null {
+    if (typeof window !== "undefined") {
+      try {
+        const item = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (item) return JSON.parse(item);
+      } catch (e) {
+        console.warn("localStorage read warning:", e);
+      }
+    }
+    return null;
+  }
+
   async function loadStats() {
     try {
       const { count: jobCount } = await supabase.from("jobs").select("*", { count: "exact", head: true });
@@ -249,10 +273,25 @@ export default function WorkspacePage() {
   async function loadWorkspace() {
     try {
       setLoadingWorkspace(true);
+      const cached = getWorkspaceFromCache();
+      if (cached) {
+        setWorkspace(cached);
+      }
+
       const res = await fetch("/api/workspace");
       if (res.ok) {
-        const data = await res.json();
-        setWorkspace(data);
+        const apiData: WorkspaceData = await res.json();
+        if (!cached) {
+          setWorkspace(apiData);
+          saveWorkspaceToCache(apiData);
+        } else {
+          // Sync local cached data (with deletions) to server API store
+          fetch("/api/workspace", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "sync_workspace", payload: cached })
+          }).catch(console.error);
+        }
       }
     } catch (err) {
       console.error("Error fetching workspace data:", err);
@@ -306,6 +345,7 @@ export default function WorkspacePage() {
       if (res.ok) {
         const updatedData = await res.json();
         setWorkspace(updatedData);
+        saveWorkspaceToCache(updatedData);
       } else {
         const errJson = await res.json();
         alert("Operation failed: " + (errJson.error || "Unknown error"));
@@ -344,6 +384,12 @@ export default function WorkspacePage() {
     if (typeof window !== "undefined" && window.confirm) {
       if (!window.confirm("Are you sure you want to cancel/delete this FNF record?")) return;
     }
+    setWorkspace(prev => {
+      const nextFnf = prev.fnf.filter(f => String(f.id) !== String(id));
+      const nextWorkspace = { ...prev, fnf: nextFnf };
+      saveWorkspaceToCache(nextWorkspace);
+      return nextWorkspace;
+    });
     await triggerWorkspaceAction("delete_fnf", { id });
     if (expandedFnf === id) setExpandedFnf(null);
   };
@@ -371,6 +417,12 @@ export default function WorkspacePage() {
     if (typeof window !== "undefined" && window.confirm) {
       if (!window.confirm("Are you sure you want to delete this onboarding process?")) return;
     }
+    setWorkspace(prev => {
+      const nextOnb = prev.onboardings.filter(o => String(o.id) !== String(id));
+      const nextWorkspace = { ...prev, onboardings: nextOnb };
+      saveWorkspaceToCache(nextWorkspace);
+      return nextWorkspace;
+    });
     await triggerWorkspaceAction("delete_onboarding", { id });
     if (expandedOnb === id) setExpandedOnb(null);
   };
@@ -394,6 +446,12 @@ export default function WorkspacePage() {
     if (typeof window !== "undefined" && window.confirm) {
       if (!window.confirm("Delete this task?")) return;
     }
+    setWorkspace(prev => {
+      const nextTasks = prev.tasks.filter(t => String(t.id) !== String(id));
+      const nextWorkspace = { ...prev, tasks: nextTasks };
+      saveWorkspaceToCache(nextWorkspace);
+      return nextWorkspace;
+    });
     await triggerWorkspaceAction("delete_task", { id });
   };
 
