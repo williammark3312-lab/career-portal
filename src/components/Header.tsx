@@ -76,9 +76,11 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
             </span>
           </div>
 
-          <div className="hidden sm:block ml-1">
-            <DigitalClock />
-          </div>
+          {isAdminPage && (
+            <div className="hidden sm:block ml-1">
+              <DigitalClock />
+            </div>
+          )}
         </div>
 
         {/* Desktop Navigation Links */}

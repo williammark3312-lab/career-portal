@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock } from "lucide-react";
 
 interface DigitalClockProps {
   className?: string;
-  showIcon?: boolean;
+  showDot?: boolean;
 }
 
-export default function DigitalClock({ className = "", showIcon = true }: DigitalClockProps) {
+export default function DigitalClock({ className = "", showDot = true }: DigitalClockProps) {
   const [mounted, setMounted] = useState(false);
   const [timeStr, setTimeStr] = useState<string>("");
 
@@ -31,20 +30,19 @@ export default function DigitalClock({ className = "", showIcon = true }: Digita
     return () => clearInterval(interval);
   }, []);
 
-  if (!mounted || !timeStr) {
-    return (
-      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-zinc-950/60 text-zinc-500 text-xs font-mono opacity-0 select-none ${className}`}>
-        <span className="tabular-nums text-xs">00:00:00 AM</span>
-      </div>
-    );
-  }
+  if (!mounted || !timeStr) return null;
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-zinc-950/60 text-zinc-300 text-xs font-mono tracking-wider backdrop-blur-md shadow-inner select-none transition-all duration-300 ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-zinc-950/40 text-zinc-300 text-[11px] font-mono tracking-wider backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] select-none transition-all duration-300 ${className}`}
     >
-      {showIcon && <Clock className="w-3.5 h-3.5 text-zinc-400 animate-pulse" />}
-      <span className="tabular-nums font-semibold text-[11px] sm:text-xs text-zinc-200">{timeStr}</span>
+      {showDot && (
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-75" />
+          <span className="relative h-1.5 w-1.5 rounded-full bg-blue-400" />
+        </span>
+      )}
+      <span className="tabular-nums font-medium text-zinc-300">{timeStr}</span>
     </div>
   );
 }
