@@ -214,6 +214,51 @@ export async function POST(request: Request) {
         break;
       }
 
+      case "add_onboarding_task": {
+        const { onboardingId, taskName } = payload;
+        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => o.id === onboardingId);
+        if (onboarding && taskName && taskName.trim()) {
+          onboarding.tasks.push({
+            id: `ot-${Date.now()}`,
+            name: taskName.trim(),
+            completed: false
+          });
+        }
+        break;
+      }
+
+      case "delete_onboarding_task": {
+        const { onboardingId, taskId } = payload;
+        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => o.id === onboardingId);
+        if (onboarding) {
+          onboarding.tasks = onboarding.tasks.filter((t: OnboardingTaskItem) => t.id !== taskId);
+        }
+        break;
+      }
+
+      case "add_fnf_task": {
+        const { fnfId, taskName, section } = payload;
+        const fnf = data.fnf.find((f: FnfRecordItem) => f.id === fnfId);
+        if (fnf && taskName && taskName.trim()) {
+          fnf.tasks.push({
+            id: `ft-${Date.now()}`,
+            name: taskName.trim(),
+            completed: false,
+            section: section || "General"
+          });
+        }
+        break;
+      }
+
+      case "delete_fnf_task": {
+        const { fnfId, taskId } = payload;
+        const fnf = data.fnf.find((f: FnfRecordItem) => f.id === fnfId);
+        if (fnf) {
+          fnf.tasks = fnf.tasks.filter((t: FnfTaskItem) => t.id !== taskId);
+        }
+        break;
+      }
+
       /* ──────────────── Task Operations ──────────────── */
       case "add_task": {
         const { title, assignedTo, dueDate, priority, category } = payload;

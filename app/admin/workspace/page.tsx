@@ -410,6 +410,20 @@ export default function WorkspacePage() {
     await triggerWorkspaceAction("update_onboarding", { id, status });
   };
 
+  /* Custom Checkpoint state */
+  const [newOnbTaskInputs, setNewOnbTaskInputs] = useState<Record<string, string>>({});
+
+  const handleAddOnbTask = async (onboardingId: string) => {
+    const taskName = newOnbTaskInputs[onboardingId]?.trim();
+    if (!taskName) return;
+    await triggerWorkspaceAction("add_onboarding_task", { onboardingId, taskName });
+    setNewOnbTaskInputs((prev) => ({ ...prev, [onboardingId]: "" }));
+  };
+
+  const handleDeleteOnbTask = async (onboardingId: string, taskId: string) => {
+    await triggerWorkspaceAction("delete_onboarding_task", { onboardingId, taskId });
+  };
+
   const handleToggleOnbTask = async (onboardingId: string, taskId: string, completed: boolean) => {
     await triggerWorkspaceAction("toggle_onboarding_task", { onboardingId, taskId, completed });
   };
@@ -954,27 +968,71 @@ export default function WorkspacePage() {
                                 </div>
 
                                 <div className="md:col-span-2 flex flex-col gap-3">
-                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Onboarding checklist</span>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Onboarding checklist</span>
+                                    <span className="text-[10px] font-semibold text-zinc-500">{o.tasks.filter((t) => t.completed).length} / {o.tasks.length} Checkpoints Done</span>
+                                  </div>
                                   <div className="flex flex-col gap-1.5">
-                                    {o.tasks.map(t => (
-                                      <button
+                                    {o.tasks.map((t) => (
+                                      <div
                                         key={t.id}
-                                        onClick={() => handleToggleOnbTask(o.id, t.id, !t.completed)}
-                                        className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                        className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all group ${
                                           t.completed
                                             ? "bg-zinc-900 border-zinc-700 text-white font-bold"
                                             : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200 font-medium"
                                         }`}
                                       >
-                                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${
-                                          t.completed ? "bg-zinc-100 border-transparent text-zinc-950" : "border-zinc-700"
-                                        }`}>
-                                          {t.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                                        </div>
-                                        <span className="text-xs font-semibold">{t.name}</span>
-                                      </button>
+                                        <button
+                                          onClick={() => handleToggleOnbTask(o.id, t.id, !t.completed)}
+                                          className="flex items-center gap-3 flex-1 text-left cursor-pointer"
+                                        >
+                                          <div
+                                            className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
+                                              t.completed ? "bg-zinc-100 border-transparent text-zinc-950" : "border-zinc-700"
+                                            }`}
+                                          >
+                                            {t.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                          </div>
+                                          <span className="text-xs font-semibold">{t.name}</span>
+                                        </button>
+
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteOnbTask(o.id, t.id);
+                                          }}
+                                          className="p-1 text-zinc-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ml-2"
+                                          title="Delete checkpoint"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
                                     ))}
                                   </div>
+
+                                  {/* Separate section to add custom checkpoints */}
+                                  <form
+                                    onSubmit={(e) => {
+                                      e.preventDefault();
+                                      handleAddOnbTask(o.id);
+                                    }}
+                                    className="flex items-center gap-2 mt-2"
+                                  >
+                                    <input
+                                      type="text"
+                                      placeholder="+ Add custom checkpoint (e.g. Sign NDA, Issue Access Card)..."
+                                      value={newOnbTaskInputs[o.id] || ""}
+                                      onChange={(e) => setNewOnbTaskInputs({ ...newOnbTaskInputs, [o.id]: e.target.value })}
+                                      className="flex-1 bg-zinc-900/60 border border-zinc-800 focus:border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 outline-none transition-all"
+                                    />
+                                    <button
+                                      type="submit"
+                                      disabled={!newOnbTaskInputs[o.id]?.trim()}
+                                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 disabled:opacity-40 transition-all cursor-pointer shadow-sm shrink-0 flex items-center gap-1"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" /> Add Checkpoint
+                                    </button>
+                                  </form>
 
                                   <div className="flex justify-end mt-4">
                                     <button
