@@ -22,7 +22,7 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
   const isWorkspace = pathname === "/admin/workspace";
   const isJobDetails = pathname?.startsWith("/jobs/") && pathname !== "/jobs";
 
-  const currentAdminTab = isWorkspace ? "workspace" : (activeAdminTab || "jobs");
+  const currentAdminTab = isWorkspace ? "workspace" : (activeAdminTab || "cvs");
 
   const handleTabClick = (tabKey: string) => {
     if (tabKey === "workspace") {
@@ -81,7 +81,6 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
               {session && (
                 <div className="flex items-center gap-1 mr-2 bg-zinc-950/60 p-1 rounded-full border border-white/5">
                   {([
-                    { key: "jobs", label: "Openings" },
                     { key: "cvs", label: "Talent Index" },
                     { key: "workspace", label: "Workspace" },
                     { key: "users", label: "Supervisors" },
@@ -218,14 +217,6 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
                   {session && (
                     <div className="flex flex-col gap-1 pb-2 mb-2 border-b border-white/10">
                       <span className="text-[10px] font-bold text-zinc-500 uppercase px-3 pt-1">Admin Sections</span>
-                      <button
-                        onClick={() => { handleTabClick("jobs"); setMobileOpen(false); }}
-                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
-                          currentAdminTab === "jobs" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"
-                        }`}
-                      >
-                        Openings
-                      </button>
                       <button
                         onClick={() => { handleTabClick("cvs"); setMobileOpen(false); }}
                         className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${

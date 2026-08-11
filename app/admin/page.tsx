@@ -179,7 +179,7 @@ export default function AdminPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   /* Tabs state */
-  const [activeTab, setActiveTab] = useState<"jobs" | "cvs" | "users">("jobs");
+  const [activeTab, setActiveTab] = useState<"cvs" | "users">("cvs");
 
   /* Auth state */
   const [session, setSession] = useState<Session | null>(null);
@@ -235,8 +235,10 @@ export default function AdminPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
-      if (tab === "jobs" || tab === "cvs" || tab === "users") {
+      if (tab === "cvs" || tab === "users") {
         setActiveTab(tab);
+      } else {
+        setActiveTab("cvs");
       }
     }
   }, []);
@@ -764,29 +766,16 @@ export default function AdminPage() {
           className="flex flex-col gap-3"
         >
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            {activeTab === "jobs"
-              ? "Open positions."
-              : activeTab === "cvs"
-              ? "Talent index."
-              : "Supervisor accounts."}
+            {activeTab === "cvs" ? "Talent index." : "Supervisor accounts."}
           </h1>
           <p className="text-sm text-zinc-400 leading-relaxed max-w-lg">
-            {activeTab === "jobs"
-              ? "Manage job openings, candidate pipelines, and active vacancy postings."
-              : activeTab === "cvs"
+            {activeTab === "cvs"
               ? "Browse talent pool, evaluate submitted CVs, and manage recruitment notes."
               : "Configure administrator permissions and supervisor account credentials."}
           </p>
 
           {/* Minimal Info Row */}
           <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">
-            {activeTab === "jobs" && (
-              <>
-                <span>POSITIONS: {stats.totalJobs}</span>
-                <span>•</span>
-                <span>DEPARTMENTS: {Array.from(new Set(jobs.map((j) => j.department))).filter(Boolean).length}</span>
-              </>
-            )}
             {activeTab === "cvs" && (
               <>
                 <span>CANDIDATES: {stats.totalCVs}</span>
@@ -825,27 +814,23 @@ export default function AdminPage() {
               <input
                 type="text"
                 placeholder={
-                  activeTab === "jobs"
-                    ? "Search roles, description or location..."
-                    : activeTab === "cvs"
+                  activeTab === "cvs"
                     ? "Search candidate names or emails..."
                     : "Search supervisor accounts..."
                 }
-                value={activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch}
+                value={activeTab === "cvs" ? cvSearch : userSearch}
                 onChange={(e) => {
-                  if (activeTab === "jobs") setJobSearch(e.target.value);
-                  else if (activeTab === "cvs") setCvSearch(e.target.value);
+                  if (activeTab === "cvs") setCvSearch(e.target.value);
                   else setUserSearch(e.target.value);
                 }}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
                 className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
               />
-              {(activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch) && (
+              {(activeTab === "cvs" ? cvSearch : userSearch) && (
                 <button
                   onClick={() => {
-                    if (activeTab === "jobs") setJobSearch("");
-                    else if (activeTab === "cvs") setCvSearch("");
+                    if (activeTab === "cvs") setCvSearch("");
                     else setUserSearch("");
                   }}
                   className="ml-2 p-1 rounded-full hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors"
@@ -856,14 +841,6 @@ export default function AdminPage() {
             </div>
 
             {/* Primary Action Button */}
-            {activeTab === "jobs" && (
-              <button
-                onClick={openCreate}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm shrink-0"
-              >
-                <Plus className="w-4 h-4" /> Create Opening
-              </button>
-            )}
             {activeTab === "cvs" && (
               <button
                 onClick={() => setShowCvModal(true)}
@@ -884,24 +861,6 @@ export default function AdminPage() {
 
           {/* Faint Category selector row */}
           <div className="flex items-center gap-2 flex-wrap pb-2">
-            {activeTab === "jobs" &&
-              ["All", ...Array.from(new Set(jobs.map((j) => j.department))).filter(Boolean)].map((dept) => {
-                const isActive = jobDeptFilter === dept;
-                return (
-                  <button
-                    key={dept}
-                    onClick={() => setJobDeptFilter(dept)}
-                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
-                      isActive
-                        ? "bg-white text-black border-transparent"
-                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
-                    }`}
-                  >
-                    {dept}
-                  </button>
-                );
-              })}
-
             {activeTab === "cvs" &&
               ["All", "Not Called", "Called", "Interviewing", "Rejected"].map((status) => {
                 const isActive = cvFilter === status;
@@ -943,85 +902,6 @@ export default function AdminPage() {
 
       {/* Main Content Section */}
       <section className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-6 pb-24">
-        {/* Openings Tab */}
-        {activeTab === "jobs" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {jobs.filter((j) => {
-              const matchesSearch =
-                !jobSearch.trim() ||
-                j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
-                j.description.toLowerCase().includes(jobSearch.toLowerCase()) ||
-                j.location.toLowerCase().includes(jobSearch.toLowerCase());
-              const matchesDept = jobDeptFilter === "All" || j.department.toLowerCase() === jobDeptFilter.toLowerCase();
-              return matchesSearch && matchesDept;
-            }).length === 0 ? (
-              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-12 text-center">
-                <p className="text-zinc-500 text-xs font-semibold">
-                  {jobs.length === 0 ? "No job listings published. Click \"Create Opening\" to start." : "No positions match your search query."}
-                </p>
-              </div>
-            ) : (
-              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
-                {jobs
-                  .filter((j) => {
-                    const matchesSearch =
-                      !jobSearch.trim() ||
-                      j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
-                      j.description.toLowerCase().includes(jobSearch.toLowerCase()) ||
-                      j.location.toLowerCase().includes(jobSearch.toLowerCase());
-                    const matchesDept = jobDeptFilter === "All" || j.department.toLowerCase() === jobDeptFilter.toLowerCase();
-                    return matchesSearch && matchesDept;
-                  })
-                  .map((job) => (
-                    <div
-                      key={job.id}
-                      className="w-full flex justify-between items-center py-5 px-6 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors group"
-                    >
-                      <div
-                        className="flex flex-col gap-1 min-w-0 pr-4 cursor-pointer"
-                        onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                      >
-                        <h2 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-300 transition-colors truncate">
-                          {job.title}
-                        </h2>
-                        <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">
-                          <MapPin className="w-3.5 h-3.5 text-zinc-600" />
-                          <span>{job.location}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-[10px] font-semibold text-zinc-450 bg-zinc-950/40 border border-zinc-900 px-3 py-1 rounded-md">
-                          {job.department}
-                        </span>
-                        <button
-                          onClick={() => openEdit(job)}
-                          className="p-2 border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-all cursor-pointer"
-                          title="Modify Listing"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(job.id)}
-                          className="p-2 border border-rose-900/40 bg-rose-955/10 hover:border-rose-900/80 text-rose-450 rounded-lg transition-all cursor-pointer"
-                          title="Delete Listing"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                          className="p-2 border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-all cursor-pointer flex items-center gap-1"
-                          title="View Applicants"
-                        >
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </motion.div>
-        )}
 
         {/* Talent Index Tab */}
         {activeTab === "cvs" && (
