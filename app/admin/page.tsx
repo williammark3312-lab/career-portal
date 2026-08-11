@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
+import Footer from "../../src/components/Footer";
 import GlassBackground from "../../src/components/GlassBackground";
 import { getAppBaseUrl } from "../../src/lib/appUrl";
 
@@ -118,6 +119,11 @@ export default function AdminPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [jobSearch, setJobSearch] = useState("");
+  const [jobDeptFilter, setJobDeptFilter] = useState("All");
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("All");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   /* Job form state */
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -737,149 +743,123 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white relative z-10 flex flex-col lg:flex-row overflow-hidden">
+    <main className="relative flex flex-col min-h-screen bg-[#050505] text-white">
       <GlassBackground />
+      <Header
+        session={session}
+        handleLogout={handleLogout}
+        activeAdminTab={activeTab}
+        onAdminTabChange={(t) => {
+          setActiveTab(t as any);
+          setActivePreviewCandidate(null);
+        }}
+      />
 
-      {/* ── Midnight-Dark Sidebar (Stripe Style) ── */}
-      <aside className="w-72 bg-zinc-950 border-r border-zinc-900/80 hidden lg:flex flex-col justify-between p-6 fixed h-screen z-20">
-        <div className="flex flex-col gap-8">
-          
-          {/* Logo Branding */}
-          <div className="flex items-center gap-3 px-2 py-1 cursor-pointer" onClick={() => router.push("/jobs")}>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/10">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-white tracking-tight leading-none">Workspace</h1>
-              <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Supervisor Space</span>
-            </div>
+      {/* Hero section matching portal */}
+      <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pt-16 pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col gap-3"
+        >
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            {activeTab === "jobs"
+              ? "Open positions."
+              : activeTab === "cvs"
+              ? "Talent index."
+              : "Supervisor accounts."}
+          </h1>
+          <p className="text-sm text-zinc-400 leading-relaxed max-w-lg">
+            {activeTab === "jobs"
+              ? "Manage job openings, candidate pipelines, and active vacancy postings."
+              : activeTab === "cvs"
+              ? "Browse talent pool, evaluate submitted CVs, and manage recruitment notes."
+              : "Configure administrator permissions and supervisor account credentials."}
+          </p>
+
+          {/* Minimal Info Row */}
+          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">
+            {activeTab === "jobs" && (
+              <>
+                <span>POSITIONS: {stats.totalJobs}</span>
+                <span>•</span>
+                <span>DEPARTMENTS: {Array.from(new Set(jobs.map((j) => j.department))).filter(Boolean).length}</span>
+              </>
+            )}
+            {activeTab === "cvs" && (
+              <>
+                <span>CANDIDATES: {stats.totalCVs}</span>
+                <span>•</span>
+                <span>INTERVIEWING: {cvs.filter((c) => c.status === "Interviewing").length}</span>
+              </>
+            )}
+            {activeTab === "users" && (
+              <>
+                <span>SUPERVISORS: {adminUsers.length}</span>
+                <span>•</span>
+                <span>SUPERUSERS: {adminUsers.filter((u) => u.role === "superuser").length}</span>
+              </>
+            )}
           </div>
+        </motion.div>
+      </section>
 
-          {/* User Account context */}
-          <div className="bg-zinc-900/40 rounded-xl p-3 border border-zinc-850 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-extrabold text-xs">
-              {session?.user?.email?.[0].toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest">Signed In</p>
-              <p className="text-xs font-bold text-zinc-300 truncate" title={session?.user?.email}>{session?.user?.email}</p>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="flex flex-col gap-1">
-            {([
-              { key: "jobs", label: "Openings & Reviews", icon: <Briefcase className="w-4 h-4" />, count: stats.totalJobs },
-              { key: "cvs", label: "Talent Index", icon: <FileText className="w-4 h-4" />, count: stats.totalCVs },
-              { key: "workspace", label: "Workspace", icon: <Layers className="w-4 h-4" />, count: undefined },
-              { key: "users", label: "Supervisor Accounts", icon: <Users className="w-4 h-4" />, count: adminUsers.length },
-            ] as const).map(t => {
-              const isActive = activeTab === (t.key as any);
-              return (
-                <button
-                   key={t.key}
-                   onClick={() => {
-                     if (t.key === "workspace") {
-                       router.push("/admin/workspace");
-                     } else {
-                       setActiveTab(t.key as any);
-                       setActivePreviewCandidate(null);
-                     }
-                   }}
-                   className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                     isActive
-                       ? "text-white bg-zinc-900 border border-zinc-850"
-                       : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent"
-                   }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    {t.icon}
-                    <span>{t.label}</span>
-                  </div>
-                  {t.count !== undefined && (
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
-                      isActive ? "bg-zinc-800 text-zinc-200" : "bg-zinc-900 text-zinc-500"
-                    }`}>
-                      {t.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Sidebar Footer context */}
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold text-rose-450 hover:bg-rose-950/20 border border-transparent hover:border-rose-950 transition-all cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
-          </button>
-          <div className="text-[10px] text-zinc-650 font-semibold px-3">
-            © {new Date().getFullYear()} Workspace
-          </div>
-        </div>
-      </aside>
-
-      {/* ── Mobile Layout header ── */}
-      <div className="lg:hidden w-full relative z-30">
-        <Header session={session} handleLogout={handleLogout} />
-        {/* Mobile menu navigation tab strip */}
-        <div className="bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900/80 px-4 py-2 flex gap-1 overflow-x-auto">
-          {([
-            { key: "jobs", label: "Openings", icon: <Briefcase className="w-3.5 h-3.5" /> },
-            { key: "cvs", label: "Talent Index", icon: <FileText className="w-3.5 h-3.5" /> },
-            { key: "workspace", label: "Workspace", icon: <Layers className="w-3.5 h-3.5" /> },
-            { key: "users", label: "Supervisors", icon: <Users className="w-3.5 h-3.5" /> },
-          ] as const).map(t => (
-            <button
-              key={t.key}
-              onClick={() => {
-                if (t.key === "workspace") {
-                  router.push("/admin/workspace");
-                } else {
-                  setActiveTab(t.key as any);
-                  setActivePreviewCandidate(null);
-                }
-              }}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-200 ${
-                activeTab === (t.key as any)
-                  ? "bg-white text-zinc-950 shadow-sm"
-                  : "text-zinc-400 bg-zinc-900 hover:bg-zinc-800"
+      {/* Search & Filter Bar Section */}
+      <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col gap-4"
+        >
+          {/* Top Control Bar: Search Input + Primary CTA */}
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            {/* Minimal Search Field */}
+            <div
+              className={`flex-1 relative flex items-center bg-zinc-950/80 rounded-xl border px-3.5 py-2.5 transition-all duration-200 ${
+                searchFocused ? "border-zinc-700 bg-zinc-950" : "border-zinc-900 bg-zinc-950/50"
               }`}
             >
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Main content pane ── */}
-      <div className="flex-1 lg:ml-72 min-h-screen flex flex-col p-4 sm:p-8 lg:p-10 relative z-10 pt-20 lg:pt-10 overflow-y-auto">
-        <div className="max-w-5xl w-full mx-auto flex flex-col gap-6 flex-grow pb-16">
-          
-          {/* Header Panel */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-850">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                <span>Console</span>
-                <ChevronRight className="w-3 h-3" />
-                <span className="text-zinc-400 font-semibold">{activeTab}</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-none">
-                {activeTab === "jobs" ? "Job Openings Desk" : activeTab === "cvs" ? "Talent Registry Index" : "Supervising Registry"}
-              </h1>
+              <Search className={`w-4 h-4 mr-2.5 transition-colors ${searchFocused ? "text-zinc-300" : "text-zinc-600"}`} />
+              <input
+                type="text"
+                placeholder={
+                  activeTab === "jobs"
+                    ? "Search roles, description or location..."
+                    : activeTab === "cvs"
+                    ? "Search candidate names or emails..."
+                    : "Search supervisor accounts..."
+                }
+                value={activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch}
+                onChange={(e) => {
+                  if (activeTab === "jobs") setJobSearch(e.target.value);
+                  else if (activeTab === "cvs") setCvSearch(e.target.value);
+                  else setUserSearch(e.target.value);
+                }}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
+              />
+              {(activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch) && (
+                <button
+                  onClick={() => {
+                    if (activeTab === "jobs") setJobSearch("");
+                    else if (activeTab === "cvs") setCvSearch("");
+                    else setUserSearch("");
+                  }}
+                  className="ml-2 p-1 rounded-full hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
-            {/* Quick header action button */}
+            {/* Primary Action Button */}
             {activeTab === "jobs" && (
               <button
                 onClick={openCreate}
-                className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-950 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm shrink-0"
               >
                 <Plus className="w-4 h-4" /> Create Opening
               </button>
@@ -887,7 +867,7 @@ export default function AdminPage() {
             {activeTab === "cvs" && (
               <button
                 onClick={() => setShowCvModal(true)}
-                className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-955 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm shrink-0"
               >
                 <Upload className="w-4 h-4" /> Upload CV File
               </button>
@@ -895,149 +875,185 @@ export default function AdminPage() {
             {activeTab === "users" && isSuperuser && (
               <button
                 onClick={() => setShowUserModal(true)}
-                className="flex items-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-955 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm shrink-0"
               >
                 <UserPlus className="w-4 h-4" /> Provision Account
               </button>
             )}
           </div>
 
-          {/* ── Openings & Reviews Tab ── */}
-          {activeTab === "jobs" && (
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
-              
-              {/* Vercel-Style Extralight Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: "Active Jobs", value: stats.totalJobs, icon: <Briefcase className="w-4 h-4" /> },
-                  { label: "Applications", value: stats.totalApps, icon: <Users className="w-4 h-4" /> },
-                  { label: "Evaluations Pending", value: stats.pendingApps, icon: <Clock className="w-4 h-4" /> },
-                  { label: "Talent Repository", value: stats.totalCVs, icon: <FileText className="w-4 h-4" /> }
-                ].map((s, idx) => (
-                  <div key={idx} className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 shadow-lg hover:border-zinc-700/80 transition-all">
-                    <div className="flex justify-between items-center text-zinc-500">
-                      <span className="text-[10px] font-bold uppercase tracking-wider">{s.label}</span>
-                      {s.icon}
-                    </div>
-                    <span className="text-3xl font-extralight tracking-tight text-white leading-none">{s.value}</span>
-                  </div>
-                ))}
+          {/* Faint Category selector row */}
+          <div className="flex items-center gap-2 flex-wrap pb-2">
+            {activeTab === "jobs" &&
+              ["All", ...Array.from(new Set(jobs.map((j) => j.department))).filter(Boolean)].map((dept) => {
+                const isActive = jobDeptFilter === dept;
+                return (
+                  <button
+                    key={dept}
+                    onClick={() => setJobDeptFilter(dept)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black border-transparent"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                    }`}
+                  >
+                    {dept}
+                  </button>
+                );
+              })}
+
+            {activeTab === "cvs" &&
+              ["All", "Not Called", "Called", "Interviewing", "Rejected"].map((status) => {
+                const isActive = cvFilter === status;
+                return (
+                  <button
+                    key={status}
+                    onClick={() => setCvFilter(status)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black border-transparent"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                    }`}
+                  >
+                    {status}
+                  </button>
+                );
+              })}
+
+            {activeTab === "users" &&
+              ["All", "Superuser", "Admin"].map((role) => {
+                const isActive = userRoleFilter === role;
+                return (
+                  <button
+                    key={role}
+                    onClick={() => setUserRoleFilter(role)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black border-transparent"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                    }`}
+                  >
+                    {role}
+                  </button>
+                );
+              })}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Main Content Section */}
+      <section className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-6 pb-24">
+        {/* Openings Tab */}
+        {activeTab === "jobs" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {jobs.filter((j) => {
+              const matchesSearch =
+                !jobSearch.trim() ||
+                j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                j.description.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                j.location.toLowerCase().includes(jobSearch.toLowerCase());
+              const matchesDept = jobDeptFilter === "All" || j.department.toLowerCase() === jobDeptFilter.toLowerCase();
+              return matchesSearch && matchesDept;
+            }).length === 0 ? (
+              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-12 text-center">
+                <p className="text-zinc-500 text-xs font-semibold">
+                  {jobs.length === 0 ? "No job listings published. Click \"Create Opening\" to start." : "No positions match your search query."}
+                </p>
               </div>
-
-              {/* Jobs List (Minimal List Design) */}
-              {jobs.length === 0 ? (
-                <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
-                  <Briefcase className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-400 font-semibold">No job listings published. Click &quot;Create Opening&quot; to start.</p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {jobs.map((job) => {
-                    const styleInfo = getDeptStyle(job.department);
-                    return (
+            ) : (
+              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
+                {jobs
+                  .filter((j) => {
+                    const matchesSearch =
+                      !jobSearch.trim() ||
+                      j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                      j.description.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                      j.location.toLowerCase().includes(jobSearch.toLowerCase());
+                    const matchesDept = jobDeptFilter === "All" || j.department.toLowerCase() === jobDeptFilter.toLowerCase();
+                    return matchesSearch && matchesDept;
+                  })
+                  .map((job) => (
+                    <div
+                      key={job.id}
+                      className="w-full flex justify-between items-center py-5 px-6 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors group"
+                    >
                       <div
-                        key={job.id}
-                        className="bg-[#121214]/60 backdrop-blur-xl border border-zinc-800/80 rounded-2xl p-5 hover:border-zinc-700/80 hover:shadow-lg transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                        className="flex flex-col gap-1 min-w-0 pr-4 cursor-pointer"
+                        onClick={() => router.push(`/admin/jobs/${job.id}`)}
                       >
-                        <div className="flex items-start gap-4 min-w-0">
-                          {/* Colored circular dot representing dept */}
-                          <div
-                            style={{ backgroundColor: styleInfo.dot }}
-                            className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
-                          />
-                          <div className="min-w-0 flex flex-col gap-1">
-                            <h2 className="text-base font-bold text-white tracking-tight leading-none hover:text-blue-400 cursor-pointer" onClick={() => router.push(`/admin/jobs/${job.id}`)}>
-                              {job.title}
-                            </h2>
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 font-semibold">
-                              <span>{job.department}</span>
-                              <span>•</span>
-                              <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3 text-zinc-500" /> {job.location}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Controls Toolbar */}
-                        <div className="flex items-center gap-3 self-stretch sm:self-auto justify-end">
-                          <button
-                            onClick={() => openEdit(job)}
-                            className="p-2 border border-zinc-800 bg-zinc-950/80 hover:bg-zinc-900 text-zinc-450 hover:text-white rounded-xl transition-all cursor-pointer"
-                            title="Modify Listing"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(job.id)}
-                            className="p-2 border border-rose-900/50 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 rounded-xl transition-all cursor-pointer"
-                            title="Delete Listing"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => router.push(`/admin/jobs/${job.id}`)}
-                            className="flex items-center gap-1 bg-white hover:bg-zinc-100 text-zinc-950 px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-[0.98]"
-                          >
-                            Reviews <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
+                        <h2 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-300 transition-colors truncate">
+                          {job.title}
+                        </h2>
+                        <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">
+                          <MapPin className="w-3.5 h-3.5 text-zinc-600" />
+                          <span>{job.location}</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </motion.section>
-          )}
 
-          {/* ── Talent Index (DataTable Layout) ── */}
-          {activeTab === "cvs" && (
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-5">
-              
-              {/* Search Toolbar */}
-              <div className="flex flex-col sm:flex-row gap-3.5 items-stretch">
-                {/* Search Box */}
-                <div className="relative flex-1 flex items-center bg-zinc-950/80 rounded-xl border border-zinc-900 px-3.5 py-2.5">
-                  <Search className="w-4 h-4 mr-2.5 text-zinc-600" />
-                  <input
-                    type="text"
-                    placeholder="Search candidate registry database..."
-                    value={cvSearch}
-                    onChange={e => setCvSearch(e.target.value)}
-                    className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
-                  />
-                </div>
-                
-                {/* Status Dropdown */}
-                <select
-                  value={cvFilter}
-                  onChange={e => setCvFilter(e.target.value)}
-                  className="px-4 py-2.5 rounded-xl border border-zinc-900 bg-zinc-950/50 text-xs font-bold text-zinc-400 focus:outline-none focus:border-zinc-700 cursor-pointer"
-                >
-                  <option value="All">All Statuses</option>
-                  <option value="Not Called">Not Called</option>
-                  <option value="Called">Called</option>
-                  <option value="Interviewing">Interviewing</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-[10px] font-semibold text-zinc-450 bg-zinc-950/40 border border-zinc-900 px-3 py-1 rounded-md">
+                          {job.department}
+                        </span>
+                        <button
+                          onClick={() => openEdit(job)}
+                          className="p-2 border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-all cursor-pointer"
+                          title="Modify Listing"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(job.id)}
+                          className="p-2 border border-rose-900/40 bg-rose-955/10 hover:border-rose-900/80 text-rose-450 rounded-lg transition-all cursor-pointer"
+                          title="Delete Listing"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                          className="p-2 border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                          title="View Applicants"
+                        >
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
               </div>
+            )}
+          </motion.div>
+        )}
 
-              {/* Data Rows */}
-              {cvs.length === 0 ? (
-                <div className="py-20 flex flex-col items-center gap-3 animate-pulse-slow" style={{border:'1px dashed rgba(255,255,255,0.06)',borderRadius:'16px'}}>
-                  <FileText className="w-7 h-7" style={{color:'rgba(255,255,255,0.12)'}} />
-                  <p className="text-sm font-semibold text-zinc-500">No candidate profile files indexed.</p>
-                </div>
-              ) : (
-                <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
-                  {cvs.filter(c => {
+        {/* Talent Index Tab */}
+        {activeTab === "cvs" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {cvs.filter((c) => {
+              const matchesFilter = cvFilter === "All" || c.status === cvFilter;
+              const matchesSearch =
+                !cvSearch.trim() ||
+                c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
+                (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase()));
+              return matchesFilter && matchesSearch;
+            }).length === 0 ? (
+              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-12 text-center">
+                <p className="text-zinc-500 text-xs font-semibold">
+                  {cvs.length === 0 ? "No candidate profile files indexed." : "No candidates match your search or filter."}
+                </p>
+              </div>
+            ) : (
+              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
+                {cvs
+                  .filter((c) => {
                     const matchesFilter = cvFilter === "All" || c.status === cvFilter;
-                    const matchesSearch = !cvSearch.trim() ||
+                    const matchesSearch =
+                      !cvSearch.trim() ||
                       c.name.toLowerCase().includes(cvSearch.toLowerCase()) ||
                       (c.email && c.email.toLowerCase().includes(cvSearch.toLowerCase()));
                     return matchesFilter && matchesSearch;
-                  }).map((cv) => {
+                  })
+                  .map((cv) => {
                     const statusStyle = getStatusStyle(cv.status);
-                    const initials = cv.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-                    
+                    const initials = cv.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+
                     return (
                       <div
                         key={cv.id}
@@ -1065,14 +1081,14 @@ export default function AdminPage() {
                         </div>
 
                         <div className="flex items-center gap-4 shrink-0">
-                          <span 
+                          <span
                             style={{ color: statusStyle.color, borderColor: statusStyle.color + "30" }}
                             className="text-[10px] font-semibold bg-zinc-950/40 border px-3 py-1 rounded-md"
                           >
                             {cv.status}
                           </span>
-                          
-                          <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => {
                                 setEditingCv(cv);
@@ -1088,7 +1104,7 @@ export default function AdminPage() {
                             </button>
                             <button
                               onClick={() => handleDeleteCv(cv.id)}
-                              className="p-2 bg-rose-950/10 hover:bg-rose-955/25 border border-rose-900/40 hover:border-rose-900/80 text-rose-450 rounded-lg transition-all cursor-pointer"
+                              className="p-2 bg-rose-955/10 hover:bg-rose-955/25 border border-rose-900/40 hover:border-rose-900/80 text-rose-450 rounded-lg transition-all cursor-pointer"
                               title="Delete Record"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1098,98 +1114,109 @@ export default function AdminPage() {
                       </div>
                     );
                   })}
-                </div>
-              )}
-            </motion.section>
-          )}
+              </div>
+            )}
+          </motion.div>
+        )}
 
-          {activeTab === "users" && (
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-4">
-              {!isSuperuser && (
-                <div className="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl text-center text-xs text-zinc-400 font-semibold mb-2">
-                  ℹ️ Only superusers are authorized to provision new accounts, revoke access, or modify roles.
-                </div>
-              )}
-              {adminUsers.length === 0 ? (
-                <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
-                  <Users className="w-8 h-8 text-zinc-650 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-400 font-semibold font-mono tracking-tight animate-pulse-slow">Loading supervisory accounts list...</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {adminUsers.map((u) => {
+        {/* Supervisors Tab */}
+        {activeTab === "users" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {!isSuperuser && (
+              <div className="p-4 border border-zinc-900 bg-zinc-950/20 rounded-2xl text-center text-xs text-zinc-500 font-semibold mb-4">
+                Only superusers are authorized to provision new accounts, revoke access, or modify roles.
+              </div>
+            )}
+            {adminUsers.filter((u) => {
+              const matchesSearch =
+                !userSearch.trim() ||
+                (u.name && u.name.toLowerCase().includes(userSearch.toLowerCase())) ||
+                (u.email && u.email.toLowerCase().includes(userSearch.toLowerCase()));
+              const matchesRole =
+                userRoleFilter === "All" ||
+                (userRoleFilter === "Superuser" ? u.role === "superuser" : u.role !== "superuser");
+              return matchesSearch && matchesRole;
+            }).length === 0 ? (
+              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-12 text-center">
+                <p className="text-zinc-500 text-xs font-semibold">
+                  {adminUsers.length === 0 ? "Loading supervisory accounts list..." : "No supervisor accounts match your search query."}
+                </p>
+              </div>
+            ) : (
+              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
+                {adminUsers
+                  .filter((u) => {
+                    const matchesSearch =
+                      !userSearch.trim() ||
+                      (u.name && u.name.toLowerCase().includes(userSearch.toLowerCase())) ||
+                      (u.email && u.email.toLowerCase().includes(userSearch.toLowerCase()));
+                    const matchesRole =
+                      userRoleFilter === "All" ||
+                      (userRoleFilter === "Superuser" ? u.role === "superuser" : u.role !== "superuser");
+                    return matchesSearch && matchesRole;
+                  })
+                  .map((u) => {
                     const initials = (u.name ?? u.email ?? "?")[0].toUpperCase();
                     return (
                       <div
                         key={u.id}
-                        className="border border-zinc-900 bg-zinc-950/20 hover:bg-zinc-900/30 transition-colors rounded-2xl p-6 relative flex flex-col justify-between gap-5 shadow-sm"
+                        className="w-full flex justify-between items-center py-5 px-6 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors group"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-zinc-950/40 border border-zinc-900 flex items-center justify-center text-zinc-300 font-extrabold text-xs shrink-0">
+                        <div className="flex items-center gap-4 min-w-0 pr-4">
+                          <div className="w-9 h-9 rounded-xl bg-zinc-950/40 border border-zinc-900 flex items-center justify-center text-zinc-300 font-extrabold text-[11px] shrink-0">
                             {initials}
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-white truncate text-sm leading-none">
-                              {u.name || <span className="italic text-zinc-650">Unnamed Admin</span>}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{u.email}</p>
-                              <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider leading-none ${
-                                u.role === "superuser"
-                                  ? "bg-violet-950/40 border border-violet-900/60 text-violet-400"
-                                  : "bg-zinc-900 border border-zinc-800 text-zinc-400"
-                              }`}>
-                                {u.role === "superuser" ? "Superuser" : "Admin"}
-                              </span>
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <h2 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-300 transition-colors truncate">
+                              {u.name || "Unnamed Admin"}
+                            </h2>
+                            <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                              <span>{u.email}</span>
+                              <span>•</span>
+                              <span>Created {new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-2 border-t border-zinc-900/60 pt-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                          <div className="flex justify-between">
-                            <span>Key Provisioned:</span>
-                            <span className="text-zinc-400">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Last Sign-In:</span>
-                            <span className="text-zinc-400">
-                              {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Never"}
-                            </span>
-                          </div>
-                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span
+                            className={`text-[10px] font-semibold px-3 py-1 rounded-md border ${
+                              u.role === "superuser"
+                                ? "bg-violet-955/20 border-violet-900/60 text-violet-400"
+                                : "bg-zinc-950/40 border-zinc-900 text-zinc-400"
+                            }`}
+                          >
+                            {u.role === "superuser" ? "Superuser" : "Admin"}
+                          </span>
 
-                        <div className="absolute top-5 right-5 flex items-center gap-1.5">
-                          {/* Toggle role button */}
                           {isSuperuser && (
-                            <button
-                              onClick={() => handleToggleRole(u.id, u.role)}
-                              className="p-2 border border-zinc-900 hover:border-violet-900/80 bg-zinc-950/40 hover:bg-violet-955/20 text-zinc-550 hover:text-violet-450 rounded-lg cursor-pointer transition-colors"
-                              title="Toggle privileges (Admin / Superuser)"
-                            >
-                              <Shield className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-
-                          {/* Revoke account button */}
-                          {isSuperuser && (
-                            <button
-                              onClick={() => handleDeleteAdminUser(u.id)}
-                              className="p-2 border border-zinc-900 hover:border-rose-900/80 bg-zinc-950/40 hover:bg-rose-955/20 text-zinc-550 hover:text-rose-450 rounded-lg cursor-pointer transition-colors"
-                              title="Revoke access key"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleToggleRole(u.id, u.role)}
+                                className="p-2 bg-zinc-950/40 border border-zinc-900 hover:border-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-all cursor-pointer"
+                                title="Toggle privileges"
+                              >
+                                <Shield className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAdminUser(u.id)}
+                                className="p-2 bg-rose-955/10 hover:bg-rose-955/25 border border-rose-900/40 hover:border-rose-900/80 text-rose-450 rounded-lg transition-all cursor-pointer"
+                                title="Revoke access key"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
                     );
                   })}
-                </div>
-              )}
-            </motion.section>
-          )}
-        </div>
-      </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </section>
+      <Footer />
 
       {/* ── ╔══════╗ Right Slide-over profile preview drawer (Ashby Style) ╔══════╗ ── */}
       <AnimatePresence>

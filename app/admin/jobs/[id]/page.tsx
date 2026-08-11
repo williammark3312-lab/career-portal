@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../../src/components/Header";
+import Footer from "../../../../src/components/Footer";
 import GlassBackground from "../../../../src/components/GlassBackground";
 import { getAppBaseUrl } from "../../../../src/lib/appUrl";
 
@@ -88,6 +89,15 @@ export default function JobScreeningPage() {
   /* Toolbar State */
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [copiedShare, setCopiedShare] = useState(false);
+
+  function handleCopyShareLink() {
+    const link = `${getAppBaseUrl()}/jobs/${jobId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 2000);
+    });
+  }
 
   /* Right Slide-over profile preview drawer */
   const [activePreviewApp, setActivePreviewApp] = useState<Application | null>(null);
@@ -432,124 +442,137 @@ export default function JobScreeningPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white relative z-10 flex flex-col overflow-hidden font-space">
+    <main className="relative flex flex-col min-h-screen bg-[#050505] text-white">
       <GlassBackground />
-      <Header session={session} handleLogout={handleLogout} />
+      <Header session={session} handleLogout={handleLogout} activeAdminTab="jobs" />
 
-      <div className="flex-1 w-full max-w-4xl mx-auto px-6 py-10 pt-28 pb-20 relative z-10 flex flex-col gap-6">
-        
-        {/* Breadcrumb Navigation */}
-        <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider">
-          <button
-            onClick={() => router.push("/admin")}
-            className="flex items-center gap-1 text-zinc-500 hover:text-blue-400 transition-colors border-none bg-none cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Console
-          </button>
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-800" />
-          <span className="truncate max-w-[150px] font-medium">{job?.title ?? "Role"}</span>
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-800" />
-          <span className="text-white font-bold">Screening Pool</span>
-        </div>
-
-        {/* Screening Header Panel */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-zinc-900 pb-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-bold px-2.5 py-1 bg-zinc-950 border border-zinc-900 text-zinc-450 rounded uppercase tracking-wider self-start">
-              {job?.department ?? "Evaluation"}
-            </span>
-            <h1 className="text-xl font-bold tracking-tight text-white leading-tight">
-              {job?.title ?? "Screening Pool Workspace"}
-            </h1>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
-              <MapPin className="w-3.5 h-3.5" /> {job?.location ?? "Remote / Hybrid"}
-            </div>
+      {/* Hero Section */}
+      <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pt-16 pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col gap-3"
+        >
+          <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">
+            <button
+              onClick={() => router.push("/admin")}
+              className="flex items-center gap-1 text-zinc-500 hover:text-white transition-colors border-none bg-none cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Openings
+            </button>
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-800" />
+            <span className="text-zinc-300 font-bold">{job?.department ?? "Evaluation"}</span>
           </div>
 
-          {/* Quick stats counters indicators row */}
-          <div className="flex flex-wrap gap-2">
-            {(["Pending", "Reviewed", "Shortlisted", "Rejected"] as const).map(statusVal => {
-              const cfg = STATUS_CONFIG[statusVal];
-              return (
-                <div
-                  key={statusVal}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-zinc-950 border border-zinc-900 rounded-lg text-[10px] font-bold text-zinc-400 shadow-sm"
-                >
-                  <span style={{ backgroundColor: cfg.dot }} className="w-1.5 h-1.5 rounded-full" />
-                  <span>{statusVal}</span>
-                  <span className="text-zinc-500 font-bold ml-1">
-                    ({counts[statusVal] ?? 0})
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            {job?.title ?? "Screening pool."}
+          </h1>
+          <p className="text-sm text-zinc-400 leading-relaxed max-w-lg">
+            Review candidate applications, manage evaluation statuses, and schedule interviews.
+          </p>
 
-        {/* Search & Status Filter Toolbar */}
-        {applications.length > 0 && (
-          <div className="flex flex-col sm:flex-row gap-3.5 items-stretch">
-            {/* Search Box */}
-            <div className="relative flex-1 flex items-center bg-zinc-950/80 rounded-xl border border-zinc-900 px-3.5 py-2.5">
-              <Search className="w-4 h-4 mr-2.5 text-zinc-655" />
+          {/* Minimal Info Row */}
+          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">
+            <span>APPLICATIONS: {applications.length}</span>
+            <span>•</span>
+            <span>PENDING: {counts.Pending || 0}</span>
+            <span>•</span>
+            <span>SHORTLISTED: {counts.Shortlisted || 0}</span>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Search & Filter Bar Section */}
+      <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col gap-4"
+        >
+          {/* Top Control Bar: Search Input + Action CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            {/* Minimal Search Field */}
+            <div
+              className="flex-1 relative flex items-center bg-zinc-950/80 rounded-xl border border-zinc-900 focus-within:border-zinc-700 px-3.5 py-2.5 transition-all duration-200"
+            >
+              <Search className="w-4 h-4 mr-2.5 text-zinc-600" />
               <input
                 type="text"
                 placeholder="Search candidate profiles by name or email..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
               />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="ml-2 p-1 rounded-full hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
-            
-            <div className="flex items-center gap-2">
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={handleCopyShareLink}
+                className="px-3.5 py-2.5 rounded-xl border border-zinc-900 bg-zinc-950/50 hover:bg-zinc-900 text-xs font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                {copiedShare ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedShare ? "Copied" : "Share Link"}</span>
+              </button>
               <button
                 onClick={handleExportApplications}
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-900 bg-zinc-950/50 hover:bg-zinc-900 text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl border border-zinc-900 bg-zinc-950/50 hover:bg-zinc-900 text-xs font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer"
               >
-                Export to Excel
+                Export Excel
               </button>
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                className="px-4 py-2.5 rounded-xl border border-zinc-900 bg-zinc-950/50 text-xs font-bold text-zinc-400 focus:outline-none cursor-pointer"
-              >
-                <option value="All">All Applications ({applications.length})</option>
-                <option value="Pending">Pending ({counts.Pending ?? 0})</option>
-                <option value="Reviewed">Reviewed ({counts.Reviewed ?? 0})</option>
-                <option value="Shortlisted">Shortlisted ({counts.Shortlisted ?? 0})</option>
-                <option value="Rejected">Rejected ({counts.Rejected ?? 0})</option>
-              </select>
             </div>
           </div>
-        )}
 
-        {/* Applications DataTable Grid */}
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
+          {/* Status Filter Pills Row */}
+          <div className="flex items-center gap-2 flex-wrap pb-2">
+            {["All", "Pending", "Reviewed", "Shortlisted", "Rejected"].map((status) => {
+              const isActive = statusFilter === status;
+              return (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-white text-black border-transparent"
+                      : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                  }`}
+                >
+                  {status} {status !== "All" && `(${counts[status] || 0})`}
+                </button>
+              );
+            })}
           </div>
-        ) : applications.length === 0 ? (
-          <div className="p-16 border border-dashed border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center">
-            <Users className="w-8 h-8 text-zinc-500 mx-auto mb-3" />
-            <p className="text-sm text-zinc-450 font-semibold">No candidate applications loaded.</p>
+        </motion.div>
+      </section>
+
+      {/* Applications List Section */}
+      <section className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-6 pb-24">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 border border-zinc-900 bg-zinc-950/20 rounded-2xl">
+            <div className="w-6 h-6 border-2 border-zinc-800 border-t-white rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 border border-zinc-800 bg-zinc-900/40 backdrop-blur-md rounded-2xl text-center flex flex-col items-center gap-3">
-            <p className="text-sm font-semibold text-zinc-400">No applications match your search parameter filters.</p>
-            <button
-              onClick={() => { setSearch(""); setStatusFilter("All"); }}
-              className="text-xs font-bold text-blue-400 hover:text-blue-300 underline border-none bg-none cursor-pointer"
-            >
-              Reset filters
-            </button>
+          <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-12 text-center">
+            <p className="text-zinc-500 text-xs font-semibold">
+              {applications.length === 0 ? "No candidate applications received for this vacancy." : "No applications match your search query or status filter."}
+            </p>
           </div>
         ) : (
           <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
             <AnimatePresence mode="popLayout">
               {filtered.map((app, i) => {
                 const statusStyle = STATUS_CONFIG[app.status] ?? { color: "#71717a", dot: "#a1a1aa" };
-                const initials = app.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-                
+                const initials = app.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+
                 return (
                   <motion.div
                     key={app.id}
@@ -561,7 +584,7 @@ export default function JobScreeningPage() {
                       const parsed = parseNotes(app.notes);
                       setProposedSlots(parsed.interview?.proposed_slots || [""]);
                     }}
-                    className="w-full flex justify-between items-center py-5 px-6 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors cursor-pointer group animate-fade-in"
+                    className="w-full flex justify-between items-center py-5 px-6 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-4 min-w-0 pr-4">
                       <div className="w-9 h-9 rounded-xl bg-zinc-950/40 border border-zinc-900 flex items-center justify-center text-zinc-300 font-extrabold text-[11px] shrink-0">
@@ -586,13 +609,13 @@ export default function JobScreeningPage() {
                           <span>{app.location}</span>
                         </div>
                       )}
-                      <span 
+                      <span
                         style={{ color: statusStyle.color, borderColor: statusStyle.color + "30" }}
                         className="text-[10px] font-semibold bg-zinc-950/40 border px-3 py-1 rounded-md"
                       >
                         {app.status}
                       </span>
-                      <ArrowRight className="w-4 h-4 text-zinc-650 group-hover:translate-x-1 group-hover:text-white transition-all duration-200" />
+                      <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:translate-x-1 group-hover:text-white transition-all duration-200" />
                     </div>
                   </motion.div>
                 );
@@ -600,7 +623,9 @@ export default function JobScreeningPage() {
             </AnimatePresence>
           </div>
         )}
-      </div>
+      </section>
+
+      <Footer />
 
       {/* ── ╔══════╗ Right Slide-over Split screening workspace drawer ╔══════╗ ── */}
       <AnimatePresence>

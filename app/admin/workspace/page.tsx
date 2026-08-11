@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../src/components/Header";
+import Footer from "../../../src/components/Footer";
 import GlassBackground from "../../../src/components/GlassBackground";
 
 /* ─── Interfaces ─── */
@@ -516,144 +517,84 @@ export default function WorkspacePage() {
   const pendingTasks = workspace.tasks.filter(t => t.status !== "Done").length;
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white relative z-10 flex flex-col lg:flex-row overflow-hidden">
+    <main className="relative flex flex-col min-h-screen bg-[#050505] text-white">
       <GlassBackground />
+      <Header session={session} handleLogout={handleLogout} activeAdminTab="workspace" />
 
-      {/* ── Midnight-Dark Sidebar ── */}
-      <aside className="w-72 bg-zinc-950 border-r border-zinc-900/80 hidden lg:flex flex-col justify-between p-6 fixed h-screen z-20">
-        <div className="flex flex-col gap-8">
-          
-          {/* Logo Branding */}
-          <div className="flex items-center gap-3 px-2 py-1 cursor-pointer" onClick={() => router.push("/jobs")}>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/10">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-white tracking-tight leading-none">Workspace</h1>
-              <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Supervisor Space</span>
-            </div>
+      {/* Hero section matching portal */}
+      <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pt-16 pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col gap-3"
+        >
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            Workspace desk.
+          </h1>
+          <p className="text-sm text-zinc-400 leading-relaxed max-w-lg">
+            Manage employee onboarding, F&F settlements, and internal operational directives.
+          </p>
+
+          {/* Minimal Info Row */}
+          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">
+            <span>SETTLEMENTS: {totalFnf}</span>
+            <span>•</span>
+            <span>ONBOARDINGS: {activeOnboardings}</span>
+            <span>•</span>
+            <span>OPEN TASKS: {pendingTasks}</span>
           </div>
+        </motion.div>
+      </section>
 
-          {/* User Account context */}
-          <div className="bg-zinc-900/40 rounded-xl p-3 border border-zinc-850 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-extrabold text-xs">
-              {session?.user?.email?.[0].toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest">Signed In</p>
-              <p className="text-xs font-bold text-zinc-300 truncate" title={session?.user?.email}>{session?.user?.email}</p>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="flex flex-col gap-1">
-            {([
-              { key: "jobs",      label: "Openings & Reviews", icon: <Briefcase className="w-4 h-4" />, count: stats.totalJobs,  route: "/admin?tab=jobs" },
-              { key: "cvs",       label: "Talent Index",       icon: <FileText  className="w-4 h-4" />, count: stats.totalCVs,  route: "/admin?tab=cvs" },
-              { key: "workspace", label: "Workspace",           icon: <Layers    className="w-4 h-4" />, count: undefined,       route: "/admin/workspace" },
-              { key: "users",     label: "Supervisor Accounts", icon: <Users     className="w-4 h-4" />, count: stats.totalUsers, route: "/admin?tab=users" },
-            ] as const).map(t => {
-              const isActive = t.key === "workspace";
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => router.push(t.route)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    isActive
-                      ? "text-white bg-zinc-900 border border-zinc-850"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    {t.icon}
-                    <span>{t.label}</span>
-                  </div>
-                  {t.count !== undefined && (
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
-                      isActive ? "bg-zinc-800 text-zinc-200" : "bg-zinc-900 text-zinc-500"
-                    }`}>
-                      {t.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Sidebar Footer context */}
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold text-rose-450 hover:bg-rose-950/20 border border-transparent hover:border-rose-950 transition-all cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
-          </button>
-          <div className="text-[10px] text-zinc-650 font-semibold px-3">
-            © {new Date().getFullYear()} Workspace
-          </div>
-        </div>
-      </aside>
-
-      {/* ── Mobile Layout header ── */}
-      <div className="lg:hidden w-full relative z-30">
-        <Header session={session} handleLogout={handleLogout} />
-        <div className="bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900/80 px-4 py-2 flex gap-1 overflow-x-auto">
-          {([
-            { key: "jobs",      label: "Openings",   icon: <Briefcase className="w-3.5 h-3.5" />, route: "/admin?tab=jobs" },
-            { key: "cvs",       label: "Talent Index",icon: <FileText  className="w-3.5 h-3.5" />, route: "/admin?tab=cvs" },
-            { key: "workspace", label: "Workspace",   icon: <Layers    className="w-3.5 h-3.5" />, route: "/admin/workspace" },
-            { key: "users",     label: "Supervisors", icon: <Users     className="w-3.5 h-3.5" />, route: "/admin?tab=users" },
-          ] as const).map(t => {
-            const isActive = t.key === "workspace";
-            return (
-              <button
-                key={t.key}
-                onClick={() => router.push(t.route)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-200 ${
-                  isActive
-                    ? "bg-white text-zinc-950 shadow-sm"
-                    : "text-zinc-400 bg-zinc-900 hover:bg-zinc-800"
-                }`}
-              >
-                {t.icon}
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Main content pane ── */}
-      <div className="flex-1 lg:ml-72 min-h-screen flex flex-col p-4 sm:p-8 lg:p-10 relative z-10 pt-20 lg:pt-10 overflow-y-auto">
-        <div className="max-w-5xl w-full mx-auto flex flex-col gap-6 flex-grow pb-16">
-          
-          {/* Header Panel */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-850">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                <span>Console</span>
-                <ChevronRight className="w-3 h-3 text-zinc-500" />
-                <span className="text-zinc-300 font-semibold">Workspace</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-none">
-                HR Operations Desk
-              </h1>
+      {/* Search & Action Bar Section */}
+      <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col gap-4"
+        >
+          {/* Top Control Bar: Action CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            {/* Sub Tab bar (Filter Pills) */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {[
+                { id: "overview", label: "Overview" },
+                { id: "fnf", label: "FNF Settlement" },
+                { id: "onboarding", label: "Onboardings" },
+                { id: "tasks", label: "Tasks Desk" },
+              ].map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black border-transparent"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Quick header action button */}
+            <div className="flex items-center gap-2 shrink-0">
               {activeTab === "fnf" && (
                 <>
                   <button
                     onClick={handleExportFnf}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-800 bg-zinc-900/60 text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-zinc-900 bg-zinc-950/50 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all cursor-pointer"
                   >
-                    Export to Excel
+                    Export Excel
                   </button>
                   <button
                     onClick={() => setShowFnfModal(true)}
-                    className="flex items-center gap-1.5 bg-zinc-100 hover:bg-white text-zinc-950 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-md shadow-white/5"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all cursor-pointer shadow-sm"
                   >
                     <Plus className="w-4 h-4" /> Start FNF
                   </button>
@@ -663,13 +604,13 @@ export default function WorkspacePage() {
                 <>
                   <button
                     onClick={handleExportOnboarding}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-800 bg-zinc-900/60 text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-zinc-900 bg-zinc-950/50 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all cursor-pointer"
                   >
-                    Export to Excel
+                    Export Excel
                   </button>
                   <button
                     onClick={() => setShowOnboardingModal(true)}
-                    className="flex items-center gap-1.5 bg-zinc-100 hover:bg-white text-zinc-950 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-md shadow-white/5"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all cursor-pointer shadow-sm"
                   >
                     <UserPlus className="w-4 h-4" /> Start Onboarding
                   </button>
@@ -679,13 +620,13 @@ export default function WorkspacePage() {
                 <>
                   <button
                     onClick={handleExportTasks}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-800 bg-zinc-900/60 text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-zinc-900 bg-zinc-950/50 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all cursor-pointer"
                   >
-                    Export to Excel
+                    Export Excel
                   </button>
                   <button
                     onClick={() => setShowTaskModal(true)}
-                    className="flex items-center gap-1.5 bg-zinc-100 hover:bg-white text-zinc-950 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-md shadow-white/5"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all cursor-pointer shadow-sm"
                   >
                     <Plus className="w-4 h-4" /> Create Task
                   </button>
@@ -693,37 +634,18 @@ export default function WorkspacePage() {
               )}
             </div>
           </div>
+        </motion.div>
+      </section>
 
-          {/* Sub Tab bar */}
-          <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-850 p-1.5 rounded-2xl overflow-x-auto">
-            {([
-              { id: "overview",   label: "Overview",       icon: <Activity      className="w-3.5 h-3.5" /> },
-              { id: "fnf",        label: "FNF Settlement", icon: <DollarSign    className="w-3.5 h-3.5" /> },
-              { id: "onboarding", label: "Onboardings",    icon: <UserPlus      className="w-3.5 h-3.5" /> },
-              { id: "tasks",      label: "Tasks Desk",     icon: <ClipboardList className="w-3.5 h-3.5" /> },
-            ] as const).map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === tab.id
-                    ? "bg-blue-950/50 text-blue-400 border border-blue-800/60 shadow-sm"
-                    : "text-zinc-400 hover:text-blue-300 hover:bg-zinc-900/40 border border-transparent"
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
+      {/* Main Content Section */}
+      <section className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-6 pb-24">
+        {loadingWorkspace ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 border border-zinc-900 bg-zinc-950/20 rounded-2xl">
+            <div className="w-6 h-6 border-2 border-zinc-800 border-t-white rounded-full animate-spin" />
+            <p className="text-xs text-zinc-500 font-semibold">Loading workspace files...</p>
           </div>
-
-          {loadingWorkspace ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="w-5 h-5 border-2 border-zinc-800 border-t-blue-500 rounded-full animate-spin" />
-              <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Loading workspace files...</p>
-            </div>
-          ) : (
-            <AnimatePresence mode="wait">
+        ) : (
+          <AnimatePresence mode="wait">
               {/* ─── OVERVIEW TAB ─── */}
               {activeTab === "overview" && (
                 <motion.div
@@ -1443,8 +1365,8 @@ export default function WorkspacePage() {
               })()}
             </AnimatePresence>
           )}
-        </div>
-      </div>
+      </section>
+      <Footer />
 
       {/* ─── FNF LAUNCH MODAL ─── */}
       {showFnfModal && (

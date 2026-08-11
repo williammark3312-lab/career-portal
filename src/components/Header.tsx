@@ -9,15 +9,32 @@ import type { Session } from "@supabase/supabase-js";
 interface HeaderProps {
   session?: Session | null;
   handleLogout?: () => void;
+  activeAdminTab?: string;
+  onAdminTabChange?: (tab: string) => void;
 }
 
-export default function Header({ session, handleLogout }: HeaderProps) {
+export default function Header({ session, handleLogout, activeAdminTab, onAdminTabChange }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isAdminPage = pathname?.startsWith("/admin");
+  const isWorkspace = pathname === "/admin/workspace";
   const isJobDetails = pathname?.startsWith("/jobs/") && pathname !== "/jobs";
+
+  const currentAdminTab = isWorkspace ? "workspace" : (activeAdminTab || "jobs");
+
+  const handleTabClick = (tabKey: string) => {
+    if (tabKey === "workspace") {
+      router.push("/admin/workspace");
+    } else {
+      if (pathname !== "/admin") {
+        router.push(`/admin?tab=${tabKey}`);
+      } else if (onAdminTabChange) {
+        onAdminTabChange(tabKey);
+      }
+    }
+  };
 
   return (
     <motion.header
@@ -40,7 +57,7 @@ export default function Header({ session, handleLogout }: HeaderProps) {
 
         {/* Logo Section */}
         <div
-          className="relative z-10 flex items-center gap-2 sm:gap-3 cursor-pointer group"
+          className="relative z-10 flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
           onClick={() => router.push(isAdminPage ? "/jobs" : "/")}
         >
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/25 transition-all duration-300 relative overflow-hidden">
@@ -58,28 +75,59 @@ export default function Header({ session, handleLogout }: HeaderProps) {
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="relative z-10 hidden md:flex items-center gap-1.5">
+        <nav className="relative z-10 hidden md:flex items-center gap-1">
           {isAdminPage ? (
-            <>
+            <div className="flex items-center gap-1">
+              {session && (
+                <div className="flex items-center gap-1 mr-2 bg-zinc-950/60 p-1 rounded-full border border-white/5">
+                  {([
+                    { key: "jobs", label: "Openings" },
+                    { key: "cvs", label: "Talent Index" },
+                    { key: "workspace", label: "Workspace" },
+                    { key: "users", label: "Supervisors" },
+                  ] as const).map((t) => {
+                    const isActive = currentAdminTab === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => handleTabClick(t.key)}
+                        className={`relative z-10 px-3 py-1 rounded-full text-[11.5px] font-bold transition-colors cursor-pointer ${
+                          isActive ? "text-black" : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeAdminNavTab"
+                            className="absolute inset-0 bg-white rounded-full -z-10 shadow-sm"
+                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                          />
+                        )}
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <button
                 onClick={() => router.push("/jobs")}
-                className="group relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
+                className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-medium text-white/75 hover:text-white transition-colors overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors rounded-full" />
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
                 Back to site
               </button>
               {session && handleLogout && (
                 <button
                   onClick={handleLogout}
-                  className="group relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-red-300 hover:text-red-200 transition-colors overflow-hidden ml-2"
+                  className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-medium text-red-300 hover:text-red-200 transition-colors overflow-hidden ml-1"
                 >
                   <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/15 transition-colors rounded-full" />
-                  <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <LogOut className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                   Sign out
                 </button>
               )}
-            </>
+            </div>
           ) : isJobDetails ? (
             <div className="relative flex items-center gap-1">
               <button
@@ -107,7 +155,7 @@ export default function Header({ session, handleLogout }: HeaderProps) {
                 <button
                   onClick={() => router.push("/jobs")}
                   className={`relative z-10 flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors ${
-                    pathname === "/jobs" ? "text-[#2563eb]" : "text-white/75 hover:text-white hover:bg-white/10"
+                    pathname === "/jobs" ? "text-black" : "text-white/75 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   {pathname === "/jobs" && (
@@ -167,6 +215,43 @@ export default function Header({ session, handleLogout }: HeaderProps) {
             <div className="flex flex-col gap-1">
               {isAdminPage ? (
                 <>
+                  {session && (
+                    <div className="flex flex-col gap-1 pb-2 mb-2 border-b border-white/10">
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase px-3 pt-1">Admin Sections</span>
+                      <button
+                        onClick={() => { handleTabClick("jobs"); setMobileOpen(false); }}
+                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
+                          currentAdminTab === "jobs" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"
+                        }`}
+                      >
+                        Openings
+                      </button>
+                      <button
+                        onClick={() => { handleTabClick("cvs"); setMobileOpen(false); }}
+                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
+                          currentAdminTab === "cvs" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"
+                        }`}
+                      >
+                        Talent Index
+                      </button>
+                      <button
+                        onClick={() => { handleTabClick("workspace"); setMobileOpen(false); }}
+                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
+                          currentAdminTab === "workspace" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"
+                        }`}
+                      >
+                        Workspace Desk
+                      </button>
+                      <button
+                        onClick={() => { handleTabClick("users"); setMobileOpen(false); }}
+                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
+                          currentAdminTab === "users" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"
+                        }`}
+                      >
+                        Supervisors
+                      </button>
+                    </div>
+                  )}
                   <button
                     onClick={() => { router.push("/jobs"); setMobileOpen(false); }}
                     className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-[14px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
