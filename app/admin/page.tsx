@@ -9,13 +9,14 @@ import {
   CheckCircle2, Upload, MessageSquare, Send, Users,
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
   Copy, Lock, Search, LogOut, Shield, ChevronRight,
-  Mail, Phone, Calendar, Check, Layers
+  Mail, Phone, Calendar, Check, Layers, Eye, EyeOff
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
 import Footer from "../../src/components/Footer";
 import GlassBackground from "../../src/components/GlassBackground";
 import { getAppBaseUrl } from "../../src/lib/appUrl";
+import { playPleasantLoginSound } from "../../src/lib/audio";
 
 /* ─── Interfaces ─── */
 interface Job {
@@ -186,6 +187,7 @@ export default function AdminPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   const [loginSuccess, setLoginSuccess] = useState(false);
 
@@ -588,8 +590,15 @@ export default function AdminPage() {
     e.preventDefault();
     setAuthLoading(true); setAuthError("");
     const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
-    if (error) { setAuthError(error.message); setAuthLoading(false); }
-    else { setLoginSuccess(true); setAuthLoading(false); setTimeout(() => setLoginSuccess(false), 1500); }
+    if (error) {
+      setAuthError(error.message);
+      setAuthLoading(false);
+    } else {
+      playPleasantLoginSound();
+      setLoginSuccess(true);
+      setAuthLoading(false);
+      setTimeout(() => setLoginSuccess(false), 1500);
+    }
   }
   async function handleLogout() {
     setSession(null);
@@ -636,76 +645,151 @@ export default function AdminPage() {
     );
   }
 
-  /* ── Sleek Dark Login screen ── */
+  /* ── Redesigned Glassmorphic Login screen matching Front Page UI/UX ── */
   if (!session) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#050505] relative overflow-hidden p-4">
-        {/* Deep, glowing background rings */}
-        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-violet-500/10 blur-[120px] pointer-events-none" />
-        
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-md border border-zinc-800/80 rounded-[32px] p-10 sm:p-12 bg-zinc-950/80 backdrop-blur-3xl shadow-2xl relative z-10 flex flex-col gap-8"
-        >
-          <div className="flex flex-col gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-violet-600 flex items-center justify-center text-white mb-2 shadow-lg shadow-blue-500/10">
-              <Lock className="w-4 h-4" />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white leading-tight">
-              Recruiter Desk
-            </h1>
-            <p className="text-sm text-zinc-400 font-semibold">Sign in to access your administrative dashboard.</p>
-          </div>
+      <main className="relative flex flex-col min-h-screen bg-[#050505] text-white">
+        <GlassBackground />
+        <Header session={session} handleLogout={handleLogout} />
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Address</label>
-              <input
-                type="email"
-                value={authEmail}
-                onChange={e => setAuthEmail(e.target.value)}
-                required
-                className="w-full border-b border-zinc-800 focus:border-blue-500 bg-transparent text-white text-sm py-2.5 outline-none transition-colors"
-                placeholder="recruiter@company.com"
-              />
-            </div>
+        <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-12">
+          {/* Subtle Ambient Radial Lighting */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/[0.02] blur-[140px] pointer-events-none" />
 
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Password</label>
-              <input
-                type="password"
-                value={authPassword}
-                onChange={e => setAuthPassword(e.target.value)}
-                required
-                className="w-full border-b border-zinc-800 focus:border-blue-500 bg-transparent text-white text-sm py-2.5 outline-none transition-colors"
-                placeholder="••••••••"
-              />
-            </div>
-
-            {authError && (
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full max-w-md relative z-10"
+          >
+            <div className="relative rounded-[28px] bg-[rgba(15,15,17,0.92)] border border-white/10 shadow-[0_16px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-2xl p-8 sm:p-10 overflow-hidden flex flex-col gap-7">
+              {/* Sheen sweeping light effect across card */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-xs font-bold text-rose-500 bg-rose-950/20 border border-rose-900/50 rounded-xl px-4 py-3 text-center"
-              >
-                {authError}
-              </motion.div>
-            )}
+                animate={{ x: ["-200%", "300%"] }}
+                transition={{ duration: 6, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+                className="absolute inset-0 z-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent skew-x-12 pointer-events-none"
+              />
 
-            <button
-              type="submit"
-              disabled={authLoading}
-              className="w-full py-3 px-6 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-blue-500/10 disabled:opacity-75 disabled:cursor-not-allowed mt-4 flex items-center justify-center"
-            >
-              {authLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : "Sign In to Workspace"}
-            </button>
-          </form>
-        </motion.div>
+              {/* Status pill badge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-zinc-400 text-xs font-semibold self-start relative z-10"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                </span>
+                Supervisor Console
+              </motion.div>
+
+              {/* Header Title & Brand Icon */}
+              <div className="relative z-10 flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center relative overflow-hidden group shadow-lg shrink-0">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-[-50%] bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-30"
+                    />
+                    <div className="w-4 h-4 bg-white rounded-[4px] rotate-45 relative z-10" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
+                      Recruiter Desk
+                    </h1>
+                  </div>
+                </div>
+                <p className="text-zinc-400 text-sm leading-relaxed">
+                  Sign in to access your administrative workspace and candidate pipeline.
+                </p>
+              </div>
+
+              {/* Login Form */}
+              <form onSubmit={handleLogin} className="relative z-10 flex flex-col gap-5">
+                {/* Email input field */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                    Email Address
+                  </label>
+                  <div className="relative flex items-center rounded-2xl bg-zinc-900/60 border border-white/10 focus-within:border-white/40 focus-within:ring-1 focus-within:ring-white/20 transition-all px-3.5 py-3">
+                    <Mail className="w-4 h-4 text-zinc-400 mr-2.5 shrink-0" />
+                    <input
+                      type="email"
+                      value={authEmail}
+                      onChange={e => setAuthEmail(e.target.value)}
+                      required
+                      className="w-full bg-transparent text-white text-sm outline-none placeholder:text-zinc-500 font-medium"
+                      placeholder="recruiter@company.com"
+                    />
+                  </div>
+                </div>
+
+                {/* Password input field */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                    Password
+                  </label>
+                  <div className="relative flex items-center rounded-2xl bg-zinc-900/60 border border-white/10 focus-within:border-white/40 focus-within:ring-1 focus-within:ring-white/20 transition-all px-3.5 py-3">
+                    <Lock className="w-4 h-4 text-zinc-400 mr-2.5 shrink-0" />
+                    <input
+                      type={showLoginPassword ? "text" : "password"}
+                      value={authPassword}
+                      onChange={e => setAuthPassword(e.target.value)}
+                      required
+                      className="w-full bg-transparent text-white text-sm outline-none placeholder:text-zinc-500 font-medium pr-2"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="text-zinc-400 hover:text-white transition-colors p-1 cursor-pointer"
+                      tabIndex={-1}
+                    >
+                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error Banner */}
+                {authError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-xs font-semibold text-rose-400 bg-rose-950/40 border border-rose-800/50 rounded-2xl px-4 py-3 text-center"
+                  >
+                    {authError}
+                  </motion.div>
+                )}
+
+                {/* Submit Button matching front page CTA */}
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="mt-2"
+                >
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-3.5 px-6 rounded-full font-bold text-xs sm:text-sm text-black bg-white hover:bg-zinc-200 active:bg-zinc-300 transition-all duration-200 cursor-pointer shadow-md disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {authLoading ? (
+                      <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Sign In to Workspace</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </motion.div>
+              </form>
+            </div>
+          </motion.div>
+        </section>
+
+        <Footer />
       </main>
     );
   }
