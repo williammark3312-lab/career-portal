@@ -1021,58 +1021,61 @@ export default function WorkspacePage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="flex flex-col gap-5"
+                    className="flex flex-col gap-4"
                   >
-                    {/* ── Google Tasks Toolbar & View Switcher ── */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-zinc-950/80 border border-zinc-850 p-3 rounded-2xl shadow-xl">
+                    {/* Toolbar & View Switcher */}
+                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                       {/* Search Bar */}
-                      <div className="relative flex-1 w-full sm:w-auto min-w-[220px]">
-                        <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <div className="flex-1 relative flex items-center bg-zinc-950/80 rounded-xl border border-zinc-900 focus-within:border-zinc-700 px-3.5 py-2.5 transition-all">
+                        <Search className="w-4 h-4 mr-2.5 text-zinc-600" />
                         <input
                           type="text"
                           placeholder="Search tasks or assignees..."
                           value={taskSearchQuery}
                           onChange={(e) => setTaskSearchQuery(e.target.value)}
-                          className="w-full bg-zinc-900/80 border border-zinc-800 focus:border-zinc-600 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white outline-none transition-all placeholder-zinc-500"
+                          className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
                         />
+                        {taskSearchQuery && (
+                          <button
+                            onClick={() => setTaskSearchQuery("")}
+                            className="ml-2 p-1 rounded-full hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
 
-                      {/* Filter Chips & View Mode Buttons */}
-                      <div className="flex items-center justify-between w-full sm:w-auto gap-2">
-                        {/* Category filter select */}
-                        <div className="flex items-center gap-1.5 bg-zinc-900/60 border border-zinc-800 px-2.5 py-1 rounded-xl">
-                          <Filter className="w-3 h-3 text-zinc-400" />
-                          <select
-                            value={taskFilterCategory}
-                            onChange={(e) => setTaskFilterCategory(e.target.value)}
-                            className="bg-transparent text-xs font-bold text-zinc-300 outline-none cursor-pointer"
-                          >
-                            <option value="All" className="bg-zinc-950 text-white">All Categories</option>
-                            <option value="General" className="bg-zinc-950 text-white">General Ops</option>
-                            <option value="Onboarding" className="bg-zinc-950 text-white">Onboarding</option>
-                            <option value="FNF" className="bg-zinc-950 text-white">FNF Clearance</option>
-                            <option value="Recruitment" className="bg-zinc-950 text-white">Recruitment</option>
-                          </select>
-                        </div>
+                      {/* Filter Chips & View Mode Switcher */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <select
+                          value={taskFilterCategory}
+                          onChange={(e) => setTaskFilterCategory(e.target.value)}
+                          className="px-3.5 py-2.5 rounded-xl border border-zinc-900 bg-zinc-950/50 text-xs font-bold text-zinc-400 focus:outline-none cursor-pointer"
+                        >
+                          <option value="All" className="bg-zinc-950 text-white">All Categories</option>
+                          <option value="General" className="bg-zinc-950 text-white">General Ops</option>
+                          <option value="Onboarding" className="bg-zinc-950 text-white">Onboarding</option>
+                          <option value="FNF" className="bg-zinc-950 text-white">FNF Clearance</option>
+                          <option value="Recruitment" className="bg-zinc-950 text-white">Recruitment</option>
+                        </select>
 
-                        {/* View Switcher: List vs Board */}
-                        <div className="flex items-center gap-1 bg-zinc-900/80 border border-zinc-800 p-1 rounded-xl">
+                        <div className="flex items-center gap-1 bg-zinc-950/80 border border-zinc-900 p-1 rounded-xl">
                           <button
                             onClick={() => setTaskViewMode("list")}
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               taskViewMode === "list"
-                                ? "bg-zinc-900 text-white border border-zinc-800 shadow-sm"
-                                : "text-zinc-400 hover:text-zinc-200"
+                                ? "bg-white text-black shadow-sm"
+                                : "text-zinc-500 hover:text-zinc-300"
                             }`}
                           >
                             <List className="w-3.5 h-3.5" /> List
                           </button>
                           <button
                             onClick={() => setTaskViewMode("board")}
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               taskViewMode === "board"
-                                ? "bg-zinc-900 text-white border border-zinc-800 shadow-sm"
-                                : "text-zinc-400 hover:text-zinc-200"
+                                ? "bg-white text-black shadow-sm"
+                                : "text-zinc-500 hover:text-zinc-300"
                             }`}
                           >
                             <Kanban className="w-3.5 h-3.5" /> Board
@@ -1081,13 +1084,13 @@ export default function WorkspacePage() {
                       </div>
                     </div>
 
-                    {/* ── Google Tasks Fast Inline Task Creator ── */}
+                    {/* Inline Task Creator Form */}
                     <form
                       onSubmit={handleQuickAddTask}
-                      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-zinc-950 border border-zinc-850 focus-within:border-zinc-600 p-2 sm:p-2.5 rounded-2xl shadow-xl transition-all"
+                      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-zinc-950/40 border border-zinc-900 focus-within:border-zinc-700 p-2.5 rounded-2xl transition-all"
                     >
                       <div className="flex items-center gap-2 flex-1 px-2">
-                        <Plus className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                        <Plus className="w-4 h-4 text-zinc-500 flex-shrink-0" />
                         <input
                           type="text"
                           placeholder="Add a task (e.g. Schedule Exit Interview, Revoke AWS Access)..."
@@ -1097,12 +1100,11 @@ export default function WorkspacePage() {
                         />
                       </div>
 
-                      <div className="flex items-center gap-2 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-850">
-                        {/* Quick category */}
+                      <div className="flex items-center gap-2 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-900">
                         <select
                           value={quickTaskCategory}
                           onChange={(e) => setQuickTaskCategory(e.target.value as WorkspaceTask["category"])}
-                          className="bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2 py-1.5 rounded-xl outline-none cursor-pointer"
+                          className="bg-zinc-900/60 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2.5 py-1.5 rounded-xl outline-none cursor-pointer"
                         >
                           <option value="General" className="bg-zinc-950 text-white">General Ops</option>
                           <option value="Onboarding" className="bg-zinc-950 text-white">Onboarding</option>
@@ -1110,119 +1112,114 @@ export default function WorkspacePage() {
                           <option value="Recruitment" className="bg-zinc-950 text-white">Recruitment</option>
                         </select>
 
-                        {/* Quick priority */}
                         <select
                           value={quickTaskPriority}
                           onChange={(e) => setQuickTaskPriority(e.target.value as WorkspaceTask["priority"])}
-                          className="bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2 py-1.5 rounded-xl outline-none cursor-pointer"
+                          className="bg-zinc-900/60 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2.5 py-1.5 rounded-xl outline-none cursor-pointer"
                         >
                           <option value="Low" className="bg-zinc-950 text-white">Low Priority</option>
                           <option value="Medium" className="bg-zinc-950 text-white">Medium Priority</option>
                           <option value="High" className="bg-zinc-950 text-white">High Priority</option>
                         </select>
 
-                        {/* Quick due date */}
                         <input
                           type="date"
                           value={quickTaskDueDate}
                           onChange={(e) => setQuickTaskDueDate(e.target.value)}
-                          className="bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2 py-1 rounded-xl outline-none cursor-pointer"
+                          className="bg-zinc-900/60 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2 py-1 rounded-xl outline-none cursor-pointer"
                         />
 
-                        {/* Quick Submit */}
                         <button
                           type="submit"
                           disabled={!quickTaskTitle.trim()}
-                          className="bg-zinc-100 hover:bg-white disabled:opacity-40 disabled:hover:bg-zinc-100 text-zinc-950 text-xs font-bold px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-md shadow-white/5"
+                          className="bg-white hover:bg-zinc-200 disabled:opacity-40 disabled:hover:bg-white text-black text-xs font-bold px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm"
                         >
                           Add
                         </button>
                       </div>
                     </form>
 
-                    {/* ── View Render: Google Tasks List View vs Board View ── */}
+                    {/* View Render: List View vs Board View */}
                     {taskViewMode === "list" ? (
-                      /* Google Tasks Minimalist List View */
                       <div className="flex flex-col gap-4">
-                        {/* Active Tasks List */}
-                        <div className="border border-zinc-850 bg-zinc-950/80 rounded-2xl overflow-hidden shadow-xl p-3 flex flex-col gap-2">
-                          <div className="flex justify-between items-center px-2 py-1 border-b border-zinc-850 mb-1">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
-                              <ClipboardList className="w-3.5 h-3.5 text-zinc-400" /> Active Tasks ({activeTasks.length})
+                        {/* Active Tasks List Container */}
+                        <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
+                          <div className="px-6 py-3.5 border-b border-zinc-900 flex justify-between items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest bg-zinc-950/40">
+                            <span className="flex items-center gap-2">
+                              <ClipboardList className="w-3.5 h-3.5 text-zinc-500" /> Active Tasks ({activeTasks.length})
                             </span>
                           </div>
 
-                          {activeTasks.map(t => (
-                            <div
-                              key={t.id}
-                              className="flex items-center justify-between p-3 rounded-xl border border-zinc-850/80 bg-zinc-900/40 hover:bg-zinc-900/80 transition-all group"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                {/* Google Tasks Radio Checkbox */}
-                                <button
-                                  onClick={() => handleUpdateTaskStatus(t.id, "Done")}
-                                  className="w-5 h-5 rounded-full border border-zinc-700 hover:border-zinc-400 bg-zinc-950 flex items-center justify-center transition-all cursor-pointer group-hover:scale-105"
-                                  title="Mark as completed"
-                                >
-                                  <Check className="w-3 h-3 text-transparent group-hover:text-zinc-300 transition-colors" />
-                                </button>
+                          {activeTasks.length === 0 ? (
+                            <div className="p-12 text-center text-zinc-500 text-xs font-semibold">
+                              No active tasks pending. Nice work!
+                            </div>
+                          ) : (
+                            activeTasks.map((t) => (
+                              <div
+                                key={t.id}
+                                className="px-6 py-4 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors flex items-center justify-between group"
+                              >
+                                <div className="flex items-center gap-3.5 min-w-0 pr-4">
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(t.id, "Done")}
+                                    className="w-5 h-5 rounded-full border border-zinc-700 hover:border-white bg-zinc-950 flex items-center justify-center transition-all cursor-pointer shrink-0"
+                                    title="Mark as completed"
+                                  >
+                                    <Check className="w-3 h-3 text-transparent group-hover:text-white transition-colors" />
+                                  </button>
 
-                                <div className="flex flex-col min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs font-bold text-white group-hover:text-zinc-300 transition-colors">
-                                      {t.title}
-                                    </span>
-                                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-zinc-300 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">
-                                      {t.category}
-                                    </span>
-                                    {t.priority === "High" && (
-                                      <span className="text-[9px] font-bold text-amber-400 bg-amber-955/40 border border-amber-900/50 px-1.5 py-0.5 rounded">
-                                        High Priority
+                                  <div className="flex flex-col gap-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-sm font-bold text-white group-hover:text-zinc-300 transition-colors">
+                                        {t.title}
                                       </span>
-                                    )}
+                                      <span className="text-[10px] font-semibold text-zinc-450 bg-zinc-950/40 border border-zinc-900 px-2 py-0.5 rounded">
+                                        {t.category}
+                                      </span>
+                                      {t.priority === "High" && (
+                                        <span className="text-[10px] font-semibold text-amber-400 bg-amber-950/30 border border-amber-900/40 px-2 py-0.5 rounded">
+                                          High Priority
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-2">
+                                      <span>Assigned: <span className="text-zinc-400">{t.assignedTo}</span></span>
+                                      <span>•</span>
+                                      <span>Due: {t.dueDate}</span>
+                                    </p>
                                   </div>
-                                  <p className="text-[10px] text-zinc-400 mt-0.5 flex items-center gap-2">
-                                    <span>Assigned: <span className="text-zinc-300">{t.assignedTo}</span></span>
-                                    <span>•</span>
-                                    <span>Due: {t.dueDate}</span>
-                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(t.id, t.status === "To Do" ? "In Progress" : "Done")}
+                                    className="text-[10px] font-bold text-zinc-300 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                                  >
+                                    {t.status === "To Do" ? "Start" : "Finish"}
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteTask(t.id);
+                                    }}
+                                    className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1.5 rounded-lg opacity-0 group-hover:opacity-100"
+                                    title="Delete task"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               </div>
-
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleUpdateTaskStatus(t.id, t.status === "To Do" ? "In Progress" : "Done")}
-                                  className="text-[10px] font-bold text-zinc-300 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
-                                >
-                                  {t.status === "To Do" ? "Start" : "Finish"}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteTask(t.id);
-                                  }}
-                                  className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1.5 rounded-lg hover:bg-rose-955/30 opacity-0 group-hover:opacity-100"
-                                  title="Delete task"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-
-                          {activeTasks.length === 0 && (
-                            <div className="text-center py-10 border border-dashed border-zinc-850 rounded-xl">
-                              <p className="text-xs text-zinc-500 italic">No active tasks pending. Nice work!</p>
-                            </div>
+                            ))
                           )}
                         </div>
 
-                        {/* Collapsible Completed Tasks Accordion (Google Tasks Style) */}
+                        {/* Completed Tasks Accordion */}
                         {completedTasks.length > 0 && (
-                          <div className="border border-zinc-850 bg-zinc-950/60 rounded-2xl overflow-hidden shadow-xl">
+                          <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
                             <button
                               onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-                              className="w-full p-3.5 flex items-center justify-between bg-zinc-900/40 hover:bg-zinc-900/70 transition-all text-xs font-bold text-zinc-400 cursor-pointer"
+                              className="w-full px-6 py-3.5 flex items-center justify-between hover:bg-zinc-900/30 transition-all text-xs font-bold text-zinc-400 cursor-pointer"
                             >
                               <span className="flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Completed ({completedTasks.length})
@@ -1231,16 +1228,16 @@ export default function WorkspacePage() {
                             </button>
 
                             {showCompletedTasks && (
-                              <div className="p-3 flex flex-col gap-2 border-t border-zinc-850 bg-zinc-950/40">
-                                {completedTasks.map(t => (
+                              <div className="border-t border-zinc-900">
+                                {completedTasks.map((t) => (
                                   <div
                                     key={t.id}
-                                    className="flex items-center justify-between p-3 rounded-xl border border-zinc-850/60 bg-zinc-900/20 group hover:bg-zinc-900/50 transition-all"
+                                    className="px-6 py-3.5 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/20 transition-all flex items-center justify-between"
                                   >
-                                    <div className="flex items-center gap-3 min-w-0">
+                                    <div className="flex items-center gap-3.5 min-w-0 pr-4">
                                       <button
                                         onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
-                                        className="w-5 h-5 rounded-full bg-emerald-500 border border-emerald-500 text-black flex items-center justify-center transition-all cursor-pointer"
+                                        className="w-5 h-5 rounded-full bg-emerald-500 text-black flex items-center justify-center transition-all cursor-pointer shrink-0"
                                         title="Reopen task"
                                       >
                                         <Check className="w-3 h-3 stroke-[3]" />
@@ -1249,13 +1246,13 @@ export default function WorkspacePage() {
                                         <span className="text-xs font-bold line-through text-zinc-500">
                                           {t.title}
                                         </span>
-                                        <span className="text-[9px] font-semibold text-zinc-500">
+                                        <span className="text-[10px] text-zinc-500 font-semibold">
                                           Completed • {t.category}
                                         </span>
                                       </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 shrink-0">
                                       <button
                                         onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
                                         className="text-[10px] font-bold text-zinc-400 hover:text-white px-2 py-0.5 rounded cursor-pointer"
@@ -1267,7 +1264,7 @@ export default function WorkspacePage() {
                                           e.stopPropagation();
                                           handleDeleteTask(t.id);
                                         }}
-                                        className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1 rounded hover:bg-rose-955/30"
+                                        className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
@@ -1281,42 +1278,42 @@ export default function WorkspacePage() {
                       </div>
                     ) : (
                       /* Board View (Kanban) */
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {[
                           { title: "To Do", key: "To Do", dot: "bg-zinc-500" },
-                          { title: "In Progress", key: "In Progress", dot: "bg-zinc-400" },
-                          { title: "Completed", key: "Done", dot: "bg-emerald-500" }
-                        ].map(col => (
-                          <div key={col.title} className="flex flex-col gap-3 bg-zinc-950/80 border border-zinc-850 rounded-2xl p-4 shadow-xl">
-                            <div className="flex items-center justify-between border-b border-zinc-850 pb-2 mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                              <span className="flex items-center gap-1.5">
-                                <span className={`w-1.5 h-1.5 rounded-full ${col.dot}`} /> {col.title}
+                          { title: "In Progress", key: "In Progress", dot: "bg-blue-400" },
+                          { title: "Completed", key: "Done", dot: "bg-emerald-400" },
+                        ].map((col) => (
+                          <div key={col.title} className="flex flex-col gap-3 bg-zinc-950/30 border border-zinc-900 rounded-2xl p-4">
+                            <div className="flex items-center justify-between border-b border-zinc-900 pb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                              <span className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${col.dot}`} /> {col.title}
                               </span>
-                              <span className="text-zinc-300 font-bold">{filteredTasks.filter(t => t.status === col.key).length}</span>
+                              <span className="text-zinc-300 font-bold">{filteredTasks.filter((t) => t.status === col.key).length}</span>
                             </div>
-                            
+
                             <div className="flex flex-col gap-2">
-                              {filteredTasks.filter(t => t.status === col.key).map(t => (
-                                <div key={t.id} className="p-3.5 border border-zinc-850 bg-zinc-900/40 rounded-xl flex flex-col gap-2.5 hover:border-zinc-700 transition-colors shadow-sm group">
+                              {filteredTasks.filter((t) => t.status === col.key).map((t) => (
+                                <div key={t.id} className="p-4 border border-zinc-900 bg-zinc-950/50 rounded-xl flex flex-col gap-3 hover:border-zinc-700 transition-colors group">
                                   <div>
-                                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-zinc-400">{t.category}</span>
-                                    <h4 className={`text-xs font-bold text-white group-hover:text-zinc-200 transition-colors mt-0.5 leading-tight ${t.status === "Done" ? "line-through text-zinc-500" : ""}`}>
+                                    <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">{t.category}</span>
+                                    <h4 className={`text-xs font-bold text-white group-hover:text-zinc-300 transition-colors mt-0.5 leading-tight ${t.status === "Done" ? "line-through text-zinc-500" : ""}`}>
                                       {t.title}
                                     </h4>
                                   </div>
-                                  
-                                  <div className="text-[10px] text-zinc-400 border-t border-zinc-850/60 pt-2 flex flex-col gap-0.5 uppercase tracking-wide">
-                                    <span>User: <span className="text-zinc-300">{t.assignedTo}</span></span>
+
+                                  <div className="text-[10px] text-zinc-500 font-semibold border-t border-zinc-900 pt-2 flex flex-col gap-0.5">
+                                    <span>Assigned: <span className="text-zinc-300">{t.assignedTo}</span></span>
                                     <span>Due: {t.dueDate}</span>
                                   </div>
 
-                                  <div className="flex items-center justify-between border-t border-zinc-850/60 pt-2 text-[10px] font-bold">
-                                    <span className="text-zinc-400 uppercase tracking-widest">{t.priority} priority</span>
+                                  <div className="flex items-center justify-between border-t border-zinc-900 pt-2 text-[10px] font-bold">
+                                    <span className="text-zinc-500 uppercase tracking-wider">{t.priority} priority</span>
                                     <div className="flex items-center gap-1.5">
                                       {t.status === "To Do" && (
                                         <button
                                           onClick={() => handleUpdateTaskStatus(t.id, "In Progress")}
-                                          className="text-[10px] font-bold text-zinc-300 hover:bg-zinc-800 border border-zinc-800 px-2 py-0.5 rounded cursor-pointer"
+                                          className="text-[10px] font-bold text-zinc-300 hover:bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded cursor-pointer"
                                         >
                                           Start
                                         </button>
@@ -1324,7 +1321,7 @@ export default function WorkspacePage() {
                                       {t.status === "In Progress" && (
                                         <button
                                           onClick={() => handleUpdateTaskStatus(t.id, "Done")}
-                                          className="text-[10px] font-bold text-emerald-400 hover:bg-emerald-955/30 border border-emerald-900/40 px-2 py-0.5 rounded cursor-pointer"
+                                          className="text-[10px] font-bold text-emerald-400 hover:bg-emerald-950/30 border border-emerald-900/40 px-2 py-0.5 rounded cursor-pointer"
                                         >
                                           Finish
                                         </button>
@@ -1350,9 +1347,9 @@ export default function WorkspacePage() {
                                   </div>
                                 </div>
                               ))}
-                              {filteredTasks.filter(t => t.status === col.key).length === 0 && (
-                                <div className="text-center py-6 border border-dashed border-zinc-850 rounded-xl">
-                                  <p className="text-[10px] text-zinc-500 italic">No tasks in column</p>
+                              {filteredTasks.filter((t) => t.status === col.key).length === 0 && (
+                                <div className="text-center py-8">
+                                  <p className="text-xs text-zinc-600 font-medium">No tasks in column</p>
                                 </div>
                               )}
                             </div>
