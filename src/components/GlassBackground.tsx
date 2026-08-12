@@ -11,7 +11,7 @@ export default function GlassBackground() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-[#050505]">
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-[#000000]">
       {/* Extremely faint top-center radial gradient to simulate high-end display depth */}
       <div 
         className="absolute inset-0 opacity-40" 

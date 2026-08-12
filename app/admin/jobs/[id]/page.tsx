@@ -444,7 +444,7 @@ export default function JobScreeningPage() {
 
   if (!mounted || authLoading) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white relative overflow-hidden font-space">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#000000] text-white relative overflow-hidden font-space">
         <GlassBackground />
         <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin relative z-10" />
       </main>
@@ -453,7 +453,7 @@ export default function JobScreeningPage() {
 
   if (!session || !isRecruiter) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#050505] text-white relative overflow-hidden p-4 font-sans">
+      <main className="min-h-screen flex items-center justify-center bg-[#000000] text-white relative overflow-hidden p-4 font-sans">
         <GlassBackground />
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -499,7 +499,7 @@ export default function JobScreeningPage() {
   }
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#050505] text-white">
+    <main className="relative flex flex-col min-h-screen bg-[#000000] text-white">
       <GlassBackground />
       <Header session={session} handleLogout={handleLogout} activeAdminTab="jobs" />
 

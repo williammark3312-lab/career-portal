@@ -472,7 +472,7 @@ export default function WorkspacePage() {
 
   if (!mounted || authLoading) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white relative overflow-hidden font-sans">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#000000] text-white relative overflow-hidden font-sans">
         <GlassBackground />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="admin-logo-mark w-9 h-9" />
@@ -489,7 +489,7 @@ export default function WorkspacePage() {
 
   if (!session) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#050505] text-white relative overflow-hidden p-4 font-sans">
+      <main className="min-h-screen flex items-center justify-center bg-[#000000] text-white relative overflow-hidden p-4 font-sans">
         <GlassBackground />
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -526,7 +526,7 @@ export default function WorkspacePage() {
 
   if (!isRecruiter) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#050505] text-white relative overflow-hidden p-4 font-sans">
+      <main className="min-h-screen flex items-center justify-center bg-[#000000] text-white relative overflow-hidden p-4 font-sans">
         <GlassBackground />
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -564,7 +564,7 @@ export default function WorkspacePage() {
   const pendingTasks = workspace.tasks.filter(t => t.status !== "Done").length;
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#050505] text-white">
+    <main className="relative flex flex-col min-h-screen bg-[#000000] text-white">
       <GlassBackground />
       <Header session={session} handleLogout={handleLogout} activeAdminTab="workspace" />
 

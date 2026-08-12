@@ -6,11 +6,11 @@
 ═══════════════════════════════════════════ */
 :root {
   /* ─── Surfaces ─── */
-  --s-base:    #050505;
-  --s-muted:   #0f0f12;
-  --s-subtle:  #18181b;
-  --s-inset:   #27272a;
-  --s-hover:   #1e1e24;
+  --s-base:    #000000;
+  --s-muted:   #0a0a0c;
+  --s-subtle:  #121215;
+  --s-inset:   #1f1f23;
+  --s-hover:   #18181c;
 
   /* ─── Borders ─── */
   --b-faint:   rgba(255,255,255,0.03);
@@ -40,10 +40,10 @@
   --rose-bg:  rgba(244,63,94,0.12);
 
   /* ─── Legacy tokens (public pages) ─── */
-  --grey-50:   #050505;
-  --grey-100:  #0f0f12;
-  --grey-200:  #18181b;
-  --grey-300:  #27272a;
+  --grey-50:   #000000;
+  --grey-100:  #0a0a0c;
+  --grey-200:  #121215;
+  --grey-300:  #1f1f23;
   --grey-400:  #3f3f46;
   --grey-500:  #71717a;
   --grey-600:  #a1a1aa;
@@ -51,20 +51,20 @@
   --grey-800:  #e4e4e7;
   --grey-900:  #f4f4f5;
   --grey-1000: #ffffff;
-  --neutral-50:  #09090b;
-  --neutral-100: #18181b;
-  --neutral-200: #27272a;
+  --neutral-50:  #000000;
+  --neutral-100: #0f0f12;
+  --neutral-200: #18181b;
   --neutral-900: #ffffff;
   --blue-400:  #60a5fa;
   --blue-500:  #3b82f6;
   --blue-600:  #2563eb;
-  --bg:        var(--grey-50);
+  --bg:        #000000;
   --fg:        var(--grey-1000);
   --muted:     var(--grey-500);
   --border:    var(--grey-200);
-  --glass-bg:     rgba(5,5,5,0.72);
+  --glass-bg:     rgba(0,0,0,0.85);
   --glass-border: rgba(255,255,255,0.06);
-  --nav-bg:    rgba(15,15,17,0.92);
+  --nav-bg:    rgba(10,10,12,0.92);
   --nav-border:rgba(255,255,255,0.08);
 }
 
@@ -80,15 +80,11 @@
    RESET
 ═══════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: auto; }
+html { scroll-behavior: auto; background-color: #000000; }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(ellipse 60% 40% at 20% 60%, rgba(50,121,249,0.06), transparent),
-    radial-gradient(ellipse 50% 35% at 80% 25%, rgba(50,121,249,0.04), transparent);
-  background-attachment: fixed;
+  background-color: #000000;
   color: var(--fg);
   margin: 0; padding: 0;
   overflow-x: hidden;

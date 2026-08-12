@@ -12,7 +12,7 @@ function AuthSuccessContent() {
   const app = searchParams.get("app") || "Antigravity";
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-[#050505] text-white flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="relative flex flex-col min-h-screen bg-[#000000] text-white flex items-center justify-center p-6 relative overflow-hidden">
       <GlassBackground />
       
       <motion.div
@@ -70,7 +70,7 @@ function AuthSuccessContent() {
 
 export default function AuthSuccessPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#050505]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#000000]" />}>
       <AuthSuccessContent />
     </Suspense>
   );
