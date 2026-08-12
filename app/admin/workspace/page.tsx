@@ -274,28 +274,19 @@ export default function WorkspacePage() {
   async function loadWorkspace() {
     try {
       setLoadingWorkspace(true);
-      const cached = getWorkspaceFromCache();
-      if (cached) {
-        setWorkspace(cached);
-      }
-
       const res = await fetch("/api/workspace");
       if (res.ok) {
         const apiData: WorkspaceData = await res.json();
-        if (!cached) {
-          setWorkspace(apiData);
-          saveWorkspaceToCache(apiData);
-        } else {
-          // Sync local cached data (with deletions) to server API store
-          fetch("/api/workspace", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "sync_workspace", payload: cached })
-          }).catch(console.error);
-        }
+        setWorkspace(apiData);
+        saveWorkspaceToCache(apiData);
+      } else {
+        const cached = getWorkspaceFromCache();
+        if (cached) setWorkspace(cached);
       }
     } catch (err) {
       console.error("Error fetching workspace data:", err);
+      const cached = getWorkspaceFromCache();
+      if (cached) setWorkspace(cached);
     } finally {
       setLoadingWorkspace(false);
     }

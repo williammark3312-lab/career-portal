@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import os from "os";
+import { createClient } from "@supabase/supabase-js";
 
 interface FnfTaskItem { id: string; name: string; completed: boolean; section: string; }
 interface FnfRecordItem { id: string; employeeName: string; department: string; resignationDate: string; lastWorkingDay: string; settlementStatus: string; amount: number; remarks: string; tasks: FnfTaskItem[]; createdAt: string; }
@@ -10,51 +10,109 @@ interface TaskItemRecord { id: string; title: string; assignedTo: string; dueDat
 interface WorkspaceStore { fnf: FnfRecordItem[]; onboardings: OnboardingRecordItem[]; tasks: TaskItemRecord[]; }
 
 const projectJsonPath = path.join(process.cwd(), "data", "workspace.json");
-const tmpJsonPath = path.join(os.tmpdir(), "workspace.json");
+const WORKSPACE_STORE_NAME = "__WORKSPACE_SYSTEM_STORE__";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fxksnkvyeyypkckehqpx.supabase.co";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_m-6h20CT-bCsXpkRPOtZ2Q_g98HQo8H";
+
+function getSupabaseClient() {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const isPlaceholder = !serviceKey || serviceKey.includes("your_service_role_key_here");
+  const key = isPlaceholder ? supabaseAnonKey : serviceKey;
+  return createClient(supabaseUrl, key, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+}
 
 let inMemoryStore: WorkspaceStore | null = null;
 
-// Helper to read data from workspace.json or /tmp in serverless
+// Helper to read workspace data from Supabase cloud database
 async function readData(): Promise<WorkspaceStore> {
-  if (inMemoryStore) {
-    return inMemoryStore;
+  const supabase = getSupabaseClient();
+
+  // 1. Fetch persistent store from Supabase cloud database
+  try {
+    const { data, error } = await supabase
+      .from("applications")
+      .select("id, notes")
+      .eq("name", WORKSPACE_STORE_NAME)
+      .limit(1);
+
+    if (!error && data && data.length > 0 && data[0].notes) {
+      try {
+        const parsed = JSON.parse(data[0].notes);
+        if (parsed && typeof parsed === "object") {
+          inMemoryStore = {
+            fnf: Array.isArray(parsed.fnf) ? parsed.fnf : [],
+            onboardings: Array.isArray(parsed.onboardings) ? parsed.onboardings : [],
+            tasks: Array.isArray(parsed.tasks) ? parsed.tasks : []
+          };
+          return inMemoryStore;
+        }
+      } catch (pErr) {
+        console.error("JSON parse error for Supabase workspace store:", pErr);
+      }
+    }
+  } catch (err) {
+    console.error("Supabase workspace read error:", err);
   }
 
-  // 1. Try reading from /tmp/workspace.json (modified state in serverless)
+  // 2. Fallback to initial seed data from project workspace.json file
+  let initialData: WorkspaceStore = { fnf: [], onboardings: [], tasks: [] };
   try {
-    const tmpContent = await fs.readFile(tmpJsonPath, "utf-8");
-    inMemoryStore = JSON.parse(tmpContent);
-    return inMemoryStore!;
+    const fileContent = await fs.readFile(projectJsonPath, "utf-8");
+    initialData = JSON.parse(fileContent);
   } catch {
-    // 2. Fallback to initial seed data from project data folder
-    try {
-      const fileContent = await fs.readFile(projectJsonPath, "utf-8");
-      inMemoryStore = JSON.parse(fileContent);
-      return inMemoryStore!;
-    } catch {
-      inMemoryStore = { fnf: [], onboardings: [], tasks: [] };
-      return inMemoryStore;
-    }
+    initialData = { fnf: [], onboardings: [], tasks: [] };
   }
+
+  // 3. Immediately seed Supabase cloud database so all future requests across locations hit cloud database
+  await writeData(initialData);
+  return initialData;
 }
 
-// Helper to write data back safely in both local and serverless Vercel environments
+// Helper to write workspace data back to Supabase cloud database
 async function writeData(data: WorkspaceStore) {
   inMemoryStore = data;
+  const supabase = getSupabaseClient();
+  const notesStr = JSON.stringify(data);
 
-  // 1. Attempt writing to project path (local dev environment)
+  // 1. Persist to Supabase cloud database
+  try {
+    const { data: existing } = await supabase
+      .from("applications")
+      .select("id")
+      .eq("name", WORKSPACE_STORE_NAME)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      const targetId = existing[0].id;
+      const { error } = await supabase
+        .from("applications")
+        .update({ notes: notesStr })
+        .eq("id", targetId);
+      if (error) console.error("Error updating Supabase workspace store:", error);
+    } else {
+      const { error } = await supabase
+        .from("applications")
+        .insert([{
+          name: WORKSPACE_STORE_NAME,
+          status: "WORKSPACE_STORE",
+          notes: notesStr
+        }]);
+      if (error) console.error("Error inserting Supabase workspace store:", error);
+    }
+  } catch (err) {
+    console.error("Supabase workspace write error:", err);
+  }
+
+  // 2. Secondary write to local workspace.json file if filesystem allows (local dev)
   try {
     const dir = path.dirname(projectJsonPath);
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(projectJsonPath, JSON.stringify(data, null, 2), "utf-8");
-    return;
   } catch {
-    // 2. If project dir is read-only (e.g. Vercel serverless /var/task), write to /tmp
-    try {
-      await fs.writeFile(tmpJsonPath, JSON.stringify(data, null, 2), "utf-8");
-    } catch (tmpErr) {
-      console.error("Serverless storage write warning:", tmpErr);
-    }
+    /* ignore local file write errors in read-only serverless environments */
   }
 }
 
