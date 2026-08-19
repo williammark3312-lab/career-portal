@@ -3,10 +3,10 @@ import path from "path";
 import { createClient } from "@supabase/supabase-js";
 
 interface FnfTaskItem { id: string; name: string; completed: boolean; section: string; }
-interface FnfRecordItem { id: string; employeeName: string; department: string; resignationDate: string; lastWorkingDay: string; settlementStatus: string; amount: number; remarks: string; tasks: FnfTaskItem[]; createdAt: string; }
+interface FnfRecordItem { id: string; employeeName: string; department: string; resignationDate: string; lastWorkingDay: string; settlementStatus: string; amount: number; remarks: string; tasks: FnfTaskItem[]; createdAt: string; dueTime?: string; notified?: boolean; }
 interface OnboardingTaskItem { id: string; name: string; completed: boolean; }
-interface OnboardingRecordItem { id: string; candidateName: string; role: string; startDate: string; status: string; mentor: string; email: string; tasks: OnboardingTaskItem[]; createdAt: string; }
-interface TaskItemRecord { id: string; title: string; assignedTo: string; dueDate: string; priority: string; status: string; category: string; createdAt: string; }
+interface OnboardingRecordItem { id: string; candidateName: string; role: string; startDate: string; status: string; mentor: string; email: string; tasks: OnboardingTaskItem[]; createdAt: string; dueTime?: string; notified?: boolean; }
+interface TaskItemRecord { id: string; title: string; assignedTo: string; dueDate: string; priority: string; status: string; category: string; createdAt: string; dueTime?: string; notified?: boolean; }
 interface WorkspaceStore { fnf: FnfRecordItem[]; onboardings: OnboardingRecordItem[]; tasks: TaskItemRecord[]; }
 
 const projectJsonPath = path.join(process.cwd(), "data", "workspace.json");
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     switch (action) {
       /* ──────────────── FNF Operations ──────────────── */
       case "add_fnf": {
-        const { employeeName, department, resignationDate, lastWorkingDay, amount, remarks } = payload || {};
+        const { employeeName, department, resignationDate, lastWorkingDay, amount, remarks, dueTime } = payload || {};
         const newFnf: FnfRecordItem = {
           id: `fnf-${Date.now()}`,
           employeeName: employeeName || "Unknown Employee",
@@ -161,6 +161,8 @@ export async function POST(request: Request) {
           settlementStatus: "Draft",
           amount: parseFloat(amount) || 0,
           remarks: remarks || "",
+          dueTime: dueTime || "12:00",
+          notified: false,
           tasks: [
             { id: "t1", name: "IT Asset Return Check", completed: false, section: "Assets" },
             { id: "t2", name: "Revoke Email & Slack Accounts", completed: false, section: "IT" },
@@ -174,7 +176,7 @@ export async function POST(request: Request) {
       }
 
       case "update_fnf": {
-        const { id, settlementStatus, amount, remarks, resignationDate, lastWorkingDay, employeeName, department } = payload || {};
+        const { id, settlementStatus, amount, remarks, resignationDate, lastWorkingDay, employeeName, department, dueTime, notified } = payload || {};
         const index = data.fnf.findIndex((f: FnfRecordItem) => String(f.id) === String(id));
         if (index !== -1) {
           data.fnf[index] = {
@@ -186,6 +188,8 @@ export async function POST(request: Request) {
             remarks: remarks !== undefined ? remarks : data.fnf[index].remarks,
             resignationDate: resignationDate || data.fnf[index].resignationDate,
             lastWorkingDay: lastWorkingDay || data.fnf[index].lastWorkingDay,
+            dueTime: dueTime !== undefined ? dueTime : data.fnf[index].dueTime,
+            notified: notified !== undefined ? Boolean(notified) : data.fnf[index].notified,
           };
         }
         break;
@@ -247,7 +251,7 @@ export async function POST(request: Request) {
 
       /* ────────────── Onboarding Operations ────────────── */
       case "add_onboarding": {
-        const { candidateName, role, startDate, mentor, email } = payload || {};
+        const { candidateName, role, startDate, mentor, email, dueTime } = payload || {};
         const newOnboarding: OnboardingRecordItem = {
           id: `onb-${Date.now()}`,
           candidateName: candidateName || "New Hire",
@@ -256,6 +260,8 @@ export async function POST(request: Request) {
           status: "Not Started",
           mentor: mentor || "Unassigned",
           email: email || "",
+          dueTime: dueTime || "10:00",
+          notified: false,
           tasks: [
             { id: "o1", name: "Educational Document Verification", completed: false },
             { id: "o2", name: "Laptop & IT Hardware Delivery", completed: false },
@@ -270,7 +276,7 @@ export async function POST(request: Request) {
       }
 
       case "update_onboarding": {
-        const { id, candidateName, status, mentor, email, startDate, role } = payload || {};
+        const { id, candidateName, status, mentor, email, startDate, role, dueTime, notified } = payload || {};
         const index = data.onboardings.findIndex((o: OnboardingRecordItem) => String(o.id) === String(id));
         if (index !== -1) {
           data.onboardings[index] = {
@@ -281,6 +287,8 @@ export async function POST(request: Request) {
             email: email !== undefined ? email : data.onboardings[index].email,
             startDate: startDate || data.onboardings[index].startDate,
             role: role || data.onboardings[index].role,
+            dueTime: dueTime !== undefined ? dueTime : data.onboardings[index].dueTime,
+            notified: notified !== undefined ? Boolean(notified) : data.onboardings[index].notified,
           };
         }
         break;
@@ -344,16 +352,18 @@ export async function POST(request: Request) {
 
       /* ──────────────── Task Operations ──────────────── */
       case "add_task": {
-        const { title, assignedTo, dueDate, priority, category } = payload || {};
+        const { title, assignedTo, dueDate, priority, category, dueTime } = payload || {};
         const normalizedPriority = priority === "High Priority" ? "High" : (priority || "Medium");
         const newTask: TaskItemRecord = {
           id: `tsk-${Date.now()}`,
           title: title || "New Task",
           assignedTo: assignedTo || "Admin",
           dueDate: dueDate || timestamp.split("T")[0],
+          dueTime: dueTime || "17:00",
           priority: normalizedPriority,
           status: "To Do",
           category: category || "General",
+          notified: false,
           createdAt: timestamp
         };
         data.tasks.unshift(newTask);
@@ -361,7 +371,7 @@ export async function POST(request: Request) {
       }
 
       case "update_task": {
-        const { id, title, assignedTo, dueDate, priority, status, category } = payload || {};
+        const { id, title, assignedTo, dueDate, priority, status, category, dueTime, notified } = payload || {};
         const index = data.tasks.findIndex((t: TaskItemRecord) => String(t.id) === String(id));
         if (index !== -1) {
           const normalizedPriority = priority === "High Priority" ? "High" : (priority || data.tasks[index].priority);
@@ -370,9 +380,11 @@ export async function POST(request: Request) {
             title: title !== undefined ? title : data.tasks[index].title,
             assignedTo: assignedTo !== undefined ? assignedTo : data.tasks[index].assignedTo,
             dueDate: dueDate !== undefined ? dueDate : data.tasks[index].dueDate,
+            dueTime: dueTime !== undefined ? dueTime : data.tasks[index].dueTime,
             priority: normalizedPriority,
             status: status !== undefined ? status : data.tasks[index].status,
             category: category !== undefined ? category : data.tasks[index].category,
+            notified: notified !== undefined ? Boolean(notified) : data.tasks[index].notified,
           };
         }
         break;

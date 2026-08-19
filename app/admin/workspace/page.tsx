@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../src/lib/supabase";
+import { playPleasantLoginSound } from "../../../src/lib/audio";
 import {
   X, ChevronRight, Check,
   UserPlus, Trash2, Plus, Clock,
   Shield, ClipboardList, Search,
   List, Kanban, ChevronDown, CheckCircle2,
   AlertCircle, Sparkles, RefreshCw, UserCheck,
-  Play, RotateCcw, CheckSquare, Square
+  Play, RotateCcw, CheckSquare, Square,
+  Bell, BellRing, Volume2
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../src/components/Header";
@@ -36,6 +38,8 @@ interface FnfRecord {
   remarks: string;
   tasks: FnfTask[];
   createdAt: string;
+  dueTime?: string;
+  notified?: boolean;
 }
 
 interface OnboardingTask {
@@ -54,6 +58,8 @@ interface OnboardingRecord {
   email: string;
   tasks: OnboardingTask[];
   createdAt: string;
+  dueTime?: string;
+  notified?: boolean;
 }
 
 interface WorkspaceTask {
@@ -65,6 +71,8 @@ interface WorkspaceTask {
   status: "To Do" | "In Progress" | "Done";
   category: "General" | "Onboarding" | "FNF" | "Recruitment";
   createdAt: string;
+  dueTime?: string;
+  notified?: boolean;
 }
 
 interface WorkspaceData {
@@ -188,13 +196,13 @@ export default function WorkspacePage() {
   /* Form inputs */
   const todayStr = new Date().toISOString().split("T")[0];
   const [fnfForm, setFnfForm] = useState({
-    employeeName: "", department: "", resignationDate: todayStr, lastWorkingDay: todayStr, amount: "", remarks: ""
+    employeeName: "", department: "", resignationDate: todayStr, lastWorkingDay: todayStr, dueTime: "12:00", amount: "", remarks: ""
   });
   const [onbForm, setOnbForm] = useState({
-    candidateName: "", role: "", startDate: todayStr, mentor: "", email: ""
+    candidateName: "", role: "", startDate: todayStr, dueTime: "10:00", mentor: "", email: ""
   });
   const [taskForm, setTaskForm] = useState({
-    title: "", assignedTo: "", dueDate: todayStr, priority: "Medium" as WorkspaceTask["priority"], category: "General" as WorkspaceTask["category"]
+    title: "", assignedTo: "", dueDate: todayStr, dueTime: "17:00", priority: "Medium" as WorkspaceTask["priority"], category: "General" as WorkspaceTask["category"]
   });
 
   /* Tasks Filtering & UX States */
@@ -204,11 +212,57 @@ export default function WorkspacePage() {
   const [quickTaskCategory, setQuickTaskCategory] = useState<WorkspaceTask["category"]>("General");
   const [quickTaskPriority, setQuickTaskPriority] = useState<WorkspaceTask["priority"]>("Medium");
   const [quickTaskDueDate, setQuickTaskDueDate] = useState(todayStr);
+  const [quickTaskDueTime, setQuickTaskDueTime] = useState("17:00");
   const [taskFilterCategory, setTaskFilterCategory] = useState<string>("All");
   const [taskSearchQuery, setTaskSearchQuery] = useState("");
 
   /* Onboardings Filter */
   const [onbFilterStatus, setOnbFilterStatus] = useState<"all" | "Not Started" | "In Progress" | "Completed">("all");
+
+  /* Notification & Push Reminders Engine State */
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [activeToast, setActiveToast] = useState<{
+    id: string;
+    type: "task" | "onboarding" | "fnf";
+    title: string;
+    subtitle: string;
+    timeStr: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotificationPermission(Notification.permission);
+    } else {
+      setNotificationPermission("unsupported");
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const perm = await Notification.requestPermission();
+        setNotificationPermission(perm);
+        if (perm === "granted") {
+          new Notification("🔔 Push Notifications Enabled", {
+            body: "You will receive real-time push alerts for scheduled Tasks, Onboarding, and FNF items.",
+          });
+          playPleasantLoginSound();
+        }
+      } catch (err) {
+        console.error("Error requesting notification permission:", err);
+      }
+    }
+  };
+
+  /* Format HH:MM to 12-hour AM/PM */
+  const formatTime12 = (timeStr?: string) => {
+    if (!timeStr) return "12:00 PM";
+    const [h, m] = timeStr.split(":").map(Number);
+    if (isNaN(h) || isNaN(m)) return timeStr;
+    const period = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${m < 10 ? "0" + m : m} ${period}`;
+  };
 
   const LOCAL_STORAGE_KEY = "career_portal_workspace_v3";
 
@@ -288,6 +342,152 @@ export default function WorkspacePage() {
     router.replace("/admin");
   }
 
+  /* Interval checker for time-based reminders */
+  useEffect(() => {
+    if (loadingWorkspace || !workspace) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const currentDateStr = now.toISOString().split("T")[0];
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const currentTotalMin = currentHours * 60 + currentMinutes;
+
+      // 1. Check Tasks
+      workspace.tasks.forEach((t) => {
+        if (t.status === "Done" || t.notified) return;
+        const [th, tm] = (t.dueTime || "17:00").split(":").map(Number);
+        const taskTotalMin = (isNaN(th) ? 17 : th) * 60 + (isNaN(tm) ? 0 : tm);
+
+        if (t.dueDate <= currentDateStr && currentTotalMin >= taskTotalMin) {
+          triggerTimeNotification({
+            id: t.id,
+            type: "task",
+            title: `⏰ Task Reminder: ${t.title}`,
+            subtitle: `Assigned: ${t.assignedTo} • Due: ${t.dueDate} at ${formatTime12(t.dueTime)}`,
+            timeStr: formatTime12(t.dueTime)
+          });
+        }
+      });
+
+      // 2. Check Onboarding
+      workspace.onboardings.forEach((o) => {
+        if (o.status === "Completed" || o.notified) return;
+        const [oh, om] = (o.dueTime || "10:00").split(":").map(Number);
+        const onbTotalMin = (isNaN(oh) ? 10 : oh) * 60 + (isNaN(om) ? 0 : om);
+
+        if (o.startDate <= currentDateStr && currentTotalMin >= onbTotalMin) {
+          triggerTimeNotification({
+            id: o.id,
+            type: "onboarding",
+            title: `📋 Onboarding Reminder: ${o.candidateName}`,
+            subtitle: `Role: ${o.role} • Start Date: ${o.startDate} at ${formatTime12(o.dueTime)}`,
+            timeStr: formatTime12(o.dueTime)
+          });
+        }
+      });
+
+      // 3. Check FNF Records
+      workspace.fnf.forEach((f) => {
+        if (f.settlementStatus === "Paid" || f.settlementStatus === "Completed" || f.notified) return;
+        const [fh, fm] = (f.dueTime || "12:00").split(":").map(Number);
+        const fnfTotalMin = (isNaN(fh) ? 12 : fh) * 60 + (isNaN(fm) ? 0 : fm);
+
+        if (f.lastWorkingDay <= currentDateStr && currentTotalMin >= fnfTotalMin) {
+          triggerTimeNotification({
+            id: f.id,
+            type: "fnf",
+            title: `💼 FNF Settlement Reminder: ${f.employeeName}`,
+            subtitle: `Dept: ${f.department} • Last Day: ${f.lastWorkingDay} at ${formatTime12(f.dueTime)}`,
+            timeStr: formatTime12(f.dueTime)
+          });
+        }
+      });
+    }, 12000);
+
+    return () => clearInterval(interval);
+  }, [workspace, loadingWorkspace]);
+
+  const triggerTimeNotification = (item: {
+    id: string;
+    type: "task" | "onboarding" | "fnf";
+    title: string;
+    subtitle: string;
+    timeStr: string;
+  }) => {
+    // 1. Play chime audio sound
+    playPleasantLoginSound();
+
+    // 2. Desktop Push Notification
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      try {
+        new Notification(item.title, {
+          body: item.subtitle,
+          tag: `${item.type}-${item.id}`,
+        });
+      } catch (e) {
+        console.warn("Desktop notification trigger issue:", e);
+      }
+    }
+
+    // 3. Set UI Toast Banner
+    setActiveToast(item);
+
+    // 4. Mark item as notified
+    setWorkspace((prev) => {
+      let nextState = { ...prev };
+      if (item.type === "task") {
+        nextState.tasks = prev.tasks.map((t) => (t.id === item.id ? { ...t, notified: true } : t));
+      } else if (item.type === "onboarding") {
+        nextState.onboardings = prev.onboardings.map((o) => (o.id === item.id ? { ...o, notified: true } : o));
+      } else if (item.type === "fnf") {
+        nextState.fnf = prev.fnf.map((f) => (f.id === item.id ? { ...f, notified: true } : f));
+      }
+      saveWorkspaceToCache(nextState);
+      return nextState;
+    });
+
+    const updateAction = item.type === "task" ? "update_task" : item.type === "onboarding" ? "update_onboarding" : "update_fnf";
+    triggerWorkspaceAction(updateAction, { id: item.id, notified: true });
+  };
+
+  const handleSnoozeReminder = async (id: string, type: "task" | "onboarding" | "fnf", snoozeMinutes: number = 15) => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + snoozeMinutes);
+    const newDateStr = now.toISOString().split("T")[0];
+    const newHours = now.getHours().toString().padStart(2, "0");
+    const newMins = now.getMinutes().toString().padStart(2, "0");
+    const newTimeStr = `${newHours}:${newMins}`;
+
+    setActiveToast(null);
+
+    if (type === "task") {
+      setWorkspace(prev => {
+        const nextTasks = prev.tasks.map(t => String(t.id) === String(id) ? { ...t, dueDate: newDateStr, dueTime: newTimeStr, notified: false } : t);
+        const nextWorkspace = { ...prev, tasks: nextTasks };
+        saveWorkspaceToCache(nextWorkspace);
+        return nextWorkspace;
+      });
+      await triggerWorkspaceAction("update_task", { id, dueDate: newDateStr, dueTime: newTimeStr, notified: false });
+    } else if (type === "onboarding") {
+      setWorkspace(prev => {
+        const nextOnb = prev.onboardings.map(o => String(o.id) === String(id) ? { ...o, startDate: newDateStr, dueTime: newTimeStr, notified: false } : o);
+        const nextWorkspace = { ...prev, onboardings: nextOnb };
+        saveWorkspaceToCache(nextWorkspace);
+        return nextWorkspace;
+      });
+      await triggerWorkspaceAction("update_onboarding", { id, startDate: newDateStr, dueTime: newTimeStr, notified: false });
+    } else if (type === "fnf") {
+      setWorkspace(prev => {
+        const nextFnf = prev.fnf.map(f => String(f.id) === String(id) ? { ...f, lastWorkingDay: newDateStr, dueTime: newTimeStr, notified: false } : f);
+        const nextWorkspace = { ...prev, fnf: nextFnf };
+        saveWorkspaceToCache(nextWorkspace);
+        return nextWorkspace;
+      });
+      await triggerWorkspaceAction("update_fnf", { id, lastWorkingDay: newDateStr, dueTime: newTimeStr, notified: false });
+    }
+  };
+
   /* API mutator helper with optimistic support */
   async function triggerWorkspaceAction(action: string, payload: Record<string, unknown>) {
     try {
@@ -321,7 +521,7 @@ export default function WorkspacePage() {
     }
     await triggerWorkspaceAction("add_fnf", fnfForm);
     setShowFnfModal(false);
-    setFnfForm({ employeeName: "", department: "", resignationDate: todayStr, lastWorkingDay: todayStr, amount: "", remarks: "" });
+    setFnfForm({ employeeName: "", department: "", resignationDate: todayStr, lastWorkingDay: todayStr, dueTime: "12:00", amount: "", remarks: "" });
   };
 
   const handleUpdateFnfStatus = async (id: string, status: FnfRecord["settlementStatus"]) => {
@@ -386,7 +586,7 @@ export default function WorkspacePage() {
     }
     await triggerWorkspaceAction("add_onboarding", onbForm);
     setShowOnboardingModal(false);
-    setOnbForm({ candidateName: "", role: "", startDate: todayStr, mentor: "", email: "" });
+    setOnbForm({ candidateName: "", role: "", startDate: todayStr, dueTime: "10:00", mentor: "", email: "" });
   };
 
   const handleUpdateOnbStatus = async (id: string, status: OnboardingRecord["status"]) => {
@@ -474,6 +674,7 @@ export default function WorkspacePage() {
       title: quickTaskTitle.trim(),
       assignedTo: session?.user?.email?.split("@")[0] || "Admin",
       dueDate: quickTaskDueDate || todayStr,
+      dueTime: quickTaskDueTime || "17:00",
       priority: quickTaskPriority,
       category: quickTaskCategory
     };
@@ -489,7 +690,7 @@ export default function WorkspacePage() {
     }
     await triggerWorkspaceAction("add_task", taskForm);
     setShowTaskModal(false);
-    setTaskForm({ title: "", assignedTo: "", dueDate: todayStr, priority: "Medium", category: "General" });
+    setTaskForm({ title: "", assignedTo: "", dueDate: todayStr, dueTime: "17:00", priority: "Medium", category: "General" });
   };
 
   const handleUpdateTaskStatus = async (id: string, status: WorkspaceTask["status"]) => {
@@ -658,13 +859,30 @@ export default function WorkspacePage() {
               </p>
             </div>
             
-            <button
-              onClick={() => loadWorkspace()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
-              title="Refresh workspace from cloud"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={requestNotificationPermission}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  notificationPermission === "granted"
+                    ? "bg-emerald-950/40 border-emerald-800/60 text-emerald-400"
+                    : notificationPermission === "denied"
+                    ? "bg-rose-950/40 border-rose-800/60 text-rose-400"
+                    : "bg-indigo-950/40 border-indigo-800/60 text-indigo-400 hover:bg-indigo-900/50"
+                }`}
+                title={notificationPermission === "granted" ? "Push Notifications Active" : "Click to enable Push Notifications for scheduled times"}
+              >
+                <Bell className="w-3.5 h-3.5" />
+                {notificationPermission === "granted" ? "Push Active" : "Enable Reminders"}
+              </button>
+
+              <button
+                onClick={() => loadWorkspace()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
+                title="Refresh workspace from cloud"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              </button>
+            </div>
           </div>
 
           {/* Minimal Info Row */}
@@ -1338,6 +1556,14 @@ export default function WorkspacePage() {
                           className="bg-zinc-900/60 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2 py-1 rounded-xl outline-none cursor-pointer"
                         />
 
+                        <input
+                          type="time"
+                          value={quickTaskDueTime}
+                          onChange={(e) => setQuickTaskDueTime(e.target.value)}
+                          className="bg-zinc-900/60 border border-zinc-800 text-[10px] font-bold text-zinc-300 px-2 py-1 rounded-xl outline-none cursor-pointer"
+                          title="Reminder Time"
+                        />
+
                         <button
                           type="submit"
                           disabled={!quickTaskTitle.trim()}
@@ -1417,7 +1643,7 @@ export default function WorkspacePage() {
                                     <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-2 flex-wrap">
                                       <span>Assigned: <span className="text-zinc-400">{t.assignedTo}</span></span>
                                       <span>•</span>
-                                      <span>Due: {t.dueDate}</span>
+                                      <span>Due: {t.dueDate} at <span className="text-indigo-400 font-bold">{formatTime12(t.dueTime)}</span></span>
                                     </p>
                                   </div>
                                 </div>
@@ -1769,7 +1995,7 @@ export default function WorkspacePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Resignation</label>
                   <input
@@ -1777,7 +2003,7 @@ export default function WorkspacePage() {
                     required
                     value={fnfForm.resignationDate}
                     onChange={(e) => setFnfForm({ ...fnfForm, resignationDate: e.target.value })}
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-all"
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none transition-all"
                   />
                 </div>
 
@@ -1788,7 +2014,18 @@ export default function WorkspacePage() {
                     required
                     value={fnfForm.lastWorkingDay}
                     onChange={(e) => setFnfForm({ ...fnfForm, lastWorkingDay: e.target.value })}
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-all"
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Reminder Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={fnfForm.dueTime}
+                    onChange={(e) => setFnfForm({ ...fnfForm, dueTime: e.target.value })}
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none transition-all"
                   />
                 </div>
               </div>
@@ -1868,7 +2105,7 @@ export default function WorkspacePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Start Date</label>
                   <input
@@ -1876,18 +2113,29 @@ export default function WorkspacePage() {
                     required
                     value={onbForm.startDate}
                     onChange={(e) => setOnbForm({ ...onbForm, startDate: e.target.value })}
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-all"
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none transition-all"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Assigned Mentor</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Reminder Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={onbForm.dueTime}
+                    onChange={(e) => setOnbForm({ ...onbForm, dueTime: e.target.value })}
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Mentor</label>
                   <input
                     type="text"
                     placeholder="Emma Watson"
                     value={onbForm.mentor}
                     onChange={(e) => setOnbForm({ ...onbForm, mentor: e.target.value })}
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-all placeholder-zinc-500"
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none transition-all placeholder-zinc-500"
                   />
                 </div>
               </div>
@@ -1944,7 +2192,7 @@ export default function WorkspacePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Due Date</label>
                   <input
@@ -1952,7 +2200,18 @@ export default function WorkspacePage() {
                     required
                     value={taskForm.dueDate}
                     onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-all"
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Reminder Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={taskForm.dueTime}
+                    onChange={(e) => setTaskForm({ ...taskForm, dueTime: e.target.value })}
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none transition-all"
                   />
                 </div>
 
@@ -1961,7 +2220,7 @@ export default function WorkspacePage() {
                   <select
                     value={taskForm.category}
                     onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value as WorkspaceTask["category"] })}
-                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3 py-2.5 text-xs text-white outline-none cursor-pointer"
+                    className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-2.5 py-2.5 text-xs text-white outline-none cursor-pointer"
                   >
                     <option value="General">General Ops</option>
                     <option value="Onboarding">Onboarding</option>
@@ -1994,6 +2253,56 @@ export default function WorkspacePage() {
           </motion.div>
         </div>
       )}
+
+      {/* ─── FLOATING REAL-TIME PUSH NOTIFICATION TOAST BANNER ─── */}
+      <AnimatePresence>
+        {activeToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.9 }}
+            className="fixed bottom-6 right-6 z-[200] w-full max-w-sm bg-zinc-950/95 border border-indigo-500/50 shadow-2xl shadow-indigo-500/20 rounded-2xl p-4 text-white flex flex-col gap-3 backdrop-blur-xl"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0 animate-pulse">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white leading-snug">{activeToast.title}</h4>
+                  <p className="text-[10px] text-zinc-400 font-medium mt-0.5">{activeToast.subtitle}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveToast(null)}
+                className="text-zinc-500 hover:text-white p-1 rounded-lg cursor-pointer transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1 border-t border-zinc-900">
+              <button
+                onClick={() => handleSnoozeReminder(activeToast.id, activeToast.type, 15)}
+                className="flex-1 py-1.5 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-bold text-zinc-300 transition-colors cursor-pointer text-center"
+              >
+                Snooze 15m
+              </button>
+              <button
+                onClick={() => {
+                  if (activeToast.type === "task") handleUpdateTaskStatus(activeToast.id, "Done");
+                  else if (activeToast.type === "onboarding") handleUpdateOnbStatus(activeToast.id, "Completed");
+                  else if (activeToast.type === "fnf") handleUpdateFnfStatus(activeToast.id, "Completed");
+                  setActiveToast(null);
+                }}
+                className="flex-1 py-1.5 px-3 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-[10px] font-bold text-white transition-colors cursor-pointer text-center"
+              >
+                Mark Done
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
