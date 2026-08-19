@@ -28,10 +28,6 @@ let inMemoryStore: WorkspaceStore | null = null;
 
 // Helper to read workspace data from Supabase cloud database with fallback to local workspace.json
 async function readData(): Promise<WorkspaceStore> {
-  if (inMemoryStore) {
-    return inMemoryStore;
-  }
-
   const supabase = getSupabaseClient();
 
   // 1. Fetch persistent store from Supabase cloud database
@@ -61,6 +57,11 @@ async function readData(): Promise<WorkspaceStore> {
     console.error("Supabase workspace read error:", err);
   }
 
+  // If in-memory store is available when Supabase fails temporarily, return it
+  if (inMemoryStore) {
+    return inMemoryStore;
+  }
+
   // 2. Fallback to initial seed data from project workspace.json file
   let initialData: WorkspaceStore = { fnf: [], onboardings: [], tasks: [] };
   try {
@@ -77,7 +78,7 @@ async function readData(): Promise<WorkspaceStore> {
     initialData = { fnf: [], onboardings: [], tasks: [] };
   }
 
-  // 3. Immediately seed Supabase cloud database so all future requests across locations hit cloud database
+  // 3. Seed Supabase cloud database so all future requests hit cloud database
   await writeData(initialData);
   return initialData;
 }

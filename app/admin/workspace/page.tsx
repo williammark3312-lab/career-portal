@@ -326,33 +326,21 @@ export default function WorkspacePage() {
 
   const handleUpdateFnfStatus = async (id: string, status: FnfRecord["settlementStatus"]) => {
     setWorkspace(prev => {
-<<<<<<< Updated upstream
-      const nextFnf = prev.fnf.map(f => f.id === id ? { ...f, settlementStatus: status } : f);
-      return { ...prev, fnf: nextFnf };
-=======
       const nextFnf = prev.fnf.map(f => String(f.id) === String(id) ? { ...f, settlementStatus: status } : f);
       const nextWorkspace = { ...prev, fnf: nextFnf };
       saveWorkspaceToCache(nextWorkspace);
       return nextWorkspace;
->>>>>>> Stashed changes
     });
     await triggerWorkspaceAction("update_fnf", { id, settlementStatus: status });
   };
 
   const handleUpdateFnfAmount = async (id: string, amount: string) => {
-<<<<<<< Updated upstream
-    const num = parseFloat(amount) || 0;
-    setWorkspace(prev => {
-      const nextFnf = prev.fnf.map(f => f.id === id ? { ...f, amount: num } : f);
-      return { ...prev, fnf: nextFnf };
-=======
     const numAmount = parseFloat(amount) || 0;
     setWorkspace(prev => {
       const nextFnf = prev.fnf.map(f => String(f.id) === String(id) ? { ...f, amount: numAmount } : f);
       const nextWorkspace = { ...prev, fnf: nextFnf };
       saveWorkspaceToCache(nextWorkspace);
       return nextWorkspace;
->>>>>>> Stashed changes
     });
     await triggerWorkspaceAction("update_fnf", { id, amount });
   };
@@ -360,17 +348,6 @@ export default function WorkspacePage() {
   const handleToggleFnfTask = async (fnfId: string, taskId: string, completed: boolean) => {
     setWorkspace(prev => {
       const nextFnf = prev.fnf.map(f => {
-<<<<<<< Updated upstream
-        if (f.id !== fnfId) return f;
-        const nextTasks = f.tasks.map(t => t.id === taskId ? { ...t, completed } : t);
-        const allDone = nextTasks.every(t => t.completed);
-        let settlementStatus = f.settlementStatus;
-        if (allDone && settlementStatus === "Draft") settlementStatus = "Approved";
-        else if (!allDone && settlementStatus === "Approved") settlementStatus = "Draft";
-        return { ...f, tasks: nextTasks, settlementStatus };
-      });
-      return { ...prev, fnf: nextFnf };
-=======
         if (String(f.id) !== String(fnfId)) return f;
         const nextTasks = f.tasks.map(t => String(t.id) === String(taskId) ? { ...t, completed } : t);
         const allDone = nextTasks.every(t => t.completed);
@@ -382,7 +359,6 @@ export default function WorkspacePage() {
       const nextWorkspace = { ...prev, fnf: nextFnf };
       saveWorkspaceToCache(nextWorkspace);
       return nextWorkspace;
->>>>>>> Stashed changes
     });
     await triggerWorkspaceAction("toggle_fnf_task", { fnfId, taskId, completed });
   };
@@ -415,15 +391,10 @@ export default function WorkspacePage() {
 
   const handleUpdateOnbStatus = async (id: string, status: OnboardingRecord["status"]) => {
     setWorkspace(prev => {
-<<<<<<< Updated upstream
-      const nextOnb = prev.onboardings.map(o => o.id === id ? { ...o, status } : o);
-      return { ...prev, onboardings: nextOnb };
-=======
       const nextOnb = prev.onboardings.map(o => String(o.id) === String(id) ? { ...o, status } : o);
       const nextWorkspace = { ...prev, onboardings: nextOnb };
       saveWorkspaceToCache(nextWorkspace);
       return nextWorkspace;
->>>>>>> Stashed changes
     });
     await triggerWorkspaceAction("update_onboarding", { id, status });
   };
@@ -434,17 +405,6 @@ export default function WorkspacePage() {
   const handleAddOnbTask = async (onboardingId: string) => {
     const taskName = newOnbTaskInputs[onboardingId]?.trim();
     if (!taskName) return;
-<<<<<<< Updated upstream
-    const tempTaskId = `ot-${Date.now()}`;
-    setWorkspace(prev => {
-      const nextOnb = prev.onboardings.map(o => {
-        if (o.id !== onboardingId) return o;
-        return { ...o, tasks: [...o.tasks, { id: tempTaskId, name: taskName, completed: false }] };
-      });
-      return { ...prev, onboardings: nextOnb };
-    });
-    setNewOnbTaskInputs((prev) => ({ ...prev, [onboardingId]: "" }));
-=======
     const newTaskId = `ot-${Date.now()}`;
     setNewOnbTaskInputs((prev) => ({ ...prev, [onboardingId]: "" }));
     setWorkspace(prev => {
@@ -456,68 +416,39 @@ export default function WorkspacePage() {
       saveWorkspaceToCache(nextWorkspace);
       return nextWorkspace;
     });
->>>>>>> Stashed changes
     await triggerWorkspaceAction("add_onboarding_task", { onboardingId, taskName });
   };
 
   const handleDeleteOnbTask = async (onboardingId: string, taskId: string) => {
     setWorkspace(prev => {
       const nextOnb = prev.onboardings.map(o => {
-<<<<<<< Updated upstream
-        if (o.id !== onboardingId) return o;
-        return { ...o, tasks: o.tasks.filter(t => t.id !== taskId) };
-      });
-      return { ...prev, onboardings: nextOnb };
-=======
         if (String(o.id) !== String(onboardingId)) return o;
         return { ...o, tasks: o.tasks.filter(t => String(t.id) !== String(taskId)) };
       });
       const nextWorkspace = { ...prev, onboardings: nextOnb };
       saveWorkspaceToCache(nextWorkspace);
       return nextWorkspace;
->>>>>>> Stashed changes
     });
     await triggerWorkspaceAction("delete_onboarding_task", { onboardingId, taskId });
   };
 
   const handleToggleOnbTask = async (onboardingId: string, taskId: string, completed: boolean) => {
-<<<<<<< Updated upstream
-    // Optimistic instant toggle
-    setWorkspace(prev => {
-      const nextOnb = prev.onboardings.map(o => {
-        if (o.id !== onboardingId) return o;
-        const nextTasks = o.tasks.map(t => t.id === taskId ? { ...t, completed } : t);
-        const doneCount = nextTasks.filter(t => t.completed).length;
-        const total = nextTasks.length;
-        let status = o.status;
-        if (doneCount === total && total > 0) {
-          status = "Completed";
-        } else if (doneCount > 0) {
-          status = "In Progress";
-        } else {
-          status = "Not Started";
-        }
-=======
     setWorkspace(prev => {
       const nextOnb = prev.onboardings.map(o => {
         if (String(o.id) !== String(onboardingId)) return o;
         const nextTasks = o.tasks.map(t => String(t.id) === String(taskId) ? { ...t, completed } : t);
         const doneCount = nextTasks.filter(t => t.completed).length;
+        const total = nextTasks.length;
         let status = o.status;
-        if (doneCount === nextTasks.length) status = "Completed";
+        if (doneCount === total && total > 0) status = "Completed";
         else if (doneCount > 0) status = "In Progress";
         else status = "Not Started";
->>>>>>> Stashed changes
         return { ...o, tasks: nextTasks, status };
       });
       const nextWorkspace = { ...prev, onboardings: nextOnb };
       saveWorkspaceToCache(nextWorkspace);
       return nextWorkspace;
     });
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
     await triggerWorkspaceAction("toggle_onboarding_task", { onboardingId, taskId, completed });
   };
 
@@ -562,17 +493,11 @@ export default function WorkspacePage() {
   };
 
   const handleUpdateTaskStatus = async (id: string, status: WorkspaceTask["status"]) => {
-<<<<<<< Updated upstream
-    // Instant optimistic update
-    setWorkspace(prev => {
-      const nextTasks = prev.tasks.map(t => t.id === id ? { ...t, status } : t);
-=======
     setWorkspace(prev => {
       const nextTasks = prev.tasks.map(t => {
         if (String(t.id) !== String(id)) return t;
         return { ...t, status };
       });
->>>>>>> Stashed changes
       const nextWorkspace = { ...prev, tasks: nextTasks };
       saveWorkspaceToCache(nextWorkspace);
       return nextWorkspace;
