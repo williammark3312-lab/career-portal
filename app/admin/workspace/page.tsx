@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../src/lib/supabase";
 import {
-  Briefcase, FileText, X, ChevronRight, Check, Layers,
-  DollarSign, Activity, Users, UserPlus, Trash2, Plus, Clock,
-  Shield, ClipboardList, LogOut, Sparkles, Search, Filter,
-  List, Kanban, ChevronDown, CheckCircle2
+  X, ChevronRight, Check,
+  UserPlus, Trash2, Plus, Clock,
+  Shield, ClipboardList, Search,
+  List, Kanban, ChevronDown, CheckCircle2,
+  AlertCircle, Sparkles, RefreshCw, UserCheck
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../src/components/Header";
@@ -166,13 +167,6 @@ export default function WorkspacePage() {
   /* Tab states */
   const [activeTab, setActiveTab] = useState<"overview" | "fnf" | "onboarding" | "tasks">("overview");
 
-  /* Stats counts for sidebar navigation */
-  const [stats, setStats] = useState({
-    totalJobs: 0,
-    totalCVs: 0,
-    totalUsers: 0
-  });
-
   /* Workspace Data state */
   const [workspace, setWorkspace] = useState<WorkspaceData>({
     fnf: [],
@@ -191,14 +185,15 @@ export default function WorkspacePage() {
   const [expandedOnb, setExpandedOnb] = useState<string | null>(null);
 
   /* Form inputs */
+  const todayStr = new Date().toISOString().split("T")[0];
   const [fnfForm, setFnfForm] = useState({
-    employeeName: "", department: "", resignationDate: "", lastWorkingDay: "", amount: "", remarks: ""
+    employeeName: "", department: "", resignationDate: todayStr, lastWorkingDay: todayStr, amount: "", remarks: ""
   });
   const [onbForm, setOnbForm] = useState({
-    candidateName: "", role: "", startDate: "", mentor: "", email: ""
+    candidateName: "", role: "", startDate: todayStr, mentor: "", email: ""
   });
   const [taskForm, setTaskForm] = useState({
-    title: "", assignedTo: "", dueDate: "", priority: "Medium" as WorkspaceTask["priority"], category: "General" as WorkspaceTask["category"]
+    title: "", assignedTo: "", dueDate: todayStr, priority: "Medium" as WorkspaceTask["priority"], category: "General" as WorkspaceTask["category"]
   });
 
   /* Google Tasks Efficiency States */
@@ -206,26 +201,12 @@ export default function WorkspacePage() {
   const [quickTaskTitle, setQuickTaskTitle] = useState("");
   const [quickTaskCategory, setQuickTaskCategory] = useState<WorkspaceTask["category"]>("General");
   const [quickTaskPriority, setQuickTaskPriority] = useState<WorkspaceTask["priority"]>("Medium");
-  const [quickTaskDueDate, setQuickTaskDueDate] = useState("");
+  const [quickTaskDueDate, setQuickTaskDueDate] = useState(todayStr);
   const [taskFilterCategory, setTaskFilterCategory] = useState<string>("All");
   const [taskSearchQuery, setTaskSearchQuery] = useState("");
   const [showCompletedTasks, setShowCompletedTasks] = useState(true);
 
-  const handleQuickAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quickTaskTitle.trim()) return;
-    const payload = {
-      title: quickTaskTitle.trim(),
-      assignedTo: session?.user?.email?.split("@")[0] || "Admin",
-      dueDate: quickTaskDueDate || new Date().toISOString().split("T")[0],
-      priority: quickTaskPriority,
-      category: quickTaskCategory
-    };
-    setQuickTaskTitle("");
-    await triggerWorkspaceAction("add_task", payload);
-  };
-
-  const LOCAL_STORAGE_KEY = "career_portal_workspace_v2";
+  const LOCAL_STORAGE_KEY = "career_portal_workspace_v3";
 
   function saveWorkspaceToCache(data: WorkspaceData) {
     if (typeof window !== "undefined") {
@@ -247,28 +228,6 @@ export default function WorkspacePage() {
       }
     }
     return null;
-  }
-
-  async function loadStats() {
-    try {
-      const { count: jobCount } = await supabase.from("jobs").select("*", { count: "exact", head: true });
-      const { count: cvCount } = await supabase.from("cv_database").select("*", { count: "exact", head: true });
-      
-      let usersCount = 0;
-      try {
-        const res = await fetch("/api/create-admin");
-        const json = await res.json();
-        if (json.users) usersCount = json.users.length;
-      } catch {}
-
-      setStats({
-        totalJobs: jobCount ?? 0,
-        totalCVs: cvCount ?? 0,
-        totalUsers: usersCount
-      });
-    } catch (err) {
-      console.error("Error loading sidebar stats:", err);
-    }
   }
 
   async function loadWorkspace() {
@@ -303,7 +262,6 @@ export default function WorkspacePage() {
       }
       setSession(session);
       setAuthLoading(false);
-      loadStats();
       loadWorkspace();
     });
 
@@ -313,7 +271,6 @@ export default function WorkspacePage() {
         setAuthLoading(false);
         router.replace("/admin");
       } else {
-        loadStats();
         loadWorkspace();
       }
     });
@@ -349,7 +306,7 @@ export default function WorkspacePage() {
     }
   }
 
-  /* ─── CRUD Handlers ─── */
+  /* ─── FNF CRUD Handlers ─── */
   const handleAddFnf = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fnfForm.employeeName.trim() || !fnfForm.department.trim()) {
@@ -358,7 +315,7 @@ export default function WorkspacePage() {
     }
     await triggerWorkspaceAction("add_fnf", fnfForm);
     setShowFnfModal(false);
-    setFnfForm({ employeeName: "", department: "", resignationDate: "", lastWorkingDay: "", amount: "", remarks: "" });
+    setFnfForm({ employeeName: "", department: "", resignationDate: todayStr, lastWorkingDay: todayStr, amount: "", remarks: "" });
   };
 
   const handleUpdateFnfStatus = async (id: string, status: FnfRecord["settlementStatus"]) => {
@@ -387,6 +344,7 @@ export default function WorkspacePage() {
     if (expandedFnf === id) setExpandedFnf(null);
   };
 
+  /* ─── Onboarding CRUD Handlers ─── */
   const handleAddOnboarding = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onbForm.candidateName.trim() || !onbForm.role.trim()) {
@@ -395,7 +353,7 @@ export default function WorkspacePage() {
     }
     await triggerWorkspaceAction("add_onboarding", onbForm);
     setShowOnboardingModal(false);
-    setOnbForm({ candidateName: "", role: "", startDate: "", mentor: "", email: "" });
+    setOnbForm({ candidateName: "", role: "", startDate: todayStr, mentor: "", email: "" });
   };
 
   const handleUpdateOnbStatus = async (id: string, status: OnboardingRecord["status"]) => {
@@ -422,7 +380,7 @@ export default function WorkspacePage() {
 
   const handleDeleteOnboarding = async (id: string) => {
     if (typeof window !== "undefined" && window.confirm) {
-      if (!window.confirm("Are you sure you want to delete this onboarding process?")) return;
+      if (!window.confirm("Are you sure you want to permanently delete this onboarding process?")) return;
     }
     setWorkspace(prev => {
       const nextOnb = prev.onboardings.filter(o => String(o.id) !== String(id));
@@ -434,6 +392,21 @@ export default function WorkspacePage() {
     if (expandedOnb === id) setExpandedOnb(null);
   };
 
+  /* ─── Task CRUD Handlers ─── */
+  const handleQuickAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickTaskTitle.trim()) return;
+    const payload = {
+      title: quickTaskTitle.trim(),
+      assignedTo: session?.user?.email?.split("@")[0] || "Admin",
+      dueDate: quickTaskDueDate || todayStr,
+      priority: quickTaskPriority,
+      category: quickTaskCategory
+    };
+    setQuickTaskTitle("");
+    await triggerWorkspaceAction("add_task", payload);
+  };
+
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskForm.title.trim()) {
@@ -442,7 +415,7 @@ export default function WorkspacePage() {
     }
     await triggerWorkspaceAction("add_task", taskForm);
     setShowTaskModal(false);
-    setTaskForm({ title: "", assignedTo: "", dueDate: "", priority: "Medium", category: "General" });
+    setTaskForm({ title: "", assignedTo: "", dueDate: todayStr, priority: "Medium", category: "General" });
   };
 
   const handleUpdateTaskStatus = async (id: string, status: WorkspaceTask["status"]) => {
@@ -460,6 +433,19 @@ export default function WorkspacePage() {
       return nextWorkspace;
     });
     await triggerWorkspaceAction("delete_task", { id });
+  };
+
+  const handleClearCompletedTasks = async () => {
+    if (typeof window !== "undefined" && window.confirm) {
+      if (!window.confirm("Clear all completed tasks?")) return;
+    }
+    setWorkspace(prev => {
+      const nextTasks = prev.tasks.filter(t => t.status !== "Done");
+      const nextWorkspace = { ...prev, tasks: nextTasks };
+      saveWorkspaceToCache(nextWorkspace);
+      return nextWorkspace;
+    });
+    await triggerWorkspaceAction("clear_completed_tasks", {});
   };
 
   const isRecruiter =
@@ -502,7 +488,7 @@ export default function WorkspacePage() {
           <div>
             <h1 className="text-base font-bold text-white tracking-tight mb-1">Authentication Required</h1>
             <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-              You must be signed in as a supervisor to access the workspace.
+              You must be signed in as an administrator to access the workspace desk.
             </p>
           </div>
           <div className="flex flex-col gap-2 w-full">
@@ -541,7 +527,7 @@ export default function WorkspacePage() {
           </div>
           <div>
             <h1 className="text-base font-bold text-white tracking-tight mb-1">Access Denied</h1>
-            <p className="text-xs text-zinc-450 font-medium leading-relaxed">
+            <p className="text-xs text-zinc-400 font-medium leading-relaxed">
               Signed in as <span className="text-indigo-400 font-semibold">{session.user.email}</span>. Only supervisors may access this workspace.
             </p>
           </div>
@@ -576,18 +562,33 @@ export default function WorkspacePage() {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col gap-3"
         >
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            Workspace desk.
-          </h1>
-          <p className="text-sm text-zinc-400 leading-relaxed max-w-lg">
-            Manage employee onboarding, F&F settlements, and internal operational directives.
-          </p>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
+                Workspace desk.
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 border border-emerald-800/60 text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Store
+                </span>
+              </h1>
+              <p className="text-sm text-zinc-400 leading-relaxed max-w-lg mt-1">
+                Manage employee onboarding, F&F settlements, and operational directives with instant deletion and addition.
+              </p>
+            </div>
+            
+            <button
+              onClick={() => loadWorkspace()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
+              title="Refresh workspace from cloud"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            </button>
+          </div>
 
           {/* Minimal Info Row */}
-          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2 flex-wrap">
             <span>SETTLEMENTS: {totalFnf}</span>
             <span>•</span>
-            <span>ONBOARDINGS: {activeOnboardings}</span>
+            <span>ONBOARDINGS: {activeOnboardings} ACTIVE</span>
             <span>•</span>
             <span>OPEN TASKS: {pendingTasks}</span>
           </div>
@@ -608,19 +609,19 @@ export default function WorkspacePage() {
             <div className="flex items-center gap-2 flex-wrap">
               {[
                 { id: "overview", label: "Overview" },
-                { id: "fnf", label: "FNF Settlement" },
-                { id: "onboarding", label: "Onboardings" },
-                { id: "tasks", label: "Tasks Desk" },
+                { id: "fnf", label: `FNF Settlement (${totalFnf})` },
+                { id: "onboarding", label: `Onboardings (${workspace.onboardings.length})` },
+                { id: "tasks", label: `Tasks Desk (${workspace.tasks.length})` },
               ].map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id as "overview" | "fnf" | "onboarding" | "tasks")}
                     className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
                       isActive
-                        ? "bg-white text-black border-transparent"
-                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                        ? "bg-white text-black border-transparent shadow-md"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200 border-zinc-900 hover:border-zinc-800"
                     }`}
                   >
                     {tab.label}
@@ -689,7 +690,7 @@ export default function WorkspacePage() {
         {loadingWorkspace ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 border border-zinc-900 bg-zinc-950/20 rounded-2xl">
             <div className="w-6 h-6 border-2 border-zinc-800 border-t-white rounded-full animate-spin" />
-            <p className="text-xs text-zinc-500 font-semibold">Loading workspace files...</p>
+            <p className="text-xs text-zinc-500 font-semibold">Loading workspace desk...</p>
           </div>
         ) : (
           <AnimatePresence mode="wait">
@@ -703,29 +704,29 @@ export default function WorkspacePage() {
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
                 >
                   {[
-                    { label: "Active Onboardings", value: activeOnboardings, desc: "Ready to engage" },
+                    { label: "Active Onboardings", value: activeOnboardings, desc: `${workspace.onboardings.length} total tracks` },
                     { label: "Settlements Handled", value: totalFnf, desc: "Lifecycle logs" },
                     { label: "Pending Clearance", value: pendingClearances, desc: "Needs evaluation" },
-                    { label: "Operational Tasks", value: pendingTasks, desc: "Open directives" }
+                    { label: "Operational Tasks", value: pendingTasks, desc: `${workspace.tasks.length} total tasks` }
                   ].map((stat, idx) => (
-                    <div key={idx} className="bg-zinc-950/80 border border-blue-950/60 rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-2">
-                      <span className="text-[10px] font-bold text-blue-400/90 uppercase tracking-widest">{stat.label}</span>
-                      <span className="text-2xl sm:text-3xl font-bold text-blue-400 tracking-tight">{stat.value}</span>
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{stat.desc}</span>
+                    <div key={idx} className="bg-zinc-950/80 border border-zinc-850 rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-2">
+                      <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">{stat.label}</span>
+                      <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{stat.value}</span>
+                      <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">{stat.desc}</span>
                     </div>
                   ))}
 
                   {/* Summary lists on Overview page */}
                   <div className="col-span-1 md:col-span-2 border border-zinc-850 bg-zinc-950/80 rounded-2xl p-5 shadow-xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-blue-400 flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-blue-400" /> Recent FNF Clearances
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-indigo-400" /> Recent FNF Clearances
                       </h3>
                       <button
-                        onClick={handleExportFnf}
-                        className="px-3 py-1.5 rounded-lg border border-blue-900/40 bg-zinc-900 text-[10px] font-bold text-blue-300 hover:text-white transition-colors cursor-pointer"
+                        onClick={() => setActiveTab("fnf")}
+                        className="px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 text-[10px] font-bold text-zinc-300 hover:text-white transition-colors cursor-pointer"
                       >
-                        Export FNF
+                        View All FNF
                       </button>
                     </div>
                     <div className="flex flex-col gap-2">
@@ -736,30 +737,39 @@ export default function WorkspacePage() {
                           <div key={f.id} className="flex justify-between items-center py-3 px-3.5 rounded-xl border border-zinc-850/80 bg-zinc-900/40 text-xs">
                             <div>
                               <h4 className="font-bold text-white">{f.employeeName}</h4>
-                              <p className="text-[10px] font-semibold text-blue-300/80 mt-0.5">{f.department} • LWD: {f.lastWorkingDay}</p>
+                              <p className="text-[10px] font-medium text-zinc-400 mt-0.5">{f.department} • LWD: {f.lastWorkingDay}</p>
                             </div>
-                            <span className="text-[10px] font-bold text-blue-400 bg-blue-950/40 border border-blue-800/60 px-2.5 py-1 rounded-md">
-                              {cleared}/{total} cleared
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-zinc-300 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-md">
+                                {cleared}/{total} cleared
+                              </span>
+                              <button
+                                onClick={() => handleDeleteFnf(f.id)}
+                                className="text-zinc-500 hover:text-rose-400 p-1 rounded transition-colors cursor-pointer"
+                                title="Delete settlement"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
                       {workspace.fnf.length === 0 && (
-                        <p className="text-xs text-zinc-500 italic py-4 text-center">No resignation clearances recorded.</p>
+                        <p className="text-xs text-zinc-500 italic py-6 text-center">No resignation clearances recorded. Click &quot;Start FNF&quot; to add one.</p>
                       )}
                     </div>
                   </div>
 
                   <div className="col-span-1 md:col-span-2 border border-zinc-850 bg-zinc-950/80 rounded-2xl p-5 shadow-xl">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-blue-400 flex items-center gap-2">
-                        <UserPlus className="w-3.5 h-3.5 text-blue-400" /> Onboarding Trackers
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                        <UserPlus className="w-3.5 h-3.5 text-indigo-400" /> Onboarding Trackers
                       </h3>
                       <button
-                        onClick={handleExportOnboarding}
-                        className="px-3 py-1.5 rounded-lg border border-blue-900/40 bg-zinc-900 text-[10px] font-bold text-blue-300 hover:text-white transition-colors cursor-pointer"
+                        onClick={() => setActiveTab("onboarding")}
+                        className="px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 text-[10px] font-bold text-zinc-300 hover:text-white transition-colors cursor-pointer"
                       >
-                        Export Onboarding
+                        View All Onboardings
                       </button>
                     </div>
                     <div className="flex flex-col gap-2">
@@ -770,16 +780,25 @@ export default function WorkspacePage() {
                           <div key={o.id} className="flex justify-between items-center py-3 px-3.5 rounded-xl border border-zinc-850/80 bg-zinc-900/40 text-xs">
                             <div>
                               <h4 className="font-bold text-white">{o.candidateName}</h4>
-                              <p className="text-[10px] font-semibold text-blue-300/80 mt-0.5">{o.role} • Start: {o.startDate}</p>
+                              <p className="text-[10px] font-medium text-zinc-400 mt-0.5">{o.role} • Start: {o.startDate}</p>
                             </div>
-                            <span className="text-[10px] font-bold text-blue-400 bg-blue-950/40 border border-blue-800/60 px-2.5 py-1 rounded-md">
-                              {o.status} ({done}/{total})
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-zinc-300 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-md">
+                                {o.status} ({done}/{total})
+                              </span>
+                              <button
+                                onClick={() => handleDeleteOnboarding(o.id)}
+                                className="text-zinc-500 hover:text-rose-400 p-1 rounded transition-colors cursor-pointer"
+                                title="Delete onboarding"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
                       {workspace.onboardings.length === 0 && (
-                        <p className="text-xs text-zinc-500 italic py-4 text-center">No onboarding tracks recorded.</p>
+                        <p className="text-xs text-zinc-500 italic py-6 text-center">No onboarding tracks recorded. Click &quot;Start Onboarding&quot; to add one.</p>
                       )}
                     </div>
                   </div>
@@ -824,7 +843,7 @@ export default function WorkspacePage() {
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-5">
+                            <div className="flex items-center gap-4">
                               <span className="text-xs font-bold text-zinc-300">
                                 {completedCount}/{totalCount} Cleared
                               </span>
@@ -834,8 +853,20 @@ export default function WorkspacePage() {
                                   <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
                                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{f.settlementStatus}</span>
                                 </span>
-                                <ChevronRight className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                               </div>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFnf(f.id);
+                                }}
+                                className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg border border-transparent hover:border-rose-900/40 transition-all cursor-pointer"
+                                title="Delete FNF settlement"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+
+                              <ChevronRight className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                             </div>
                           </div>
 
@@ -913,8 +944,15 @@ export default function WorkspacePage() {
                       );
                     })}
                     {workspace.fnf.length === 0 && (
-                      <div className="text-center py-12">
-                        <p className="text-xs text-zinc-500">No resignation clearances initialized.</p>
+                      <div className="text-center py-16 flex flex-col items-center gap-2">
+                        <AlertCircle className="w-6 h-6 text-zinc-600" />
+                        <p className="text-xs text-zinc-500 font-medium">No resignation clearances active.</p>
+                        <button
+                          onClick={() => setShowFnfModal(true)}
+                          className="mt-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+                        >
+                          Initiate a new F&F settlement
+                        </button>
                       </div>
                     )}
                   </div>
@@ -939,13 +977,15 @@ export default function WorkspacePage() {
                       return (
                         <div
                           key={o.id}
-                          onClick={() => setExpandedOnb(o.id)}
-                          className="py-5 px-6 border-b border-zinc-900 last:border-b-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer hover:bg-zinc-900/30 transition-colors group"
+                          className="py-4 px-6 border-b border-zinc-900 last:border-b-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-900/30 transition-colors group"
                         >
-                          <div className="flex flex-col gap-1 min-w-0">
-                            <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-300 transition-colors flex items-center gap-2">
+                          <div 
+                            onClick={() => setExpandedOnb(o.id)}
+                            className="flex flex-col gap-1 min-w-0 flex-1 cursor-pointer"
+                          >
+                            <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-200 transition-colors flex items-center gap-2">
                               {o.candidateName}
-                              <span className="text-[10px] font-semibold text-zinc-450 bg-zinc-950/40 border border-zinc-900 px-2 py-0.5 rounded">
+                              <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-950/60 border border-zinc-800 px-2 py-0.5 rounded">
                                 {o.role}
                               </span>
                             </h4>
@@ -953,34 +993,67 @@ export default function WorkspacePage() {
                               <span>Start: {o.startDate}</span>
                               <span>•</span>
                               <span>Mentor: {o.mentor}</span>
+                              {o.email && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-zinc-400">{o.email}</span>
+                                </>
+                              )}
                             </p>
                           </div>
 
-                          <div className="flex items-center gap-5 shrink-0">
+                          <div className="flex items-center gap-3 shrink-0">
                             <span className="text-xs font-bold text-zinc-300">
                               {doneCount}/{totalCount} Done
                             </span>
 
-                            <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center gap-1.5">
-                                <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{o.status}</span>
-                              </span>
-                              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:translate-x-1 group-hover:text-white transition-all duration-200" />
+                            <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-900 px-2.5 py-1 rounded-lg">
+                              <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{o.status}</span>
                             </div>
+
+                            {/* Direct Delete button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteOnboarding(o.id);
+                              }}
+                              className="p-2 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl border border-zinc-900/40 hover:border-rose-900/60 transition-all cursor-pointer"
+                              title="Delete onboarding candidate"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => setExpandedOnb(o.id)}
+                              className="p-1.5 text-zinc-500 hover:text-white rounded-lg transition-colors cursor-pointer"
+                              title="View checklist details"
+                            >
+                              <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
                           </div>
                         </div>
                       );
                     })}
                     {workspace.onboardings.length === 0 && (
-                      <div className="p-12 text-center text-zinc-500 text-xs font-semibold">
-                        No candidate onboarding guides active.
+                      <div className="p-16 text-center flex flex-col items-center gap-2">
+                        <UserCheck className="w-6 h-6 text-zinc-600" />
+                        <p className="text-zinc-500 text-xs font-semibold">
+                          No candidate onboarding guides active.
+                        </p>
+                        <button
+                          onClick={() => setShowOnboardingModal(true)}
+                          className="mt-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+                        >
+                          Start candidate onboarding
+                        </button>
                       </div>
                     )}
                   </div>
                 </motion.div>
               )}
-                    {/* ─── TASKS DESK TAB (GOOGLE TASKS HYPER-EFFICIENT UX) ─── */}
+
+              {/* ─── TASKS DESK TAB (GOOGLE TASKS HYPER-EFFICIENT UX) ─── */}
               {activeTab === "tasks" && (() => {
                 const filteredTasks = workspace.tasks.filter(t => {
                   const matchCat = taskFilterCategory === "All" || t.category === taskFilterCategory;
@@ -1005,13 +1078,13 @@ export default function WorkspacePage() {
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                       {/* Search Bar */}
                       <div className="flex-1 relative flex items-center bg-zinc-950/80 rounded-xl border border-zinc-900 focus-within:border-zinc-700 px-3.5 py-2.5 transition-all">
-                        <Search className="w-4 h-4 mr-2.5 text-zinc-600" />
+                        <Search className="w-4 h-4 mr-2.5 text-zinc-500" />
                         <input
                           type="text"
                           placeholder="Search tasks or assignees..."
                           value={taskSearchQuery}
                           onChange={(e) => setTaskSearchQuery(e.target.value)}
-                          className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
+                          className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-500 font-medium"
                         />
                         {taskSearchQuery && (
                           <button
@@ -1024,7 +1097,7 @@ export default function WorkspacePage() {
                       </div>
 
                       {/* Filter Chips & View Mode Switcher */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         <select
                           value={taskFilterCategory}
                           onChange={(e) => setTaskFilterCategory(e.target.value)}
@@ -1062,7 +1135,7 @@ export default function WorkspacePage() {
                       </div>
                     </div>
 
-                    {/* Inline Task Creator Form */}
+                    {/* Inline Quick Task Creator Form */}
                     <form
                       onSubmit={handleQuickAddTask}
                       className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-zinc-950/40 border border-zinc-900 focus-within:border-zinc-700 p-2.5 rounded-2xl transition-all"
@@ -1078,7 +1151,7 @@ export default function WorkspacePage() {
                         />
                       </div>
 
-                      <div className="flex items-center gap-2 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-900">
+                      <div className="flex items-center gap-2 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-900 flex-wrap">
                         <select
                           value={quickTaskCategory}
                           onChange={(e) => setQuickTaskCategory(e.target.value as WorkspaceTask["category"])}
@@ -1112,7 +1185,7 @@ export default function WorkspacePage() {
                           disabled={!quickTaskTitle.trim()}
                           className="bg-white hover:bg-zinc-200 disabled:opacity-40 disabled:hover:bg-white text-black text-xs font-bold px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm"
                         >
-                          Add
+                          Add Task
                         </button>
                       </div>
                     </form>
@@ -1130,7 +1203,7 @@ export default function WorkspacePage() {
 
                           {activeTasks.length === 0 ? (
                             <div className="p-12 text-center text-zinc-500 text-xs font-semibold">
-                              No active tasks pending. Nice work!
+                              No active tasks pending. Click above to add a new task.
                             </div>
                           ) : (
                             activeTasks.map((t) => (
@@ -1152,7 +1225,7 @@ export default function WorkspacePage() {
                                       <span className="text-sm font-bold text-white group-hover:text-zinc-300 transition-colors">
                                         {t.title}
                                       </span>
-                                      <span className="text-[10px] font-semibold text-zinc-450 bg-zinc-950/40 border border-zinc-900 px-2 py-0.5 rounded">
+                                      <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-950/40 border border-zinc-900 px-2 py-0.5 rounded">
                                         {t.category}
                                       </span>
                                       {t.priority === "High" && (
@@ -1181,7 +1254,7 @@ export default function WorkspacePage() {
                                       e.stopPropagation();
                                       handleDeleteTask(t.id);
                                     }}
-                                    className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1.5 rounded-lg opacity-0 group-hover:opacity-100"
+                                    className="text-zinc-500 hover:text-rose-400 hover:bg-rose-950/30 cursor-pointer transition-all p-1.5 rounded-lg border border-transparent hover:border-rose-900/40"
                                     title="Delete task"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1195,15 +1268,23 @@ export default function WorkspacePage() {
                         {/* Completed Tasks Accordion */}
                         {completedTasks.length > 0 && (
                           <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
-                            <button
-                              onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-                              className="w-full px-6 py-3.5 flex items-center justify-between hover:bg-zinc-900/30 transition-all text-xs font-bold text-zinc-400 cursor-pointer"
-                            >
-                              <span className="flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Completed ({completedTasks.length})
-                              </span>
-                              <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${showCompletedTasks ? "rotate-180" : ""}`} />
-                            </button>
+                            <div className="w-full px-6 py-3.5 flex items-center justify-between hover:bg-zinc-900/30 transition-all text-xs font-bold text-zinc-400">
+                              <button
+                                onClick={() => setShowCompletedTasks(!showCompletedTasks)}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                <span>Completed ({completedTasks.length})</span>
+                                <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${showCompletedTasks ? "rotate-180" : ""}`} />
+                              </button>
+
+                              <button
+                                onClick={handleClearCompletedTasks}
+                                className="text-[10px] font-semibold text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
+                              >
+                                Clear all completed
+                              </button>
+                            </div>
 
                             {showCompletedTasks && (
                               <div className="border-t border-zinc-900">
@@ -1243,6 +1324,7 @@ export default function WorkspacePage() {
                                           handleDeleteTask(t.id);
                                         }}
                                         className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1"
+                                        title="Delete task"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
@@ -1317,7 +1399,8 @@ export default function WorkspacePage() {
                                           e.stopPropagation();
                                           handleDeleteTask(t.id);
                                         }}
-                                        className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-0.5"
+                                        className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1"
+                                        title="Delete task"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
@@ -1484,7 +1567,7 @@ export default function WorkspacePage() {
                     }}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-950/30 border border-rose-900/40 transition-all cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" /> Remove tracker
+                    <Trash2 className="w-3.5 h-3.5" /> Permanently Delete Tracker
                   </button>
                 </div>
               </motion.div>
@@ -1504,7 +1587,9 @@ export default function WorkspacePage() {
             className="w-full max-w-md border border-zinc-800 rounded-[28px] p-6 sm:p-8 bg-zinc-950/95 backdrop-blur-2xl shadow-2xl flex flex-col gap-6 text-white"
           >
             <div className="flex justify-between items-center pb-3 border-b border-zinc-850">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Start FNF Process</h3>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-400" /> Start FNF Process
+              </h3>
               <button onClick={() => setShowFnfModal(false)} className="text-zinc-400 hover:text-white cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
 
@@ -1590,7 +1675,9 @@ export default function WorkspacePage() {
             className="w-full max-w-md border border-zinc-800 rounded-[28px] p-6 sm:p-8 bg-zinc-950/95 backdrop-blur-2xl shadow-2xl flex flex-col gap-6 text-white"
           >
             <div className="flex justify-between items-center pb-3 border-b border-zinc-850">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Start Onboarding</h3>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-indigo-400" /> Start Onboarding
+              </h3>
               <button onClick={() => setShowOnboardingModal(false)} className="text-zinc-400 hover:text-white cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
 
@@ -1620,7 +1707,7 @@ export default function WorkspacePage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Corporate Email</label>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Corporate / Personal Email</label>
                 <input
                   type="email"
                   placeholder="alice@company.com"
@@ -1676,7 +1763,9 @@ export default function WorkspacePage() {
             className="w-full max-w-md border border-zinc-800 rounded-[28px] p-6 sm:p-8 bg-zinc-950/95 backdrop-blur-2xl shadow-2xl flex flex-col gap-6 text-white"
           >
             <div className="flex justify-between items-center pb-3 border-b border-zinc-850">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Create Task</h3>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <Plus className="w-4 h-4 text-indigo-400" /> Create Task
+              </h3>
               <button onClick={() => setShowTaskModal(false)} className="text-zinc-400 hover:text-white cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
 
@@ -1686,7 +1775,7 @@ export default function WorkspacePage() {
                 <input
                   type="text"
                   required
-                  placeholder="Revoke credentials..."
+                  placeholder="Revoke credentials, Setup workspace..."
                   value={taskForm.title}
                   onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                   className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-all placeholder-zinc-500"
@@ -1697,7 +1786,7 @@ export default function WorkspacePage() {
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Assignee</label>
                 <input
                   type="text"
-                  placeholder="IT Team"
+                  placeholder="IT Team, Admin, HR..."
                   value={taskForm.assignedTo}
                   onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value })}
                   className="w-full bg-zinc-900/60 border border-zinc-800 focus:border-zinc-600 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-all placeholder-zinc-500"
@@ -1740,7 +1829,7 @@ export default function WorkspacePage() {
                 >
                   <option value="Low">Low Priority</option>
                   <option value="Medium">Medium Priority</option>
-                  <option value="High Priority">High Priority</option>
+                  <option value="High">High Priority</option>
                 </select>
               </div>
 

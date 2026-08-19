@@ -26,7 +26,7 @@ function getSupabaseClient() {
 
 let inMemoryStore: WorkspaceStore | null = null;
 
-// Helper to read workspace data from Supabase cloud database
+// Helper to read workspace data from Supabase cloud database with fallback to local workspace.json
 async function readData(): Promise<WorkspaceStore> {
   const supabase = getSupabaseClient();
 
@@ -61,7 +61,14 @@ async function readData(): Promise<WorkspaceStore> {
   let initialData: WorkspaceStore = { fnf: [], onboardings: [], tasks: [] };
   try {
     const fileContent = await fs.readFile(projectJsonPath, "utf-8");
-    initialData = JSON.parse(fileContent);
+    const parsed = JSON.parse(fileContent);
+    if (parsed && typeof parsed === "object") {
+      initialData = {
+        fnf: Array.isArray(parsed.fnf) ? parsed.fnf : [],
+        onboardings: Array.isArray(parsed.onboardings) ? parsed.onboardings : [],
+        tasks: Array.isArray(parsed.tasks) ? parsed.tasks : []
+      };
+    }
   } catch {
     initialData = { fnf: [], onboardings: [], tasks: [] };
   }
@@ -71,7 +78,7 @@ async function readData(): Promise<WorkspaceStore> {
   return initialData;
 }
 
-// Helper to write workspace data back to Supabase cloud database
+// Helper to write workspace data back to Supabase cloud database and local fallback file
 async function writeData(data: WorkspaceStore) {
   inMemoryStore = data;
   const supabase = getSupabaseClient();
@@ -139,8 +146,8 @@ export async function POST(request: Request) {
     switch (action) {
       /* ──────────────── FNF Operations ──────────────── */
       case "add_fnf": {
-        const { employeeName, department, resignationDate, lastWorkingDay, amount, remarks } = payload;
-        const newFnf = {
+        const { employeeName, department, resignationDate, lastWorkingDay, amount, remarks } = payload || {};
+        const newFnf: FnfRecordItem = {
           id: `fnf-${Date.now()}`,
           employeeName: employeeName || "Unknown Employee",
           department: department || "General",
@@ -162,13 +169,15 @@ export async function POST(request: Request) {
       }
 
       case "update_fnf": {
-        const { id, settlementStatus, amount, remarks, resignationDate, lastWorkingDay } = payload;
-        const index = data.fnf.findIndex((f: FnfRecordItem) => f.id === id);
+        const { id, settlementStatus, amount, remarks, resignationDate, lastWorkingDay, employeeName, department } = payload || {};
+        const index = data.fnf.findIndex((f: FnfRecordItem) => String(f.id) === String(id));
         if (index !== -1) {
           data.fnf[index] = {
             ...data.fnf[index],
+            employeeName: employeeName !== undefined ? employeeName : data.fnf[index].employeeName,
+            department: department !== undefined ? department : data.fnf[index].department,
             settlementStatus: settlementStatus || data.fnf[index].settlementStatus,
-            amount: amount !== undefined ? parseFloat(amount) : data.fnf[index].amount,
+            amount: amount !== undefined ? (parseFloat(amount) || 0) : data.fnf[index].amount,
             remarks: remarks !== undefined ? remarks : data.fnf[index].remarks,
             resignationDate: resignationDate || data.fnf[index].resignationDate,
             lastWorkingDay: lastWorkingDay || data.fnf[index].lastWorkingDay,
@@ -178,16 +187,21 @@ export async function POST(request: Request) {
       }
 
       case "delete_fnf": {
-        const { id } = payload as { id: string };
+        const { id } = (payload || {}) as { id: string };
         data.fnf = data.fnf.filter((f: FnfRecordItem) => String(f.id) !== String(id));
         break;
       }
 
+      case "clear_fnf": {
+        data.fnf = [];
+        break;
+      }
+
       case "toggle_fnf_task": {
-        const { fnfId, taskId, completed } = payload;
-        const fnf = data.fnf.find((f: FnfRecordItem) => f.id === fnfId);
+        const { fnfId, taskId, completed } = payload || {};
+        const fnf = data.fnf.find((f: FnfRecordItem) => String(f.id) === String(fnfId));
         if (fnf) {
-          const task = fnf.tasks.find((t: FnfTaskItem) => t.id === taskId);
+          const task = fnf.tasks.find((t: FnfTaskItem) => String(t.id) === String(taskId));
           if (task) {
             task.completed = completed;
             
@@ -203,10 +217,33 @@ export async function POST(request: Request) {
         break;
       }
 
+      case "add_fnf_task": {
+        const { fnfId, taskName, section } = payload || {};
+        const fnf = data.fnf.find((f: FnfRecordItem) => String(f.id) === String(fnfId));
+        if (fnf && taskName && taskName.trim()) {
+          fnf.tasks.push({
+            id: `ft-${Date.now()}`,
+            name: taskName.trim(),
+            completed: false,
+            section: section || "General"
+          });
+        }
+        break;
+      }
+
+      case "delete_fnf_task": {
+        const { fnfId, taskId } = payload || {};
+        const fnf = data.fnf.find((f: FnfRecordItem) => String(f.id) === String(fnfId));
+        if (fnf) {
+          fnf.tasks = fnf.tasks.filter((t: FnfTaskItem) => String(t.id) !== String(taskId));
+        }
+        break;
+      }
+
       /* ────────────── Onboarding Operations ────────────── */
       case "add_onboarding": {
-        const { candidateName, role, startDate, mentor, email } = payload;
-        const newOnboarding = {
+        const { candidateName, role, startDate, mentor, email } = payload || {};
+        const newOnboarding: OnboardingRecordItem = {
           id: `onb-${Date.now()}`,
           candidateName: candidateName || "New Hire",
           role: role || "General",
@@ -228,11 +265,12 @@ export async function POST(request: Request) {
       }
 
       case "update_onboarding": {
-        const { id, status, mentor, email, startDate, role } = payload;
-        const index = data.onboardings.findIndex((o: OnboardingRecordItem) => o.id === id);
+        const { id, candidateName, status, mentor, email, startDate, role } = payload || {};
+        const index = data.onboardings.findIndex((o: OnboardingRecordItem) => String(o.id) === String(id));
         if (index !== -1) {
           data.onboardings[index] = {
             ...data.onboardings[index],
+            candidateName: candidateName !== undefined ? candidateName : data.onboardings[index].candidateName,
             status: status || data.onboardings[index].status,
             mentor: mentor !== undefined ? mentor : data.onboardings[index].mentor,
             email: email !== undefined ? email : data.onboardings[index].email,
@@ -244,23 +282,28 @@ export async function POST(request: Request) {
       }
 
       case "delete_onboarding": {
-        const { id } = payload as { id: string };
+        const { id } = (payload || {}) as { id: string };
         data.onboardings = data.onboardings.filter((o: OnboardingRecordItem) => String(o.id) !== String(id));
         break;
       }
 
+      case "clear_onboardings": {
+        data.onboardings = [];
+        break;
+      }
+
       case "toggle_onboarding_task": {
-        const { onboardingId, taskId, completed } = payload;
-        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => o.id === onboardingId);
+        const { onboardingId, taskId, completed } = payload || {};
+        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => String(o.id) === String(onboardingId));
         if (onboarding) {
-          const task = onboarding.tasks.find((t: OnboardingTaskItem) => t.id === taskId);
+          const task = onboarding.tasks.find((t: OnboardingTaskItem) => String(t.id) === String(taskId));
           if (task) {
             task.completed = completed;
 
             // Auto update status based on checklist progression
             const doneCount = onboarding.tasks.filter((t: OnboardingTaskItem) => t.completed).length;
             const total = onboarding.tasks.length;
-            if (doneCount === total) {
+            if (doneCount === total && total > 0) {
               onboarding.status = "Completed";
             } else if (doneCount > 0) {
               onboarding.status = "In Progress";
@@ -273,8 +316,8 @@ export async function POST(request: Request) {
       }
 
       case "add_onboarding_task": {
-        const { onboardingId, taskName } = payload;
-        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => o.id === onboardingId);
+        const { onboardingId, taskName } = payload || {};
+        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => String(o.id) === String(onboardingId));
         if (onboarding && taskName && taskName.trim()) {
           onboarding.tasks.push({
             id: `ot-${Date.now()}`,
@@ -286,46 +329,24 @@ export async function POST(request: Request) {
       }
 
       case "delete_onboarding_task": {
-        const { onboardingId, taskId } = payload;
-        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => o.id === onboardingId);
+        const { onboardingId, taskId } = payload || {};
+        const onboarding = data.onboardings.find((o: OnboardingRecordItem) => String(o.id) === String(onboardingId));
         if (onboarding) {
-          onboarding.tasks = onboarding.tasks.filter((t: OnboardingTaskItem) => t.id !== taskId);
-        }
-        break;
-      }
-
-      case "add_fnf_task": {
-        const { fnfId, taskName, section } = payload;
-        const fnf = data.fnf.find((f: FnfRecordItem) => f.id === fnfId);
-        if (fnf && taskName && taskName.trim()) {
-          fnf.tasks.push({
-            id: `ft-${Date.now()}`,
-            name: taskName.trim(),
-            completed: false,
-            section: section || "General"
-          });
-        }
-        break;
-      }
-
-      case "delete_fnf_task": {
-        const { fnfId, taskId } = payload;
-        const fnf = data.fnf.find((f: FnfRecordItem) => f.id === fnfId);
-        if (fnf) {
-          fnf.tasks = fnf.tasks.filter((t: FnfTaskItem) => t.id !== taskId);
+          onboarding.tasks = onboarding.tasks.filter((t: OnboardingTaskItem) => String(t.id) !== String(taskId));
         }
         break;
       }
 
       /* ──────────────── Task Operations ──────────────── */
       case "add_task": {
-        const { title, assignedTo, dueDate, priority, category } = payload;
-        const newTask = {
+        const { title, assignedTo, dueDate, priority, category } = payload || {};
+        const normalizedPriority = priority === "High Priority" ? "High" : (priority || "Medium");
+        const newTask: TaskItemRecord = {
           id: `tsk-${Date.now()}`,
           title: title || "New Task",
           assignedTo: assignedTo || "Admin",
           dueDate: dueDate || timestamp.split("T")[0],
-          priority: priority || "Medium",
+          priority: normalizedPriority,
           status: "To Do",
           category: category || "General",
           createdAt: timestamp
@@ -335,15 +356,16 @@ export async function POST(request: Request) {
       }
 
       case "update_task": {
-        const { id, title, assignedTo, dueDate, priority, status, category } = payload;
-        const index = data.tasks.findIndex((t: TaskItemRecord) => t.id === id);
+        const { id, title, assignedTo, dueDate, priority, status, category } = payload || {};
+        const index = data.tasks.findIndex((t: TaskItemRecord) => String(t.id) === String(id));
         if (index !== -1) {
+          const normalizedPriority = priority === "High Priority" ? "High" : (priority || data.tasks[index].priority);
           data.tasks[index] = {
             ...data.tasks[index],
             title: title || data.tasks[index].title,
             assignedTo: assignedTo !== undefined ? assignedTo : data.tasks[index].assignedTo,
             dueDate: dueDate || data.tasks[index].dueDate,
-            priority: priority || data.tasks[index].priority,
+            priority: normalizedPriority,
             status: status || data.tasks[index].status,
             category: category || data.tasks[index].category,
           };
@@ -352,8 +374,18 @@ export async function POST(request: Request) {
       }
 
       case "delete_task": {
-        const { id } = payload as { id: string };
+        const { id } = (payload || {}) as { id: string };
         data.tasks = data.tasks.filter((t: TaskItemRecord) => String(t.id) !== String(id));
+        break;
+      }
+
+      case "clear_completed_tasks": {
+        data.tasks = data.tasks.filter((t: TaskItemRecord) => t.status !== "Done");
+        break;
+      }
+
+      case "clear_tasks": {
+        data.tasks = [];
         break;
       }
 
@@ -364,6 +396,13 @@ export async function POST(request: Request) {
           if (Array.isArray(sync.onboardings)) data.onboardings = sync.onboardings;
           if (Array.isArray(sync.tasks)) data.tasks = sync.tasks;
         }
+        break;
+      }
+
+      case "reset_workspace": {
+        data.fnf = [];
+        data.onboardings = [];
+        data.tasks = [];
         break;
       }
 
