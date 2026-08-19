@@ -9,7 +9,8 @@ import {
   UserPlus, Trash2, Plus, Clock,
   Shield, ClipboardList, Search,
   List, Kanban, ChevronDown, CheckCircle2,
-  AlertCircle, Sparkles, RefreshCw, UserCheck
+  AlertCircle, Sparkles, RefreshCw, UserCheck,
+  Play, RotateCcw, CheckSquare, Square
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../../src/components/Header";
@@ -196,15 +197,18 @@ export default function WorkspacePage() {
     title: "", assignedTo: "", dueDate: todayStr, priority: "Medium" as WorkspaceTask["priority"], category: "General" as WorkspaceTask["category"]
   });
 
-  /* Google Tasks Efficiency States */
+  /* Tasks Filtering & UX States */
   const [taskViewMode, setTaskViewMode] = useState<"list" | "board">("list");
+  const [taskStatusTab, setTaskStatusTab] = useState<"all" | "To Do" | "In Progress" | "Done">("all");
   const [quickTaskTitle, setQuickTaskTitle] = useState("");
   const [quickTaskCategory, setQuickTaskCategory] = useState<WorkspaceTask["category"]>("General");
   const [quickTaskPriority, setQuickTaskPriority] = useState<WorkspaceTask["priority"]>("Medium");
   const [quickTaskDueDate, setQuickTaskDueDate] = useState(todayStr);
   const [taskFilterCategory, setTaskFilterCategory] = useState<string>("All");
   const [taskSearchQuery, setTaskSearchQuery] = useState("");
-  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
+
+  /* Onboardings Filter */
+  const [onbFilterStatus, setOnbFilterStatus] = useState<"all" | "Not Started" | "In Progress" | "Completed">("all");
 
   const LOCAL_STORAGE_KEY = "career_portal_workspace_v3";
 
@@ -284,7 +288,7 @@ export default function WorkspacePage() {
     router.replace("/admin");
   }
 
-  /* API mutator helper */
+  /* API mutator helper with optimistic support */
   async function triggerWorkspaceAction(action: string, payload: Record<string, unknown>) {
     try {
       const res = await fetch("/api/workspace", {
@@ -299,10 +303,12 @@ export default function WorkspacePage() {
       } else {
         const errJson = await res.json();
         alert("Operation failed: " + (errJson.error || "Unknown error"));
+        loadWorkspace(); // Re-fetch on error to revert optimistic state
       }
     } catch (err) {
       console.error("API error:", err);
       alert("Failed to connect to API.");
+      loadWorkspace();
     }
   }
 
@@ -319,14 +325,35 @@ export default function WorkspacePage() {
   };
 
   const handleUpdateFnfStatus = async (id: string, status: FnfRecord["settlementStatus"]) => {
+    setWorkspace(prev => {
+      const nextFnf = prev.fnf.map(f => f.id === id ? { ...f, settlementStatus: status } : f);
+      return { ...prev, fnf: nextFnf };
+    });
     await triggerWorkspaceAction("update_fnf", { id, settlementStatus: status });
   };
 
   const handleUpdateFnfAmount = async (id: string, amount: string) => {
+    const num = parseFloat(amount) || 0;
+    setWorkspace(prev => {
+      const nextFnf = prev.fnf.map(f => f.id === id ? { ...f, amount: num } : f);
+      return { ...prev, fnf: nextFnf };
+    });
     await triggerWorkspaceAction("update_fnf", { id, amount });
   };
 
   const handleToggleFnfTask = async (fnfId: string, taskId: string, completed: boolean) => {
+    setWorkspace(prev => {
+      const nextFnf = prev.fnf.map(f => {
+        if (f.id !== fnfId) return f;
+        const nextTasks = f.tasks.map(t => t.id === taskId ? { ...t, completed } : t);
+        const allDone = nextTasks.every(t => t.completed);
+        let settlementStatus = f.settlementStatus;
+        if (allDone && settlementStatus === "Draft") settlementStatus = "Approved";
+        else if (!allDone && settlementStatus === "Approved") settlementStatus = "Draft";
+        return { ...f, tasks: nextTasks, settlementStatus };
+      });
+      return { ...prev, fnf: nextFnf };
+    });
     await triggerWorkspaceAction("toggle_fnf_task", { fnfId, taskId, completed });
   };
 
@@ -357,6 +384,10 @@ export default function WorkspacePage() {
   };
 
   const handleUpdateOnbStatus = async (id: string, status: OnboardingRecord["status"]) => {
+    setWorkspace(prev => {
+      const nextOnb = prev.onboardings.map(o => o.id === id ? { ...o, status } : o);
+      return { ...prev, onboardings: nextOnb };
+    });
     await triggerWorkspaceAction("update_onboarding", { id, status });
   };
 
@@ -366,15 +397,52 @@ export default function WorkspacePage() {
   const handleAddOnbTask = async (onboardingId: string) => {
     const taskName = newOnbTaskInputs[onboardingId]?.trim();
     if (!taskName) return;
-    await triggerWorkspaceAction("add_onboarding_task", { onboardingId, taskName });
+    const tempTaskId = `ot-${Date.now()}`;
+    setWorkspace(prev => {
+      const nextOnb = prev.onboardings.map(o => {
+        if (o.id !== onboardingId) return o;
+        return { ...o, tasks: [...o.tasks, { id: tempTaskId, name: taskName, completed: false }] };
+      });
+      return { ...prev, onboardings: nextOnb };
+    });
     setNewOnbTaskInputs((prev) => ({ ...prev, [onboardingId]: "" }));
+    await triggerWorkspaceAction("add_onboarding_task", { onboardingId, taskName });
   };
 
   const handleDeleteOnbTask = async (onboardingId: string, taskId: string) => {
+    setWorkspace(prev => {
+      const nextOnb = prev.onboardings.map(o => {
+        if (o.id !== onboardingId) return o;
+        return { ...o, tasks: o.tasks.filter(t => t.id !== taskId) };
+      });
+      return { ...prev, onboardings: nextOnb };
+    });
     await triggerWorkspaceAction("delete_onboarding_task", { onboardingId, taskId });
   };
 
   const handleToggleOnbTask = async (onboardingId: string, taskId: string, completed: boolean) => {
+    // Optimistic instant toggle
+    setWorkspace(prev => {
+      const nextOnb = prev.onboardings.map(o => {
+        if (o.id !== onboardingId) return o;
+        const nextTasks = o.tasks.map(t => t.id === taskId ? { ...t, completed } : t);
+        const doneCount = nextTasks.filter(t => t.completed).length;
+        const total = nextTasks.length;
+        let status = o.status;
+        if (doneCount === total && total > 0) {
+          status = "Completed";
+        } else if (doneCount > 0) {
+          status = "In Progress";
+        } else {
+          status = "Not Started";
+        }
+        return { ...o, tasks: nextTasks, status };
+      });
+      const nextWorkspace = { ...prev, onboardings: nextOnb };
+      saveWorkspaceToCache(nextWorkspace);
+      return nextWorkspace;
+    });
+
     await triggerWorkspaceAction("toggle_onboarding_task", { onboardingId, taskId, completed });
   };
 
@@ -419,6 +487,13 @@ export default function WorkspacePage() {
   };
 
   const handleUpdateTaskStatus = async (id: string, status: WorkspaceTask["status"]) => {
+    // Instant optimistic update
+    setWorkspace(prev => {
+      const nextTasks = prev.tasks.map(t => t.id === id ? { ...t, status } : t);
+      const nextWorkspace = { ...prev, tasks: nextTasks };
+      saveWorkspaceToCache(nextWorkspace);
+      return nextWorkspace;
+    });
     await triggerWorkspaceAction("update_task", { id, status });
   };
 
@@ -535,7 +610,7 @@ export default function WorkspacePage() {
             <button onClick={handleLogout} className="w-full py-2.5 px-4 rounded-xl font-bold text-xs text-white bg-rose-500 hover:bg-rose-600 cursor-pointer transition-all active:scale-[0.98]">
               Sign Out & Try Again
             </button>
-            <button onClick={() => router.push("/")} className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-zinc-300 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer">
+            <button onClick={() => router.push("/")} className="w-full py-2.5 px-4 rounded-xl font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-all cursor-pointer">
               Back to Home
             </button>
           </div>
@@ -588,9 +663,9 @@ export default function WorkspacePage() {
           <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2 flex-wrap">
             <span>SETTLEMENTS: {totalFnf}</span>
             <span>•</span>
-            <span>ONBOARDINGS: {activeOnboardings} ACTIVE</span>
+            <span>ONBOARDINGS: {activeOnboardings} ACTIVE ({workspace.onboardings.length} TOTAL)</span>
             <span>•</span>
-            <span>OPEN TASKS: {pendingTasks}</span>
+            <span>OPEN TASKS: {pendingTasks} ({workspace.tasks.length} TOTAL)</span>
           </div>
         </motion.div>
       </section>
@@ -960,111 +1035,153 @@ export default function WorkspacePage() {
               )}
 
               {/* ─── ONBOARDINGS TAB ─── */}
-              {activeTab === "onboarding" && (
-                <motion.div
-                  key="onboarding"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col gap-4"
-                >
-                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
-                    {workspace.onboardings.map((o) => {
-                      const doneCount = o.tasks.filter((t) => t.completed).length;
-                      const totalCount = o.tasks.length;
-                      const dotColor = o.status === "Completed" ? "#10b981" : o.status === "In Progress" ? "#3b82f6" : "#71717a";
+              {activeTab === "onboarding" && (() => {
+                const filteredOnb = workspace.onboardings.filter(o => {
+                  if (onbFilterStatus === "all") return true;
+                  return o.status === onbFilterStatus;
+                });
 
-                      return (
-                        <div
-                          key={o.id}
-                          className="py-4 px-6 border-b border-zinc-900 last:border-b-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-900/30 transition-colors group"
-                        >
-                          <div 
-                            onClick={() => setExpandedOnb(o.id)}
-                            className="flex flex-col gap-1 min-w-0 flex-1 cursor-pointer"
+                return (
+                  <motion.div
+                    key="onboarding"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col gap-4"
+                  >
+                    {/* Status Tabs for Onboardings */}
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-900 p-1 rounded-xl">
+                        {[
+                          { id: "all", label: `All (${workspace.onboardings.length})` },
+                          { id: "Not Started", label: `Not Started (${workspace.onboardings.filter(o => o.status === "Not Started").length})` },
+                          { id: "In Progress", label: `In Progress (${workspace.onboardings.filter(o => o.status === "In Progress").length})` },
+                          { id: "Completed", label: `Completed (${workspace.onboardings.filter(o => o.status === "Completed").length})` },
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => setOnbFilterStatus(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              onbFilterStatus === tab.id
+                                ? "bg-white text-black shadow-sm"
+                                : "text-zinc-400 hover:text-white"
+                            }`}
                           >
-                            <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-200 transition-colors flex items-center gap-2">
-                              {o.candidateName}
-                              <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-950/60 border border-zinc-800 px-2 py-0.5 rounded">
-                                {o.role}
-                              </span>
-                            </h4>
-                            <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-2 mt-0.5">
-                              <span>Start: {o.startDate}</span>
-                              <span>•</span>
-                              <span>Mentor: {o.mentor}</span>
-                              {o.email && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-zinc-400">{o.email}</span>
-                                </>
-                              )}
-                            </p>
-                          </div>
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-xs font-bold text-zinc-300">
-                              {doneCount}/{totalCount} Done
-                            </span>
+                    <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
+                      {filteredOnb.map((o) => {
+                        const doneCount = o.tasks.filter((t) => t.completed).length;
+                        const totalCount = o.tasks.length;
+                        const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+                        const dotColor = o.status === "Completed" ? "#10b981" : o.status === "In Progress" ? "#3b82f6" : "#71717a";
 
-                            <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-900 px-2.5 py-1 rounded-lg">
-                              <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
-                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{o.status}</span>
+                        return (
+                          <div
+                            key={o.id}
+                            className="py-4 px-6 border-b border-zinc-900 last:border-b-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-zinc-900/30 transition-colors group"
+                          >
+                            <div 
+                              onClick={() => setExpandedOnb(o.id)}
+                              className="flex flex-col gap-1 min-w-0 flex-1 cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-zinc-200 transition-colors">
+                                  {o.candidateName}
+                                </h4>
+                                <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-950/60 border border-zinc-800 px-2 py-0.5 rounded">
+                                  {o.role}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-2 mt-0.5 flex-wrap">
+                                <span>Start: {o.startDate}</span>
+                                <span>•</span>
+                                <span>Mentor: {o.mentor}</span>
+                                {o.email && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-zinc-400">{o.email}</span>
+                                  </>
+                                )}
+                              </p>
                             </div>
 
-                            {/* Direct Delete button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteOnboarding(o.id);
-                              }}
-                              className="p-2 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl border border-zinc-900/40 hover:border-rose-900/60 transition-all cursor-pointer"
-                              title="Delete onboarding candidate"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <div className="flex flex-col items-end gap-1">
+                                <span className="text-xs font-bold text-zinc-300">
+                                  {doneCount}/{totalCount} Done ({pct}%)
+                                </span>
+                                <div className="w-24 h-1.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+                                  <div 
+                                    className={`h-full transition-all duration-300 ${o.status === "Completed" ? "bg-emerald-400" : "bg-blue-400"}`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
 
-                            <button
-                              onClick={() => setExpandedOnb(o.id)}
-                              className="p-1.5 text-zinc-500 hover:text-white rounded-lg transition-colors cursor-pointer"
-                              title="View checklist details"
-                            >
-                              <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
-                            </button>
+                              <div className="flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-900 px-2.5 py-1 rounded-lg">
+                                <span style={{ backgroundColor: dotColor }} className="w-1.5 h-1.5 rounded-full" />
+                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{o.status}</span>
+                              </div>
+
+                              {/* Direct Delete button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteOnboarding(o.id);
+                                }}
+                                className="p-2 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl border border-zinc-900/40 hover:border-rose-900/60 transition-all cursor-pointer"
+                                title="Delete onboarding candidate"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => setExpandedOnb(o.id)}
+                                className="p-1.5 text-zinc-500 hover:text-white rounded-lg transition-colors cursor-pointer"
+                                title="View checklist details"
+                              >
+                                <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:translate-x-0.5 transition-transform" />
+                              </button>
+                            </div>
                           </div>
+                        );
+                      })}
+                      {filteredOnb.length === 0 && (
+                        <div className="p-16 text-center flex flex-col items-center gap-2">
+                          <UserCheck className="w-6 h-6 text-zinc-600" />
+                          <p className="text-zinc-500 text-xs font-semibold">
+                            {workspace.onboardings.length === 0 ? "No candidate onboarding guides active." : "No candidates found matching filter."}
+                          </p>
+                          {workspace.onboardings.length === 0 && (
+                            <button
+                              onClick={() => setShowOnboardingModal(true)}
+                              className="mt-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+                            >
+                              Start candidate onboarding
+                            </button>
+                          )}
                         </div>
-                      );
-                    })}
-                    {workspace.onboardings.length === 0 && (
-                      <div className="p-16 text-center flex flex-col items-center gap-2">
-                        <UserCheck className="w-6 h-6 text-zinc-600" />
-                        <p className="text-zinc-500 text-xs font-semibold">
-                          No candidate onboarding guides active.
-                        </p>
-                        <button
-                          onClick={() => setShowOnboardingModal(true)}
-                          className="mt-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
-                        >
-                          Start candidate onboarding
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })()}
 
               {/* ─── TASKS DESK TAB (GOOGLE TASKS HYPER-EFFICIENT UX) ─── */}
               {activeTab === "tasks" && (() => {
                 const filteredTasks = workspace.tasks.filter(t => {
                   const matchCat = taskFilterCategory === "All" || t.category === taskFilterCategory;
+                  const matchStatus = taskStatusTab === "all" || t.status === taskStatusTab;
                   const matchQuery = !taskSearchQuery.trim() || 
                     t.title.toLowerCase().includes(taskSearchQuery.toLowerCase()) || 
                     t.assignedTo.toLowerCase().includes(taskSearchQuery.toLowerCase());
-                  return matchCat && matchQuery;
+                  return matchCat && matchStatus && matchQuery;
                 });
-
-                const activeTasks = filteredTasks.filter(t => t.status !== "Done");
-                const completedTasks = filteredTasks.filter(t => t.status === "Done");
 
                 return (
                   <motion.div
@@ -1135,6 +1252,39 @@ export default function WorkspacePage() {
                       </div>
                     </div>
 
+                    {/* Status Tabs for Task List View */}
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-1 bg-zinc-950/80 border border-zinc-900 p-1 rounded-xl">
+                        {[
+                          { id: "all", label: `All Tasks (${workspace.tasks.length})` },
+                          { id: "To Do", label: `To Do (${workspace.tasks.filter(t => t.status === "To Do").length})` },
+                          { id: "In Progress", label: `In Progress (${workspace.tasks.filter(t => t.status === "In Progress").length})` },
+                          { id: "Done", label: `Completed (${workspace.tasks.filter(t => t.status === "Done").length})` },
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => setTaskStatusTab(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              taskStatusTab === tab.id
+                                ? "bg-white text-black shadow-sm"
+                                : "text-zinc-400 hover:text-white"
+                            }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {workspace.tasks.some(t => t.status === "Done") && (
+                        <button
+                          onClick={handleClearCompletedTasks}
+                          className="text-[11px] font-semibold text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
+                        >
+                          Clear completed tasks
+                        </button>
+                      )}
+                    </div>
+
                     {/* Inline Quick Task Creator Form */}
                     <form
                       onSubmit={handleQuickAddTask}
@@ -1193,38 +1343,55 @@ export default function WorkspacePage() {
                     {/* View Render: List View vs Board View */}
                     {taskViewMode === "list" ? (
                       <div className="flex flex-col gap-4">
-                        {/* Active Tasks List Container */}
                         <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
-                          <div className="px-6 py-3.5 border-b border-zinc-900 flex justify-between items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest bg-zinc-950/40">
-                            <span className="flex items-center gap-2">
-                              <ClipboardList className="w-3.5 h-3.5 text-zinc-500" /> Active Tasks ({activeTasks.length})
-                            </span>
-                          </div>
-
-                          {activeTasks.length === 0 ? (
+                          {filteredTasks.length === 0 ? (
                             <div className="p-12 text-center text-zinc-500 text-xs font-semibold">
-                              No active tasks pending. Click above to add a new task.
+                              {workspace.tasks.length === 0 ? "No tasks recorded yet. Click above to add a new task." : "No tasks found matching this filter."}
                             </div>
                           ) : (
-                            activeTasks.map((t) => (
+                            filteredTasks.map((t) => (
                               <div
                                 key={t.id}
-                                className="px-6 py-4 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors flex items-center justify-between group"
+                                className="px-6 py-4 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/30 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 group"
                               >
-                                <div className="flex items-center gap-3.5 min-w-0 pr-4">
+                                <div className="flex items-center gap-3.5 min-w-0 pr-4 flex-1">
+                                  {/* Status Icon Button */}
                                   <button
-                                    onClick={() => handleUpdateTaskStatus(t.id, "Done")}
-                                    className="w-5 h-5 rounded-full border border-zinc-700 hover:border-white bg-zinc-950 flex items-center justify-center transition-all cursor-pointer shrink-0"
-                                    title="Mark as completed"
+                                    onClick={() => handleUpdateTaskStatus(t.id, t.status === "Done" ? "To Do" : "Done")}
+                                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                                      t.status === "Done"
+                                        ? "bg-emerald-500 border-emerald-500 text-black"
+                                        : "border-zinc-700 hover:border-white bg-zinc-950"
+                                    }`}
+                                    title={t.status === "Done" ? "Reopen task" : "Mark as completed"}
                                   >
-                                    <Check className="w-3 h-3 text-transparent group-hover:text-white transition-colors" />
+                                    {t.status === "Done" ? (
+                                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                    ) : (
+                                      <Check className="w-3 h-3 text-transparent group-hover:text-zinc-600 transition-colors" />
+                                    )}
                                   </button>
 
-                                  <div className="flex flex-col gap-1 min-w-0">
+                                  <div className="flex flex-col gap-1 min-w-0 flex-1">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-sm font-bold text-white group-hover:text-zinc-300 transition-colors">
+                                      <span className={`text-sm font-bold transition-colors ${t.status === "Done" ? "line-through text-zinc-500" : "text-white"}`}>
                                         {t.title}
                                       </span>
+                                      
+                                      {/* Status Badge */}
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                        t.status === "In Progress" 
+                                          ? "bg-blue-950/60 border border-blue-800/60 text-blue-400" 
+                                          : t.status === "Done" 
+                                          ? "bg-emerald-950/60 border border-emerald-800/60 text-emerald-400"
+                                          : "bg-zinc-900 border border-zinc-800 text-zinc-400"
+                                      }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${
+                                          t.status === "In Progress" ? "bg-blue-400 animate-pulse" : t.status === "Done" ? "bg-emerald-400" : "bg-zinc-500"
+                                        }`} />
+                                        {t.status}
+                                      </span>
+
                                       <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-950/40 border border-zinc-900 px-2 py-0.5 rounded">
                                         {t.category}
                                       </span>
@@ -1234,7 +1401,7 @@ export default function WorkspacePage() {
                                         </span>
                                       )}
                                     </div>
-                                    <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-2">
+                                    <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-2 flex-wrap">
                                       <span>Assigned: <span className="text-zinc-400">{t.assignedTo}</span></span>
                                       <span>•</span>
                                       <span>Due: {t.dueDate}</span>
@@ -1242,13 +1409,43 @@ export default function WorkspacePage() {
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <button
-                                    onClick={() => handleUpdateTaskStatus(t.id, t.status === "To Do" ? "In Progress" : "Done")}
-                                    className="text-[10px] font-bold text-zinc-300 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
-                                  >
-                                    {t.status === "To Do" ? "Start" : "Finish"}
-                                  </button>
+                                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                  {t.status === "To Do" && (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(t.id, "In Progress")}
+                                      className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-400 bg-blue-950/40 border border-blue-900/60 hover:bg-blue-900/50 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                                    >
+                                      <Play className="w-3 h-3" /> Start
+                                    </button>
+                                  )}
+
+                                  {t.status === "In Progress" && (
+                                    <>
+                                      <button
+                                        onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
+                                        className="text-[10px] font-bold text-zinc-400 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
+                                        title="Move back to To Do"
+                                      >
+                                        To Do
+                                      </button>
+                                      <button
+                                        onClick={() => handleUpdateTaskStatus(t.id, "Done")}
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-900/60 hover:bg-emerald-900/50 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                                      >
+                                        <Check className="w-3 h-3" /> Finish
+                                      </button>
+                                    </>
+                                  )}
+
+                                  {t.status === "Done" && (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
+                                      className="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-400 bg-zinc-900 border border-zinc-800 hover:text-white hover:bg-zinc-800 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer"
+                                    >
+                                      <RotateCcw className="w-3 h-3" /> Reopen
+                                    </button>
+                                  )}
+
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1264,77 +1461,6 @@ export default function WorkspacePage() {
                             ))
                           )}
                         </div>
-
-                        {/* Completed Tasks Accordion */}
-                        {completedTasks.length > 0 && (
-                          <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl overflow-hidden">
-                            <div className="w-full px-6 py-3.5 flex items-center justify-between hover:bg-zinc-900/30 transition-all text-xs font-bold text-zinc-400">
-                              <button
-                                onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-                                className="flex items-center gap-2 cursor-pointer"
-                              >
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                                <span>Completed ({completedTasks.length})</span>
-                                <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${showCompletedTasks ? "rotate-180" : ""}`} />
-                              </button>
-
-                              <button
-                                onClick={handleClearCompletedTasks}
-                                className="text-[10px] font-semibold text-zinc-500 hover:text-rose-400 transition-colors cursor-pointer"
-                              >
-                                Clear all completed
-                              </button>
-                            </div>
-
-                            {showCompletedTasks && (
-                              <div className="border-t border-zinc-900">
-                                {completedTasks.map((t) => (
-                                  <div
-                                    key={t.id}
-                                    className="px-6 py-3.5 border-b border-zinc-900 last:border-b-0 hover:bg-zinc-900/20 transition-all flex items-center justify-between"
-                                  >
-                                    <div className="flex items-center gap-3.5 min-w-0 pr-4">
-                                      <button
-                                        onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
-                                        className="w-5 h-5 rounded-full bg-emerald-500 text-black flex items-center justify-center transition-all cursor-pointer shrink-0"
-                                        title="Reopen task"
-                                      >
-                                        <Check className="w-3 h-3 stroke-[3]" />
-                                      </button>
-                                      <div className="flex flex-col min-w-0">
-                                        <span className="text-xs font-bold line-through text-zinc-500">
-                                          {t.title}
-                                        </span>
-                                        <span className="text-[10px] text-zinc-500 font-semibold">
-                                          Completed • {t.category}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <button
-                                        onClick={() => handleUpdateTaskStatus(t.id, "To Do")}
-                                        className="text-[10px] font-bold text-zinc-400 hover:text-white px-2 py-0.5 rounded cursor-pointer"
-                                      >
-                                        Reopen
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleDeleteTask(t.id);
-                                        }}
-                                        className="text-zinc-500 hover:text-rose-400 cursor-pointer transition-colors p-1"
-                                        title="Delete task"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     ) : (
                       /* Board View (Kanban) */
@@ -1349,11 +1475,11 @@ export default function WorkspacePage() {
                               <span className="flex items-center gap-2">
                                 <span className={`w-2 h-2 rounded-full ${col.dot}`} /> {col.title}
                               </span>
-                              <span className="text-zinc-300 font-bold">{filteredTasks.filter((t) => t.status === col.key).length}</span>
+                              <span className="text-zinc-300 font-bold">{workspace.tasks.filter((t) => t.status === col.key).length}</span>
                             </div>
 
                             <div className="flex flex-col gap-2">
-                              {filteredTasks.filter((t) => t.status === col.key).map((t) => (
+                              {workspace.tasks.filter((t) => t.status === col.key).map((t) => (
                                 <div key={t.id} className="p-4 border border-zinc-900 bg-zinc-950/50 rounded-xl flex flex-col gap-3 hover:border-zinc-700 transition-colors group">
                                   <div>
                                     <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">{t.category}</span>
@@ -1373,7 +1499,7 @@ export default function WorkspacePage() {
                                       {t.status === "To Do" && (
                                         <button
                                           onClick={() => handleUpdateTaskStatus(t.id, "In Progress")}
-                                          className="text-[10px] font-bold text-zinc-300 hover:bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded cursor-pointer"
+                                          className="text-[10px] font-bold text-blue-400 hover:bg-blue-950/30 border border-blue-900/40 px-2 py-0.5 rounded cursor-pointer"
                                         >
                                           Start
                                         </button>
@@ -1408,9 +1534,9 @@ export default function WorkspacePage() {
                                   </div>
                                 </div>
                               ))}
-                              {filteredTasks.filter((t) => t.status === col.key).length === 0 && (
+                              {workspace.tasks.filter((t) => t.status === col.key).length === 0 && (
                                 <div className="text-center py-8">
-                                  <p className="text-xs text-zinc-600 font-medium">No tasks in column</p>
+                                  <p className="text-xs text-zinc-600 font-medium">No tasks in {col.title}</p>
                                 </div>
                               )}
                             </div>
@@ -1433,6 +1559,7 @@ export default function WorkspacePage() {
           if (!o) return null;
           const doneCount = o.tasks.filter((t) => t.completed).length;
           const totalCount = o.tasks.length;
+          const isAllDone = doneCount === totalCount && totalCount > 0;
 
           return (
             <div className="bg-black/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 z-[150] fixed inset-0" onClick={() => setExpandedOnb(null)}>
@@ -1451,6 +1578,11 @@ export default function WorkspacePage() {
                       <h3 className="text-lg font-bold text-white leading-tight">{o.candidateName}</h3>
                       <span className="text-[10px] font-semibold text-zinc-300 bg-zinc-900 border border-zinc-800 px-2.5 py-0.5 rounded-md">
                         {o.role}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        o.status === "Completed" ? "bg-emerald-950/80 text-emerald-400 border border-emerald-800/60" : "bg-blue-950/80 text-blue-400 border border-blue-800/60"
+                      }`}>
+                        {o.status}
                       </span>
                     </div>
                     <p className="text-xs text-zinc-400 flex items-center gap-2 mt-0.5">
@@ -1489,11 +1621,18 @@ export default function WorkspacePage() {
                   </div>
                 </div>
 
+                {isAllDone && (
+                  <div className="bg-emerald-950/30 border border-emerald-900/60 p-3.5 rounded-2xl flex items-center gap-3 text-emerald-400 text-xs font-semibold">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <span>All onboarding checkpoints completed! Candidate is ready.</span>
+                  </div>
+                )}
+
                 {/* Checklist Section */}
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Onboarding checklist</span>
-                    <span className="text-[10px] font-semibold text-zinc-400">{doneCount} / {totalCount} Checkpoints Done</span>
+                    <span className="text-[10px] font-semibold text-zinc-300">{doneCount} of {totalCount} Checkpoints Done</span>
                   </div>
                   <div className="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto pr-1">
                     {o.tasks.map((t) => (
@@ -1501,7 +1640,7 @@ export default function WorkspacePage() {
                         key={t.id}
                         className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all group ${
                           t.completed
-                            ? "bg-zinc-900 border-zinc-700 text-white font-bold"
+                            ? "bg-zinc-900/90 border-zinc-700 text-white font-bold"
                             : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200 font-medium"
                         }`}
                       >
@@ -1510,13 +1649,13 @@ export default function WorkspacePage() {
                           className="flex items-center gap-3 flex-1 text-left cursor-pointer"
                         >
                           <div
-                            className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
-                              t.completed ? "bg-zinc-100 border-transparent text-zinc-950" : "border-zinc-700"
+                            className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 transition-all ${
+                              t.completed ? "bg-emerald-500 border-emerald-500 text-black" : "border-zinc-700 bg-zinc-950"
                             }`}
                           >
-                            {t.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                            {t.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                           </div>
-                          <span className="text-xs font-semibold">{t.name}</span>
+                          <span className={`text-xs ${t.completed ? "line-through text-zinc-300" : "text-white"}`}>{t.name}</span>
                         </button>
 
                         <button
