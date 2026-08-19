@@ -28,6 +28,10 @@ let inMemoryStore: WorkspaceStore | null = null;
 
 // Helper to read workspace data from Supabase cloud database with fallback to local workspace.json
 async function readData(): Promise<WorkspaceStore> {
+  if (inMemoryStore) {
+    return inMemoryStore;
+  }
+
   const supabase = getSupabaseClient();
 
   // 1. Fetch persistent store from Supabase cloud database
@@ -203,7 +207,7 @@ export async function POST(request: Request) {
         if (fnf) {
           const task = fnf.tasks.find((t: FnfTaskItem) => String(t.id) === String(taskId));
           if (task) {
-            task.completed = completed;
+            task.completed = Boolean(completed);
             
             // Auto update status if all are completed
             const allDone = fnf.tasks.every((t: FnfTaskItem) => t.completed);
@@ -298,7 +302,7 @@ export async function POST(request: Request) {
         if (onboarding) {
           const task = onboarding.tasks.find((t: OnboardingTaskItem) => String(t.id) === String(taskId));
           if (task) {
-            task.completed = completed;
+            task.completed = Boolean(completed);
 
             // Auto update status based on checklist progression
             const doneCount = onboarding.tasks.filter((t: OnboardingTaskItem) => t.completed).length;
@@ -362,12 +366,12 @@ export async function POST(request: Request) {
           const normalizedPriority = priority === "High Priority" ? "High" : (priority || data.tasks[index].priority);
           data.tasks[index] = {
             ...data.tasks[index],
-            title: title || data.tasks[index].title,
+            title: title !== undefined ? title : data.tasks[index].title,
             assignedTo: assignedTo !== undefined ? assignedTo : data.tasks[index].assignedTo,
-            dueDate: dueDate || data.tasks[index].dueDate,
+            dueDate: dueDate !== undefined ? dueDate : data.tasks[index].dueDate,
             priority: normalizedPriority,
-            status: status || data.tasks[index].status,
-            category: category || data.tasks[index].category,
+            status: status !== undefined ? status : data.tasks[index].status,
+            category: category !== undefined ? category : data.tasks[index].category,
           };
         }
         break;
