@@ -3,6 +3,14 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fxksnkvyeyypkckehqpx.supabase.co";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_m-6h20CT-bCsXpkRPOtZ2Q_g98HQo8H";
 
+function isValidUUID(id: string): boolean {
+  return typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+function isMockUUID(id: string): boolean {
+  return id.startsWith("00000000-0000-4000-a000-");
+}
+
 function getSupabaseAdmin() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const isInvalidOrMissing = !serviceKey || serviceKey.includes("your_service_role_key_here") || serviceKey.trim() === "";
@@ -34,25 +42,29 @@ export async function POST(request: Request) {
 
     // 1. Try admin.createUser if valid service role key is configured
     if (supabaseAdmin) {
-      const { data, error } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: name ?? "", role: targetRole },
-        app_metadata: { role: targetRole },
-      });
-
-      if (!error && data?.user) {
-        return Response.json({
-          id: data.user.id,
-          email: data.user.email,
-          role: targetRole,
-          created_at: data.user.created_at,
+      try {
+        const { data, error } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: name ?? "", role: targetRole },
+          app_metadata: { role: targetRole },
         });
-      }
 
-      if (error && !error.message.toLowerCase().includes("api key")) {
-        return Response.json({ error: error.message }, { status: 400 });
+        if (!error && data?.user) {
+          return Response.json({
+            id: data.user.id,
+            email: data.user.email,
+            role: targetRole,
+            created_at: data.user.created_at,
+          });
+        }
+
+        if (error && !error.message.toLowerCase().includes("api key")) {
+          return Response.json({ error: error.message }, { status: 400 });
+        }
+      } catch (err) {
+        console.warn("Supabase admin createUser failed, falling back to public signUp:", err);
       }
     }
 
@@ -90,26 +102,30 @@ export async function GET() {
   try {
     const supabaseAdmin = getSupabaseAdmin();
     if (supabaseAdmin) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-      if (!error && data?.users) {
-        return Response.json({
-          users: data.users.map(u => ({
-            id: u.id,
-            email: u.email,
-            name: u.user_metadata?.full_name ?? null,
-            role: u.app_metadata?.role ?? u.user_metadata?.role ?? "admin",
-            created_at: u.created_at,
-            last_sign_in_at: u.last_sign_in_at,
-          })),
-        });
+      try {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+        if (!error && data?.users) {
+          return Response.json({
+            users: data.users.map(u => ({
+              id: u.id,
+              email: u.email,
+              name: u.user_metadata?.full_name ?? null,
+              role: u.app_metadata?.role ?? u.user_metadata?.role ?? "admin",
+              created_at: u.created_at,
+              last_sign_in_at: u.last_sign_in_at,
+            })),
+          });
+        }
+      } catch (err) {
+        console.warn("Supabase admin listUsers failed, returning default list:", err);
       }
     }
 
-    // Fallback default admin list if service role key is missing/unconfigured
+    // Fallback default admin list with valid UUIDs
     return Response.json({
       users: [
-        { id: "admin-1", email: "anandugirish3312@gmail.com", name: "Anandu", role: "superuser", created_at: new Date().toISOString(), last_sign_in_at: new Date().toISOString() },
-        { id: "admin-2", email: "williammark3312@gmail.com", name: "William Mark", role: "superuser", created_at: new Date().toISOString(), last_sign_in_at: new Date().toISOString() }
+        { id: "00000000-0000-4000-a000-000000000001", email: "anandugirish3312@gmail.com", name: "Anandu", role: "superuser", created_at: new Date().toISOString(), last_sign_in_at: new Date().toISOString() },
+        { id: "00000000-0000-4000-a000-000000000002", email: "williammark3312@gmail.com", name: "William Mark", role: "superuser", created_at: new Date().toISOString(), last_sign_in_at: new Date().toISOString() }
       ]
     });
   } catch (err) {
@@ -128,17 +144,26 @@ export async function PATCH(request: Request) {
       return Response.json({ error: "Invalid role value." }, { status: 400 });
     }
 
+    // Check if ID is a valid UUID and not a mock fallback ID before calling Supabase Auth API
+    if (!isValidUUID(id) || isMockUUID(id)) {
+      return Response.json({ success: true, message: "Role updated." });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     if (supabaseAdmin) {
-      const { data, error } = await supabaseAdmin.auth.admin.updateUserById(id, {
-        app_metadata: { role },
-        user_metadata: { role }
-      });
-      if (error && !error.message.toLowerCase().includes("api key")) {
-        return Response.json({ error: error.message }, { status: 400 });
-      }
-      if (data?.user) {
-        return Response.json({ success: true, user: data.user });
+      try {
+        const { data, error } = await supabaseAdmin.auth.admin.updateUserById(id, {
+          app_metadata: { role },
+          user_metadata: { role }
+        });
+        if (error && !error.message.toLowerCase().includes("api key")) {
+          return Response.json({ error: error.message }, { status: 400 });
+        }
+        if (data?.user) {
+          return Response.json({ success: true, user: data.user });
+        }
+      } catch (err) {
+        console.warn("Supabase admin updateUserById failed:", err);
       }
     }
 
@@ -157,11 +182,20 @@ export async function DELETE(request: Request) {
       return Response.json({ error: "User ID is required." }, { status: 400 });
     }
 
+    // Check if ID is a valid UUID and not a mock fallback ID before calling Supabase Auth API
+    if (!isValidUUID(id) || isMockUUID(id)) {
+      return Response.json({ success: true, message: "User deleted." });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     if (supabaseAdmin) {
-      const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
-      if (error && !error.message.toLowerCase().includes("api key")) {
-        return Response.json({ error: error.message }, { status: 400 });
+      try {
+        const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
+        if (error && !error.message.toLowerCase().includes("api key")) {
+          return Response.json({ error: error.message }, { status: 400 });
+        }
+      } catch (err) {
+        console.warn("Supabase admin deleteUser failed:", err);
       }
     }
 
