@@ -10,7 +10,7 @@ interface TaskItemRecord { id: string; title: string; assignedTo: string; dueDat
 interface WorkspaceStore { fnf: FnfRecordItem[]; onboardings: OnboardingRecordItem[]; tasks: TaskItemRecord[]; }
 
 const projectJsonPath = path.join(process.cwd(), "data", "workspace.json");
-const WORKSPACE_STORE_NAME = "__WORKSPACE_SYSTEM_STORE__";
+const WORKSPACE_KEY = "main";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fxksnkvyeyypkckehqpx.supabase.co";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_m-6h20CT-bCsXpkRPOtZ2Q_g98HQo8H";
@@ -24,107 +24,117 @@ function getSupabaseClient() {
   });
 }
 
-let inMemoryStore: WorkspaceStore | null = null;
+// ─── DEDICATED workspace_store TABLE ────────────────────────────────────────
+// Workspace data is stored in its own Supabase table to avoid NOT NULL
+// constraint violations from the `applications` table (which requires
+// email, phone, resume_url, job_id etc.) that caused silent write failures
+// and data loss on every serverless cold start.
+//
+// Run this ONE TIME in your Supabase SQL Editor:
+//
+//   create table if not exists workspace_store (
+//     key   text primary key,
+//     data  jsonb not null default '{}'::jsonb
+//   );
+//   alter table workspace_store enable row level security;
+//   create policy "allow_all" on workspace_store for all using (true) with check (true);
+//
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Helper to read workspace data from Supabase cloud database with fallback to local workspace.json
+function emptyStore(): WorkspaceStore {
+  return { fnf: [], onboardings: [], tasks: [] };
+}
+
+function parseStore(raw: unknown): WorkspaceStore {
+  if (!raw || typeof raw !== "object") return emptyStore();
+  const r = raw as Record<string, unknown>;
+  return {
+    fnf: Array.isArray(r.fnf) ? r.fnf as FnfRecordItem[] : [],
+    onboardings: Array.isArray(r.onboardings) ? r.onboardings as OnboardingRecordItem[] : [],
+    tasks: Array.isArray(r.tasks) ? r.tasks as TaskItemRecord[] : [],
+  };
+}
+
+// Helper to read workspace data.
+// Priority: dedicated workspace_store table → local workspace.json fallback
 async function readData(): Promise<WorkspaceStore> {
   const supabase = getSupabaseClient();
 
-  // 1. Fetch persistent store from Supabase cloud database
+  // 1. Try the dedicated workspace_store table (correct, isolated storage)
   try {
     const { data, error } = await supabase
-      .from("applications")
-      .select("id, notes")
-      .eq("name", WORKSPACE_STORE_NAME)
-      .limit(1);
+      .from("workspace_store")
+      .select("data")
+      .eq("key", WORKSPACE_KEY)
+      .limit(1)
+      .maybeSingle();
 
-    if (!error && data && data.length > 0 && data[0].notes) {
-      try {
-        const parsed = JSON.parse(data[0].notes);
-        if (parsed && typeof parsed === "object") {
-          inMemoryStore = {
-            fnf: Array.isArray(parsed.fnf) ? parsed.fnf : [],
-            onboardings: Array.isArray(parsed.onboardings) ? parsed.onboardings : [],
-            tasks: Array.isArray(parsed.tasks) ? parsed.tasks : []
-          };
-          return inMemoryStore;
-        }
-      } catch (pErr) {
-        console.error("JSON parse error for Supabase workspace store:", pErr);
+    if (!error && data && data.data) {
+      return parseStore(data.data);
+    }
+
+    if (error) {
+      if (error.code === "42P01" || error.message?.includes("does not exist")) {
+        // Table doesn't exist yet — log the DDL to help the admin create it
+        console.warn(
+          "[workspace] `workspace_store` table not found in Supabase.\n" +
+          "Run the following SQL once in your Supabase SQL Editor to fix data loss:\n\n" +
+          "  create table if not exists workspace_store (\n" +
+          "    key   text primary key,\n" +
+          "    data  jsonb not null default '{}'::jsonb\n" +
+          "  );\n" +
+          "  alter table workspace_store enable row level security;\n" +
+          "  create policy \"allow_all\" on workspace_store for all using (true) with check (true);\n"
+        );
+      } else {
+        console.error("[workspace] Supabase workspace_store read error:", error);
       }
     }
   } catch (err) {
-    console.error("Supabase workspace read error:", err);
+    console.error("[workspace] Unexpected Supabase read error:", err);
   }
 
-  // If in-memory store is available when Supabase fails temporarily, return it
-  if (inMemoryStore) {
-    return inMemoryStore;
-  }
-
-  // 2. Fallback to initial seed data from project workspace.json file
-  let initialData: WorkspaceStore = { fnf: [], onboardings: [], tasks: [] };
+  // 2. Fallback: read from local workspace.json (works in local dev / first boot)
   try {
     const fileContent = await fs.readFile(projectJsonPath, "utf-8");
     const parsed = JSON.parse(fileContent);
-    if (parsed && typeof parsed === "object") {
-      initialData = {
-        fnf: Array.isArray(parsed.fnf) ? parsed.fnf : [],
-        onboardings: Array.isArray(parsed.onboardings) ? parsed.onboardings : [],
-        tasks: Array.isArray(parsed.tasks) ? parsed.tasks : []
-      };
-    }
+    const store = parseStore(parsed);
+    // Seed the cloud table so future reads come from Supabase
+    await writeData(store);
+    return store;
   } catch {
-    initialData = { fnf: [], onboardings: [], tasks: [] };
+    /* file missing or unreadable — return empty */
   }
 
-  // 3. Seed Supabase cloud database so all future requests hit cloud database
-  await writeData(initialData);
-  return initialData;
+  return emptyStore();
 }
 
-// Helper to write workspace data back to Supabase cloud database and local fallback file
+// Helper to write workspace data.
+// Primary: dedicated workspace_store table (upsert by key).
+// Secondary: local workspace.json (for local dev convenience, best-effort).
 async function writeData(data: WorkspaceStore) {
-  inMemoryStore = data;
   const supabase = getSupabaseClient();
-  const notesStr = JSON.stringify(data);
 
-  // 1. Persist to Supabase cloud database
+  // 1. Upsert to dedicated workspace_store table
   try {
-    const { data: existing } = await supabase
-      .from("applications")
-      .select("id")
-      .eq("name", WORKSPACE_STORE_NAME)
-      .limit(1);
+    const { error } = await supabase
+      .from("workspace_store")
+      .upsert({ key: WORKSPACE_KEY, data }, { onConflict: "key" });
 
-    if (existing && existing.length > 0) {
-      const targetId = existing[0].id;
-      const { error } = await supabase
-        .from("applications")
-        .update({ notes: notesStr })
-        .eq("id", targetId);
-      if (error) console.error("Error updating Supabase workspace store:", error);
-    } else {
-      const { error } = await supabase
-        .from("applications")
-        .insert([{
-          name: WORKSPACE_STORE_NAME,
-          status: "WORKSPACE_STORE",
-          notes: notesStr
-        }]);
-      if (error) console.error("Error inserting Supabase workspace store:", error);
+    if (error) {
+      console.error("[workspace] Supabase workspace_store write error:", error);
     }
   } catch (err) {
-    console.error("Supabase workspace write error:", err);
+    console.error("[workspace] Unexpected Supabase write error:", err);
   }
 
-  // 2. Secondary write to local workspace.json file if filesystem allows (local dev)
+  // 2. Mirror to local workspace.json (best-effort, silent fail in serverless)
   try {
     const dir = path.dirname(projectJsonPath);
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(projectJsonPath, JSON.stringify(data, null, 2), "utf-8");
   } catch {
-    /* ignore local file write errors in read-only serverless environments */
+    /* ignore in read-only serverless environments */
   }
 }
 
@@ -213,8 +223,6 @@ export async function POST(request: Request) {
           const task = fnf.tasks.find((t: FnfTaskItem) => String(t.id) === String(taskId));
           if (task) {
             task.completed = Boolean(completed);
-            
-            // Auto update status if all are completed
             const allDone = fnf.tasks.every((t: FnfTaskItem) => t.completed);
             if (allDone && fnf.settlementStatus === "Draft") {
               fnf.settlementStatus = "Approved";
@@ -312,8 +320,6 @@ export async function POST(request: Request) {
           const task = onboarding.tasks.find((t: OnboardingTaskItem) => String(t.id) === String(taskId));
           if (task) {
             task.completed = Boolean(completed);
-
-            // Auto update status based on checklist progression
             const doneCount = onboarding.tasks.filter((t: OnboardingTaskItem) => t.completed).length;
             const total = onboarding.tasks.length;
             if (doneCount === total && total > 0) {
