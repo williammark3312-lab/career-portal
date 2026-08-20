@@ -1,5 +1,64 @@
 {
   "fnf": [],
-  "onboardings": [],
-  "tasks": []
+  "onboardings": [
+    {
+      "id": "onb-1786375733029",
+      "candidateName": "Anandu",
+      "role": "HR",
+      "startDate": "2026-08-01",
+      "status": "Completed",
+      "mentor": "Unassigned",
+      "email": "anandugirish@gmail.com",
+      "tasks": [
+        {
+          "id": "o1",
+          "name": "Educational Document Verification",
+          "completed": true
+        },
+        {
+          "id": "o2",
+          "name": "Laptop & IT Hardware Delivery",
+          "completed": true
+        },
+        {
+          "id": "o3",
+          "name": "Generate Corporate Email Address",
+          "completed": true
+        },
+        {
+          "id": "o4",
+          "name": "Send Welcome Mail & Agenda",
+          "completed": true
+        },
+        {
+          "id": "o5",
+          "name": "Conduct Day 1 Orientation Session",
+          "completed": true
+        }
+      ],
+      "createdAt": "2026-08-10T15:28:53.029Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "tsk-1786377152283",
+      "title": "ME",
+      "assignedTo": "ME",
+      "dueDate": "2026-02-10",
+      "priority": "Medium",
+      "status": "Done",
+      "category": "General",
+      "createdAt": "2026-08-10T15:52:32.283Z"
+    },
+    {
+      "id": "tsk-1786377127472",
+      "title": "FNF",
+      "assignedTo": "ME",
+      "dueDate": "2026-08-10",
+      "priority": "Medium",
+      "status": "Done",
+      "category": "General",
+      "createdAt": "2026-08-10T15:52:07.472Z"
+    }
+  ]
 }

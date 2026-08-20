@@ -11,6 +11,7 @@ interface WorkspaceStore { fnf: FnfRecordItem[]; onboardings: OnboardingRecordIt
 
 const projectJsonPath = path.join(process.cwd(), "data", "workspace.json");
 const WORKSPACE_KEY = "main";
+const WORKSPACE_STORE_NAME = "__WORKSPACE_SYSTEM_STORE__";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fxksnkvyeyypkckehqpx.supabase.co";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_m-6h20CT-bCsXpkRPOtZ2Q_g98HQo8H";
@@ -41,6 +42,8 @@ function getSupabaseClient() {
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
+let inMemoryStore: WorkspaceStore | null = null;
+
 function emptyStore(): WorkspaceStore {
   return { fnf: [], onboardings: [], tasks: [] };
 }
@@ -55,12 +58,16 @@ function parseStore(raw: unknown): WorkspaceStore {
   };
 }
 
+function storeTotalItems(store: WorkspaceStore): number {
+  return store.fnf.length + store.onboardings.length + store.tasks.length;
+}
+
 // Helper to read workspace data.
-// Priority: dedicated workspace_store table → local workspace.json fallback
+// Priority: In-Memory -> workspace_store table -> legacy applications table -> local workspace.json
 async function readData(): Promise<WorkspaceStore> {
   const supabase = getSupabaseClient();
 
-  // 1. Try the dedicated workspace_store table (correct, isolated storage)
+  // 1. Try the dedicated workspace_store table
   try {
     const { data, error } = await supabase
       .from("workspace_store")
@@ -70,50 +77,71 @@ async function readData(): Promise<WorkspaceStore> {
       .maybeSingle();
 
     if (!error && data && data.data) {
-      return parseStore(data.data);
-    }
-
-    if (error) {
-      if (error.code === "42P01" || error.message?.includes("does not exist")) {
-        // Table doesn't exist yet — log the DDL to help the admin create it
-        console.warn(
-          "[workspace] `workspace_store` table not found in Supabase.\n" +
-          "Run the following SQL once in your Supabase SQL Editor to fix data loss:\n\n" +
-          "  create table if not exists workspace_store (\n" +
-          "    key   text primary key,\n" +
-          "    data  jsonb not null default '{}'::jsonb\n" +
-          "  );\n" +
-          "  alter table workspace_store enable row level security;\n" +
-          "  create policy \"allow_all\" on workspace_store for all using (true) with check (true);\n"
-        );
-      } else {
-        console.error("[workspace] Supabase workspace_store read error:", error);
+      const store = parseStore(data.data);
+      if (storeTotalItems(store) > 0 || inMemoryStore === null) {
+        inMemoryStore = store;
+        return store;
       }
     }
   } catch (err) {
-    console.error("[workspace] Unexpected Supabase read error:", err);
+    console.error("[workspace] Unexpected Supabase workspace_store read error:", err);
   }
 
-  // 2. Fallback: read from local workspace.json (works in local dev / first boot)
+  // 2. Legacy fallback: check applications table if workspace_store was empty/missing
+  try {
+    const { data, error } = await supabase
+      .from("applications")
+      .select("id, notes")
+      .or(`name.eq.${WORKSPACE_STORE_NAME},status.eq.WORKSPACE_STORE`)
+      .limit(1);
+
+    if (!error && data && data.length > 0 && data[0].notes) {
+      try {
+        const parsed = JSON.parse(data[0].notes);
+        const store = parseStore(parsed);
+        if (storeTotalItems(store) > 0) {
+          inMemoryStore = store;
+          // Seed dedicated workspace_store table for future reads
+          await writeData(store);
+          return store;
+        }
+      } catch (pErr) {
+        console.error("[workspace] JSON parse error for legacy applications store:", pErr);
+      }
+    }
+  } catch (err) {
+    console.error("[workspace] Legacy applications store read error:", err);
+  }
+
+  // Return in-memory cache if available
+  if (inMemoryStore) {
+    return inMemoryStore;
+  }
+
+  // 3. Fallback: read from local workspace.json
   try {
     const fileContent = await fs.readFile(projectJsonPath, "utf-8");
     const parsed = JSON.parse(fileContent);
     const store = parseStore(parsed);
-    // Seed the cloud table so future reads come from Supabase
-    await writeData(store);
+    inMemoryStore = store;
+    if (storeTotalItems(store) > 0) {
+      await writeData(store);
+    }
     return store;
   } catch {
     /* file missing or unreadable — return empty */
   }
 
-  return emptyStore();
+  inMemoryStore = emptyStore();
+  return inMemoryStore;
 }
 
 // Helper to write workspace data.
-// Primary: dedicated workspace_store table (upsert by key).
-// Secondary: local workspace.json (for local dev convenience, best-effort).
+// Writes to: inMemoryStore -> workspace_store table -> legacy applications table -> local workspace.json
 async function writeData(data: WorkspaceStore) {
+  inMemoryStore = data;
   const supabase = getSupabaseClient();
+  const notesStr = JSON.stringify(data);
 
   // 1. Upsert to dedicated workspace_store table
   try {
@@ -128,7 +156,33 @@ async function writeData(data: WorkspaceStore) {
     console.error("[workspace] Unexpected Supabase write error:", err);
   }
 
-  // 2. Mirror to local workspace.json (best-effort, silent fail in serverless)
+  // 2. Dual-write to legacy applications table for backwards compatibility
+  try {
+    const { data: existing } = await supabase
+      .from("applications")
+      .select("id")
+      .or(`name.eq.${WORKSPACE_STORE_NAME},status.eq.WORKSPACE_STORE`)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      await supabase
+        .from("applications")
+        .update({ notes: notesStr })
+        .eq("id", existing[0].id);
+    } else {
+      await supabase
+        .from("applications")
+        .insert([{
+          name: WORKSPACE_STORE_NAME,
+          status: "WORKSPACE_STORE",
+          notes: notesStr
+        }]);
+    }
+  } catch (err) {
+    console.error("[workspace] Legacy applications store write error:", err);
+  }
+
+  // 3. Mirror to local workspace.json
   try {
     const dir = path.dirname(projectJsonPath);
     await fs.mkdir(dir, { recursive: true });
