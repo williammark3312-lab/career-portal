@@ -549,15 +549,25 @@ export default function AdminPage() {
 
   async function handleDeleteAdminUser(id: string) {
     if (!confirm("Are you sure you want to delete this admin user?")) return;
+    setAdminUsers(prev => prev.filter(u => u.id !== id));
     try {
       const res = await fetch(`/api/create-admin?id=${id}`, {
         method: "DELETE",
       });
       const json = await res.json();
-      if (!res.ok) { alert(json.error ?? "Failed to delete user."); return; }
-      loadAdminUsers();
+      if (!res.ok) {
+        alert(json.error ?? "Failed to delete user.");
+        loadAdminUsers();
+        return;
+      }
+      if (json.users) {
+        setAdminUsers(json.users);
+      } else {
+        loadAdminUsers();
+      }
     } catch {
       alert("Failed to delete user due to network error.");
+      loadAdminUsers();
     }
   }
 
@@ -565,6 +575,7 @@ export default function AdminPage() {
     if (!isSuperuser) { alert("Only superusers can change roles."); return; }
     const targetRole = currentRole === "superuser" ? "admin" : "superuser";
     if (!confirm(`Are you sure you want to change this user's role to ${targetRole}?`)) return;
+    setAdminUsers(prev => prev.map(u => u.id === userId ? { ...u, role: targetRole as "admin" | "superuser" } : u));
     try {
       const res = await fetch("/api/create-admin", {
         method: "PATCH",
@@ -572,10 +583,19 @@ export default function AdminPage() {
         body: JSON.stringify({ id: userId, role: targetRole }),
       });
       const json = await res.json();
-      if (!res.ok) { alert(json.error ?? "Failed to update role."); return; }
-      loadAdminUsers();
+      if (!res.ok) {
+        alert(json.error ?? "Failed to update role.");
+        loadAdminUsers();
+        return;
+      }
+      if (json.users) {
+        setAdminUsers(json.users);
+      } else {
+        loadAdminUsers();
+      }
     } catch {
       alert("Failed to update role due to network error.");
+      loadAdminUsers();
     }
   }
 
