@@ -49,7 +49,7 @@ function PlanetaryRings() {
             clearcoat={1}
             clearcoatRoughness={0.08}
             color="#2563EB"
-            transmission={0.6}
+            transmission={0.65}
             roughness={0.06}
             ior={1.25}
             resolution={512}
@@ -141,8 +141,8 @@ function FloatingParticles({ count = 35 }) {
           <meshBasicMaterial
             color="#2563EB"
             transparent
-            opacity={0.12}
-            blending={THREE.AdditiveBlending}
+            opacity={0.15}
+            blending={THREE.NormalBlending}
           />
         </mesh>
       ))}
@@ -173,14 +173,33 @@ export default function GlassBackground() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 -z-10 pointer-events-none bg-[#000000] overflow-hidden">
-      <div className="absolute inset-0 opacity-70">
+    <div className="fixed inset-0 -z-10 pointer-events-none bg-[#F8F9FF] overflow-hidden">
+      {/* Soft iridescent light-mode ambient blobs */}
+      <div
+        className="absolute w-[700px] h-[700px] -top-[200px] -left-[150px] rounded-full blur-[120px] opacity-40"
+        style={{ background: "radial-gradient(circle, rgba(37,99,235,0.25) 0%, transparent 70%)" }}
+      />
+      <div
+        className="absolute w-[500px] h-[500px] top-[100px] -right-[100px] rounded-full blur-[100px] opacity-35"
+        style={{ background: "radial-gradient(circle, rgba(239,68,68,0.2) 0%, transparent 70%)" }}
+      />
+      <div
+        className="absolute w-[600px] h-[600px] -bottom-[150px] -left-[100px] rounded-full blur-[110px] opacity-35"
+        style={{ background: "radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%)" }}
+      />
+      <div
+        className="absolute w-[400px] h-[400px] bottom-[100px] -right-[60px] rounded-full blur-[90px] opacity-30"
+        style={{ background: "radial-gradient(circle, rgba(245,158,11,0.2) 0%, transparent 70%)" }}
+      />
+
+      {/* 3D Live Ring Canvas */}
+      <div className="absolute inset-0 opacity-85">
         <Canvas camera={{ position: [0, 0, responsiveCamY], fov: 45 }}>
-          <ambientLight intensity={1.5} />
-          <directionalLight position={[10, 10, 5]} intensity={2.2} color="#ffffff" />
-          <directionalLight position={[-10, 10, -5]} intensity={1.5} color="#3B82F6" />
-          <directionalLight position={[5, -10, 5]} intensity={1.2} color="#F59E0B" />
-          <directionalLight position={[-5, -10, -5]} intensity={1.0} color="#10B981" />
+          <ambientLight intensity={1.8} />
+          <directionalLight position={[10, 10, 5]} intensity={2.4} color="#ffffff" />
+          <directionalLight position={[-10, 10, -5]} intensity={1.8} color="#3B82F6" />
+          <directionalLight position={[5, -10, 5]} intensity={1.5} color="#F59E0B" />
+          <directionalLight position={[-5, -10, -5]} intensity={1.2} color="#10B981" />
 
           <Suspense fallback={null}>
             <PlanetaryRings />
@@ -188,19 +207,20 @@ export default function GlassBackground() {
             <Environment preset="city" />
             <ContactShadows
               position={[0, -2.8, 0]}
-              opacity={0.22}
+              opacity={0.18}
               scale={18}
-              blur={3.5}
-              color="#1e293b"
+              blur={4}
+              color="#64748b"
             />
           </Suspense>
         </Canvas>
       </div>
 
+      {/* Subtle Dot Grid */}
       <div 
-        className="absolute inset-0 opacity-[0.22]"
+        className="absolute inset-0 opacity-[0.28]"
         style={{
-          backgroundImage: "radial-gradient(rgba(37,99,235,0.06) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(rgba(37,99,235,0.08) 1px, transparent 1px)",
           backgroundSize: "32px 32px",
         }}
       />
