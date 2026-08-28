@@ -181,7 +181,7 @@ export default function AdminPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   /* Tabs state */
-  const [activeTab, setActiveTab] = useState<"cvs" | "users">("cvs");
+  const [activeTab, setActiveTab] = useState<"jobs" | "cvs" | "users">("jobs");
 
   /* Auth state */
   const [session, setSession] = useState<Session | null>(null);
@@ -220,7 +220,10 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "cvs") {
+    if (activeTab === "jobs") {
+      loadJobs();
+      loadStats();
+    } else if (activeTab === "cvs") {
       loadCvs();
       loadStats();
     }
@@ -238,10 +241,10 @@ export default function AdminPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
-      if (tab === "cvs" || tab === "users") {
+      if (tab === "jobs" || tab === "cvs" || tab === "users") {
         setActiveTab(tab);
       } else {
-        setActiveTab("cvs");
+        setActiveTab("jobs");
       }
     }
   }, []);
@@ -874,16 +877,31 @@ export default function AdminPage() {
           className="flex flex-col gap-3"
         >
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            {activeTab === "cvs" ? "Talent index." : "Supervisor accounts."}
+            {activeTab === "jobs"
+              ? "Openings & Reviews."
+              : activeTab === "cvs"
+              ? "Talent index."
+              : "Supervisor accounts."}
           </h1>
           <p className="text-sm text-zinc-400 leading-relaxed max-w-lg">
-            {activeTab === "cvs"
+            {activeTab === "jobs"
+              ? "Publish job openings, review candidate applications per job, and manage active roles."
+              : activeTab === "cvs"
               ? "Browse talent pool, evaluate submitted CVs, and manage recruitment notes."
               : "Configure administrator permissions and supervisor account credentials."}
           </p>
 
           {/* Minimal Info Row */}
           <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-2">
+            {activeTab === "jobs" && (
+              <>
+                <span>ROLES: {stats.totalJobs}</span>
+                <span>•</span>
+                <span>APPLICATIONS: {stats.totalApps}</span>
+                <span>•</span>
+                <span>PENDING: {stats.pendingApps}</span>
+              </>
+            )}
             {activeTab === "cvs" && (
               <>
                 <span>CANDIDATES: {stats.totalCVs}</span>
@@ -922,23 +940,27 @@ export default function AdminPage() {
               <input
                 type="text"
                 placeholder={
-                  activeTab === "cvs"
+                  activeTab === "jobs"
+                    ? "Search job titles, departments, or locations..."
+                    : activeTab === "cvs"
                     ? "Search candidate names or emails..."
                     : "Search supervisor accounts..."
                 }
-                value={activeTab === "cvs" ? cvSearch : userSearch}
+                value={activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch}
                 onChange={(e) => {
-                  if (activeTab === "cvs") setCvSearch(e.target.value);
+                  if (activeTab === "jobs") setJobSearch(e.target.value);
+                  else if (activeTab === "cvs") setCvSearch(e.target.value);
                   else setUserSearch(e.target.value);
                 }}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
                 className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
               />
-              {(activeTab === "cvs" ? cvSearch : userSearch) && (
+              {(activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch) && (
                 <button
                   onClick={() => {
-                    if (activeTab === "cvs") setCvSearch("");
+                    if (activeTab === "jobs") setJobSearch("");
+                    else if (activeTab === "cvs") setCvSearch("");
                     else setUserSearch("");
                   }}
                   className="ml-2 p-1 rounded-full hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors"
@@ -949,6 +971,14 @@ export default function AdminPage() {
             </div>
 
             {/* Primary Action Button */}
+            {activeTab === "jobs" && (
+              <button
+                onClick={openCreate}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Publish New Role
+              </button>
+            )}
             {activeTab === "cvs" && (
               <button
                 onClick={() => setShowCvModal(true)}
@@ -969,6 +999,24 @@ export default function AdminPage() {
 
           {/* Faint Category selector row */}
           <div className="flex items-center gap-2 flex-wrap pb-2">
+            {activeTab === "jobs" &&
+              ["All", ...Array.from(new Set(jobs.map((j) => j.department).filter(Boolean)))].map((dept) => {
+                const isActive = jobDeptFilter === dept;
+                return (
+                  <button
+                    key={dept}
+                    onClick={() => setJobDeptFilter(dept)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black border-transparent"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                    }`}
+                  >
+                    {dept}
+                  </button>
+                );
+              })}
+
             {activeTab === "cvs" &&
               ["All", "Not Called", "Called", "Interviewing", "Rejected"].map((status) => {
                 const isActive = cvFilter === status;
@@ -1010,6 +1058,102 @@ export default function AdminPage() {
 
       {/* Main Content Section */}
       <section className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-6 pb-24">
+
+        {/* Job Openings Tab */}
+        {activeTab === "jobs" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {jobs.filter((j) => {
+              const matchesDept = jobDeptFilter === "All" || j.department === jobDeptFilter;
+              const matchesSearch =
+                !jobSearch.trim() ||
+                j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                j.department.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                j.location.toLowerCase().includes(jobSearch.toLowerCase());
+              return matchesDept && matchesSearch;
+            }).length === 0 ? (
+              <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-12 text-center flex flex-col items-center gap-3">
+                <Briefcase className="w-8 h-8 text-zinc-600 mb-1" />
+                <p className="text-zinc-400 text-xs font-semibold">
+                  {jobs.length === 0 ? "No active job openings published." : "No job roles match your search or department filter."}
+                </p>
+                {jobs.length === 0 && (
+                  <button
+                    onClick={openCreate}
+                    className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" /> Publish First Opening
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {jobs
+                  .filter((j) => {
+                    const matchesDept = jobDeptFilter === "All" || j.department === jobDeptFilter;
+                    const matchesSearch =
+                      !jobSearch.trim() ||
+                      j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                      j.department.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                      j.location.toLowerCase().includes(jobSearch.toLowerCase());
+                    return matchesDept && matchesSearch;
+                  })
+                  .map((job) => {
+                    return (
+                      <div
+                        key={job.id}
+                        className="group relative border border-zinc-900 bg-zinc-950/30 hover:bg-zinc-900/40 rounded-2xl p-6 transition-all duration-300 flex flex-col sm:flex-row justify-between sm:items-center gap-4"
+                      >
+                        <div className="flex flex-col gap-2.5 min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-white/10 text-white/90 border border-white/10">
+                              {job.department}
+                            </span>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                              <MapPin className="w-3 h-3" /> {job.location}
+                            </span>
+                          </div>
+                          <h2
+                            onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                            className="text-base sm:text-lg font-bold text-white group-hover:text-zinc-200 transition-colors cursor-pointer truncate"
+                          >
+                            {job.title}
+                          </h2>
+                          <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                            {job.description.replace(/[*#]/g, "").slice(0, 160)}...
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-900">
+                          <button
+                            onClick={() => router.push(`/admin/jobs/${job.id}`)}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/10 transition-all cursor-pointer"
+                          >
+                            Screen Applications <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => openEdit(job)}
+                            className="p-2 bg-zinc-950/40 border border-zinc-900 hover:border-zinc-800 text-zinc-400 hover:text-white rounded-xl transition-all cursor-pointer"
+                            title="Edit Listing"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => handleDelete(job.id)}
+                            className="p-2 bg-rose-955/10 hover:bg-rose-955/25 border border-rose-900/40 hover:border-rose-900/80 text-rose-450 rounded-xl transition-all cursor-pointer"
+                            title="Delete Opening"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Talent Index Tab */}
         {activeTab === "cvs" && (
