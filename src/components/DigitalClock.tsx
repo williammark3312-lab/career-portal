@@ -34,15 +34,15 @@ export default function DigitalClock({ className = "", showDot = true }: Digital
 
   return (
     <div
-      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-zinc-950/80 text-zinc-300 text-xs font-mono tracking-wider backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.7)] select-none transition-all duration-300 hover:border-white/20 ${className}`}
+      className={`inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-white/8 bg-[rgba(15,15,17,0.65)] text-white/80 text-xs font-mono tracking-wider backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.35)] select-none transition-all duration-300 hover:bg-[rgba(25,25,28,0.8)] hover:border-white/15 hover:text-white ${className}`}
     >
       {showDot && (
         <span className="relative flex h-2 w-2">
-          <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
-          <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
+          <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-60" />
+          <span className="relative h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
         </span>
       )}
-      <span className="tabular-nums font-semibold text-zinc-200 text-xs sm:text-[13px]">{timeStr}</span>
+      <span className="tabular-nums font-semibold text-white/90 text-xs sm:text-[13px]">{timeStr}</span>
     </div>
   );
 }
