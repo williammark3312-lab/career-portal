@@ -11,7 +11,7 @@ export default function Home() {
   const router = useRouter();
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#000000] text-white">
+    <main className="relative flex flex-col min-h-screen bg-transparent text-white">
       <GlassBackground />
       <Header />
 

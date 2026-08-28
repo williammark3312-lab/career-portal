@@ -154,7 +154,7 @@ export default function JobDetailsPage() {
   /* Loading state */
   if (!job) {
     return (
-      <main className="min-h-screen bg-[#000000] flex items-center justify-center relative overflow-hidden">
+      <main className="min-h-screen bg-transparent flex items-center justify-center relative overflow-hidden">
         <GlassBackground />
         <div className="flex flex-col items-center gap-4 relative z-10">
           <div className="w-10 h-10 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin" />
@@ -167,7 +167,7 @@ export default function JobDetailsPage() {
   /* Success receipt */
   if (submitted) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[#000000] text-white">
+      <main className="relative flex flex-col min-h-screen bg-transparent text-white">
         <GlassBackground />
         <Header />
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-28 gap-6 max-w-lg mx-auto w-full">
@@ -190,8 +190,8 @@ export default function JobDetailsPage() {
               </motion.div>
               <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Application Received</h2>
               <p className="text-xs font-medium text-zinc-400 mt-1">Thank you! Your profile is in review.</p>
-              <div className="absolute -bottom-[10px] -left-[10px] w-5 h-5 rounded-full bg-[#000000] border border-zinc-800/80" />
-              <div className="absolute -bottom-[10px] -right-[10px] w-5 h-5 rounded-full bg-[#000000] border border-zinc-800/80" />
+              <div className="absolute -bottom-[10px] -left-[10px] w-5 h-5 rounded-full bg-transparent border border-zinc-800/80" />
+              <div className="absolute -bottom-[10px] -right-[10px] w-5 h-5 rounded-full bg-transparent border border-zinc-800/80" />
             </div>
             <div className="p-8 flex flex-col gap-4">
               {[
@@ -242,7 +242,7 @@ export default function JobDetailsPage() {
 
   /* Main job detail page */
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#000000] text-white">
+    <main className="relative flex flex-col min-h-screen bg-transparent text-white">
       <GlassBackground />
       <Header />
 

@@ -206,7 +206,7 @@ export default function CandidateSchedulingPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#000000] relative overflow-hidden">
+      <main className="min-h-screen flex items-center justify-center bg-transparent relative overflow-hidden">
         <GlassBackground />
         <div className="w-6 h-6 border-2 border-zinc-800 border-t-zinc-450 animate-spin relative z-10" />
       </main>
@@ -214,7 +214,7 @@ export default function CandidateSchedulingPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col justify-between bg-[#000000] text-white relative z-10 overflow-hidden">
+    <main className="min-h-screen flex flex-col justify-between bg-transparent text-white relative z-10 overflow-hidden">
       <GlassBackground />
 
       <div className="flex-1 w-full max-w-md mx-auto px-6 pt-24 pb-16 flex flex-col justify-center relative z-10">

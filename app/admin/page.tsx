@@ -632,7 +632,7 @@ export default function AdminPage() {
   /* ── Spinner loading state ── */
   if ((!mounted || authLoading) && !loginSuccess) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#000000] text-white relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-transparent text-white relative overflow-hidden">
         <GlassBackground />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
@@ -645,7 +645,7 @@ export default function AdminPage() {
   /* ── Auth Success Animation ── */
   if (loginSuccess) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#000000] text-white relative overflow-hidden">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-transparent text-white relative overflow-hidden">
         <GlassBackground />
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -672,7 +672,7 @@ export default function AdminPage() {
   /* ── Redesigned Glassmorphic Login screen matching Front Page UI/UX ── */
   if (!session) {
     return (
-      <main className="relative flex flex-col min-h-screen bg-[#000000] text-white">
+      <main className="relative flex flex-col min-h-screen bg-transparent text-white">
         <GlassBackground />
         <Header session={session} handleLogout={handleLogout} />
 
@@ -822,7 +822,7 @@ export default function AdminPage() {
 
   if (session && !isRecruiter) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#000000] relative overflow-hidden p-4">
+      <main className="min-h-screen flex items-center justify-center bg-transparent relative overflow-hidden p-4">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -856,7 +856,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="relative flex flex-col min-h-screen bg-[#000000] text-white">
+    <main className="relative flex flex-col min-h-screen bg-transparent text-white">
       <GlassBackground />
       <Header
         session={session}
