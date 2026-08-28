@@ -63,11 +63,11 @@ function storeTotalItems(store: WorkspaceStore): number {
 }
 
 // Helper to read workspace data.
-// Priority: In-Memory -> workspace_store table -> legacy applications table -> local workspace.json
+// Priority: Dedicated workspace_store table -> In-Memory cache -> legacy applications table -> local workspace.json
 async function readData(): Promise<WorkspaceStore> {
   const supabase = getSupabaseClient();
 
-  // 1. Try the dedicated workspace_store table
+  // 1. Try the dedicated workspace_store table (Primary Source of Truth)
   try {
     const { data, error } = await supabase
       .from("workspace_store")
@@ -76,18 +76,21 @@ async function readData(): Promise<WorkspaceStore> {
       .limit(1)
       .maybeSingle();
 
-    if (!error && data && data.data) {
+    if (!error && data && data.data !== undefined && data.data !== null) {
       const store = parseStore(data.data);
-      if (storeTotalItems(store) > 0 || inMemoryStore === null) {
-        inMemoryStore = store;
-        return store;
-      }
+      inMemoryStore = store;
+      return store;
     }
   } catch (err) {
     console.error("[workspace] Unexpected Supabase workspace_store read error:", err);
   }
 
-  // 2. Legacy fallback: check applications table if workspace_store was empty/missing
+  // 2. Return in-memory cache if available (e.g. transient DB glitch)
+  if (inMemoryStore !== null) {
+    return inMemoryStore;
+  }
+
+  // 3. Legacy fallback: check applications table ONLY if workspace_store row was not found
   try {
     const { data, error } = await supabase
       .from("applications")
@@ -99,12 +102,10 @@ async function readData(): Promise<WorkspaceStore> {
       try {
         const parsed = JSON.parse(data[0].notes);
         const store = parseStore(parsed);
-        if (storeTotalItems(store) > 0) {
-          inMemoryStore = store;
-          // Seed dedicated workspace_store table for future reads
-          await writeData(store);
-          return store;
-        }
+        inMemoryStore = store;
+        // Seed dedicated workspace_store table for future reads
+        await writeData(store);
+        return store;
       } catch (pErr) {
         console.error("[workspace] JSON parse error for legacy applications store:", pErr);
       }
@@ -113,26 +114,20 @@ async function readData(): Promise<WorkspaceStore> {
     console.error("[workspace] Legacy applications store read error:", err);
   }
 
-  // Return in-memory cache if available
-  if (inMemoryStore) {
-    return inMemoryStore;
-  }
-
-  // 3. Fallback: read from local workspace.json
+  // 4. Fallback: read from local workspace.json
   try {
     const fileContent = await fs.readFile(projectJsonPath, "utf-8");
     const parsed = JSON.parse(fileContent);
     const store = parseStore(parsed);
     inMemoryStore = store;
-    if (storeTotalItems(store) > 0) {
-      await writeData(store);
-    }
+    await writeData(store);
     return store;
   } catch {
     /* file missing or unreadable — return empty */
   }
 
   inMemoryStore = emptyStore();
+  await writeData(inMemoryStore);
   return inMemoryStore;
 }
 

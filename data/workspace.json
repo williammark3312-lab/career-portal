@@ -1,13 +1,31 @@
 {
   "fnf": [],
+  "tasks": [
+    {
+      "id": "tsk-1786377152283",
+      "title": "ME",
+      "status": "Done",
+      "dueDate": "2026-02-10",
+      "category": "General",
+      "priority": "Medium",
+      "createdAt": "2026-08-10T15:52:32.283Z",
+      "assignedTo": "ME"
+    },
+    {
+      "id": "tsk-1786377127472",
+      "title": "FNF",
+      "status": "Done",
+      "dueDate": "2026-08-10",
+      "category": "General",
+      "priority": "Medium",
+      "createdAt": "2026-08-10T15:52:07.472Z",
+      "assignedTo": "ME"
+    }
+  ],
   "onboardings": [
     {
       "id": "onb-1786375733029",
-      "candidateName": "Anandu",
       "role": "HR",
-      "startDate": "2026-08-01",
-      "status": "Completed",
-      "mentor": "Unassigned",
       "email": "anandugirish@gmail.com",
       "tasks": [
         {
@@ -36,29 +54,11 @@
           "completed": true
         }
       ],
-      "createdAt": "2026-08-10T15:28:53.029Z"
-    }
-  ],
-  "tasks": [
-    {
-      "id": "tsk-1786377152283",
-      "title": "ME",
-      "assignedTo": "ME",
-      "dueDate": "2026-02-10",
-      "priority": "Medium",
-      "status": "Done",
-      "category": "General",
-      "createdAt": "2026-08-10T15:52:32.283Z"
-    },
-    {
-      "id": "tsk-1786377127472",
-      "title": "FNF",
-      "assignedTo": "ME",
-      "dueDate": "2026-08-10",
-      "priority": "Medium",
-      "status": "Done",
-      "category": "General",
-      "createdAt": "2026-08-10T15:52:07.472Z"
+      "mentor": "Unassigned",
+      "status": "Completed",
+      "createdAt": "2026-08-10T15:28:53.029Z",
+      "startDate": "2026-08-01",
+      "candidateName": "Anandu"
     }
   ]
 }
