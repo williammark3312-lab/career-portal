@@ -20,20 +20,15 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isAdminPage = pathname?.startsWith("/admin");
-  const isWorkspace = pathname === "/admin/workspace";
   const isJobDetails = pathname?.startsWith("/jobs/") && pathname !== "/jobs";
 
-  const currentAdminTab = isWorkspace ? "workspace" : (activeAdminTab || "cvs");
+  const currentAdminTab = activeAdminTab || "cvs";
 
   const handleTabClick = (tabKey: string) => {
-    if (tabKey === "workspace") {
-      router.push("/admin/workspace");
-    } else {
-      if (pathname !== "/admin") {
-        router.push(`/admin?tab=${tabKey}`);
-      } else if (onAdminTabChange) {
-        onAdminTabChange(tabKey);
-      }
+    if (pathname !== "/admin") {
+      router.push(`/admin?tab=${tabKey}`);
+    } else if (onAdminTabChange) {
+      onAdminTabChange(tabKey);
     }
   };
 
@@ -87,7 +82,6 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
                   {([
                     { key: "jobs", label: "Openings" },
                     { key: "cvs", label: "Talent Index" },
-                    { key: "workspace", label: "Workspace" },
                     { key: "users", label: "Supervisors" },
                   ] as const).map((t) => {
                     const isActive = currentAdminTab === t.key;
@@ -238,14 +232,7 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
                       >
                         Talent Index
                       </button>
-                      <button
-                        onClick={() => { handleTabClick("workspace"); setMobileOpen(false); }}
-                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
-                          currentAdminTab === "workspace" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"
-                        }`}
-                      >
-                        Workspace Desk
-                      </button>
+
                       <button
                         onClick={() => { handleTabClick("users"); setMobileOpen(false); }}
                         className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
