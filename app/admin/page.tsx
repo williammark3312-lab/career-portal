@@ -1053,6 +1053,8 @@ export default function AdminPage() {
                     ? "Search job titles, departments, or locations..."
                     : activeTab === "cvs"
                     ? "Search candidate names or emails..."
+                    : activeTab === "panel"
+                    ? "Search tasks..."
                     : "Search supervisor accounts..."
                 }
                 value={activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch}
@@ -1483,148 +1485,144 @@ export default function AdminPage() {
             )}
           </motion.div>
         )}
+
+        {/* Work Panel Tab */}
+        {activeTab === "panel" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {panelLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3">
+                <div className="w-8 h-8 border-2 border-white/10 border-t-white/60 rounded-full animate-spin" />
+                <p className="text-xs text-zinc-500 font-semibold">Loading tasks...</p>
+              </div>
+            ) : (() => {
+              const filteredTasks = tasks.filter((t) =>
+                panelFilter === "all" ? true : t.status === panelFilter
+              );
+
+              const priorityConfig = {
+                high:   { label: "High",   color: "text-rose-400",    bg: "bg-rose-950/30",    border: "border-rose-900/60"    },
+                medium: { label: "Medium", color: "text-amber-400",   bg: "bg-amber-950/30",   border: "border-amber-900/60"   },
+                low:    { label: "Low",    color: "text-emerald-400", bg: "bg-emerald-950/30", border: "border-emerald-900/60" },
+              };
+
+              const statusConfig: Record<WorkTask["status"], { label: string; icon: React.ReactNode; color: string }> = {
+                "todo":        { label: "Todo",        icon: <ListTodo className="w-3.5 h-3.5" />,    color: "text-zinc-400"    },
+                "in-progress": { label: "In Progress", icon: <CircleDot className="w-3.5 h-3.5" />,   color: "text-blue-400"    },
+                "done":        { label: "Done",        icon: <CircleCheck className="w-3.5 h-3.5" />,  color: "text-emerald-400" },
+              };
+
+              function getReminderChip(reminder?: string, status?: string) {
+                if (!reminder || status === "done") return null;
+                const diff = new Date(reminder).getTime() - Date.now();
+                const hours = diff / 3_600_000;
+                if (diff < 0)   return { label: "Overdue",  cls: "bg-rose-950/50 border-rose-900/60 text-rose-400" };
+                if (hours < 1)  return { label: "Due soon", cls: "bg-amber-950/50 border-amber-900/60 text-amber-400" };
+                if (hours < 24) return { label: `In ${Math.round(hours)}h`, cls: "bg-blue-950/50 border-blue-900/60 text-blue-400" };
+                return { label: new Date(reminder).toLocaleDateString("en-IN", { day: "numeric", month: "short" }), cls: "bg-zinc-900/60 border-zinc-800 text-zinc-400" };
+              }
+
+              if (filteredTasks.length === 0) {
+                return (
+                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-14 text-center flex flex-col items-center gap-3">
+                    <ListTodo className="w-8 h-8 text-zinc-600 mb-1" />
+                    <p className="text-zinc-400 text-xs font-semibold">
+                      {tasks.length === 0 ? "No tasks yet. Add your first task to get started." : "No tasks match this filter."}
+                    </p>
+                    {tasks.length === 0 && (
+                      <button
+                        onClick={() => { setShowAddTask(true); requestNotificationPermission(); }}
+                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" /> Add First Task
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 gap-3">
+                  {filteredTasks.map((task) => {
+                    const pri  = priorityConfig[task.priority];
+                    const st   = statusConfig[task.status];
+                    const chip = getReminderChip(task.reminder, task.status);
+                    return (
+                      <motion.div
+                        key={task.id}
+                        layout
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="group relative border border-zinc-900 bg-zinc-950/30 hover:bg-zinc-900/40 rounded-2xl p-5 transition-all duration-200 flex flex-col sm:flex-row sm:items-start gap-4"
+                      >
+                        {/* Left: title + description + chips */}
+                        <div className="flex-1 flex flex-col gap-2.5 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${pri.bg} ${pri.border} ${pri.color}`}>
+                              {pri.label}
+                            </span>
+                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-zinc-900/60 border border-zinc-800 ${st.color}`}>
+                              {st.icon}{st.label}
+                            </span>
+                            {chip && (
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-md border ${chip.cls}`}>
+                                <Bell className="w-3 h-3" />{chip.label}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className={`text-sm font-bold transition-colors ${task.status === "done" ? "line-through text-zinc-500" : "text-white"}`}>
+                            {task.title}
+                          </h3>
+                          {task.description && (
+                            <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">{task.description}</p>
+                          )}
+                          {task.reminder && (
+                            <p className="text-[10px] text-zinc-600 font-semibold flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Reminder: {new Date(task.reminder).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Right: status cycler + delete */}
+                        <div className="flex sm:flex-col items-center gap-2 shrink-0">
+                          {task.status !== "done" && (
+                            <button
+                              onClick={() => handleTaskStatus(task.id, task.status === "todo" ? "in-progress" : "done")}
+                              title={task.status === "todo" ? "Mark In Progress" : "Mark Done"}
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                            >
+                              {task.status === "todo" ? <><CircleDot className="w-3.5 h-3.5 text-blue-400" /> Start</> : <><CircleCheck className="w-3.5 h-3.5 text-emerald-400" /> Done</>}
+                            </button>
+                          )}
+                          {task.status === "done" && (
+                            <button
+                              onClick={() => handleTaskStatus(task.id, "todo")}
+                              title="Reopen task"
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                            >
+                              <ListTodo className="w-3.5 h-3.5" /> Reopen
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteTask(task.id)}
+                            title="Delete task"
+                            className="p-2 rounded-xl border border-zinc-900 bg-zinc-950/40 hover:bg-rose-950/30 hover:border-rose-900/60 text-zinc-600 hover:text-rose-400 transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </motion.div>
+        )}
+
       </section>
       <Footer />
 
-      {/* ─── Work Panel Tab ─── */}
-      {activeTab === "panel" && (
-        <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pb-24" style={{ marginTop: "-1.5rem" }}>
-          {panelLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="w-8 h-8 border-2 border-white/10 border-t-white/60 rounded-full animate-spin" />
-              <p className="text-xs text-zinc-500 font-semibold">Loading tasks...</p>
-            </div>
-          ) : (() => {
-            const filteredTasks = tasks.filter((t) =>
-              panelFilter === "all" ? true : t.status === panelFilter
-            );
-
-            const priorityConfig = {
-              high:   { label: "High",   color: "text-rose-400",   bg: "bg-rose-950/30",   border: "border-rose-900/60"   },
-              medium: { label: "Medium", color: "text-amber-400",  bg: "bg-amber-950/30",  border: "border-amber-900/60"  },
-              low:    { label: "Low",    color: "text-emerald-400",bg: "bg-emerald-950/30",border: "border-emerald-900/60" },
-            };
-
-            const statusConfig: Record<WorkTask["status"], { label: string; icon: React.ReactNode; color: string }> = {
-              "todo":        { label: "Todo",        icon: <ListTodo className="w-3.5 h-3.5" />,    color: "text-zinc-400"   },
-              "in-progress": { label: "In Progress", icon: <CircleDot className="w-3.5 h-3.5" />,  color: "text-blue-400"   },
-              "done":        { label: "Done",        icon: <CircleCheck className="w-3.5 h-3.5" />, color: "text-emerald-400"},
-            };
-
-            function getReminderChip(reminder?: string, status?: string) {
-              if (!reminder || status === "done") return null;
-              const diff = new Date(reminder).getTime() - Date.now();
-              const hours = diff / 3_600_000;
-              if (diff < 0)        return { label: "Overdue",  cls: "bg-rose-950/50 border-rose-900/60 text-rose-400" };
-              if (hours < 1)       return { label: "Due soon", cls: "bg-amber-950/50 border-amber-900/60 text-amber-400" };
-              if (hours < 24)      return { label: `In ${Math.round(hours)}h`, cls: "bg-blue-950/50 border-blue-900/60 text-blue-400" };
-              return { label: new Date(reminder).toLocaleDateString("en-IN", { day: "numeric", month: "short" }), cls: "bg-zinc-900/60 border-zinc-800 text-zinc-400" };
-            }
-
-            if (filteredTasks.length === 0) {
-              return (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-14 text-center flex flex-col items-center gap-3"
-                >
-                  <ListTodo className="w-8 h-8 text-zinc-600 mb-1" />
-                  <p className="text-zinc-400 text-xs font-semibold">
-                    {tasks.length === 0 ? "No tasks yet. Add your first task to get started." : "No tasks match this filter."}
-                  </p>
-                  {tasks.length === 0 && (
-                    <button
-                      onClick={() => { setShowAddTask(true); requestNotificationPermission(); }}
-                      className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" /> Add First Task
-                    </button>
-                  )}
-                </motion.div>
-              );
-            }
-
-            return (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-3">
-                {filteredTasks.map((task) => {
-                  const pri = priorityConfig[task.priority];
-                  const st  = statusConfig[task.status];
-                  const chip = getReminderChip(task.reminder, task.status);
-                  return (
-                    <motion.div
-                      key={task.id}
-                      layout
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="group relative border border-zinc-900 bg-zinc-950/30 hover:bg-zinc-900/40 rounded-2xl p-5 transition-all duration-200 flex flex-col sm:flex-row sm:items-start gap-4"
-                    >
-                      {/* Left: title + description + chips */}
-                      <div className="flex-1 flex flex-col gap-2.5 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {/* Priority badge */}
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${pri.bg} ${pri.border} ${pri.color}`}>
-                            {pri.label}
-                          </span>
-                          {/* Status badge */}
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-zinc-900/60 border border-zinc-800 ${st.color}`}>
-                            {st.icon}{st.label}
-                          </span>
-                          {/* Reminder chip */}
-                          {chip && (
-                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-md border ${chip.cls}`}>
-                              <Bell className="w-3 h-3" />{chip.label}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className={`text-sm font-bold transition-colors ${task.status === "done" ? "line-through text-zinc-500" : "text-white"}`}>
-                          {task.title}
-                        </h3>
-                        {task.description && (
-                          <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">{task.description}</p>
-                        )}
-                        {task.reminder && (
-                          <p className="text-[10px] text-zinc-600 font-semibold flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            Reminder: {new Date(task.reminder).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Right: status cycler + delete */}
-                      <div className="flex sm:flex-col items-center gap-2 shrink-0">
-                        {/* Cycle status */}
-                        {task.status !== "done" && (
-                          <button
-                            onClick={() => handleTaskStatus(task.id, task.status === "todo" ? "in-progress" : "done")}
-                            title={task.status === "todo" ? "Mark In Progress" : "Mark Done"}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all cursor-pointer"
-                          >
-                            {task.status === "todo" ? <><CircleDot className="w-3.5 h-3.5 text-blue-400" /> Start</> : <><CircleCheck className="w-3.5 h-3.5 text-emerald-400" /> Done</>}
-                          </button>
-                        )}
-                        {task.status === "done" && (
-                          <button
-                            onClick={() => handleTaskStatus(task.id, "todo")}
-                            title="Reopen task"
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all cursor-pointer"
-                          >
-                            <ListTodo className="w-3.5 h-3.5" /> Reopen
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteTask(task.id)}
-                          title="Delete task"
-                          className="p-2 rounded-xl border border-zinc-900 bg-zinc-950/40 hover:bg-rose-950/30 hover:border-rose-900/60 text-zinc-600 hover:text-rose-400 transition-all cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            );
-          })()}
-        </section>
-      )}
 
       {/* ─── Add Task Modal ─── */}
       <AnimatePresence>
