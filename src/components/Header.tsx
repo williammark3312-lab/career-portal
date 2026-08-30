@@ -82,6 +82,7 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
                   {([
                     { key: "jobs", label: "Openings" },
                     { key: "cvs", label: "Talent Index" },
+                    { key: "panel", label: "Work Panel" },
                     { key: "users", label: "Supervisors" },
                   ] as const).map((t) => {
                     const isActive = currentAdminTab === t.key;
@@ -231,6 +232,14 @@ export default function Header({ session, handleLogout, activeAdminTab, onAdminT
                         }`}
                       >
                         Talent Index
+                      </button>
+                      <button
+                        onClick={() => { handleTabClick("panel"); setMobileOpen(false); }}
+                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
+                          currentAdminTab === "panel" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"
+                        }`}
+                      >
+                        Work Panel
                       </button>
 
                       <button

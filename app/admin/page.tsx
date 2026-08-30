@@ -9,7 +9,8 @@ import {
   CheckCircle2, Upload, MessageSquare, Send, Users,
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
   Copy, Lock, Search, LogOut, Shield, ChevronRight,
-  Mail, Phone, Calendar, Check, Layers, Eye, EyeOff
+  Mail, Phone, Calendar, Check, Layers, Eye, EyeOff,
+  Bell, BellRing, ListTodo, CircleDot, CircleCheck, AlertTriangle, ChevronDown
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -38,6 +39,15 @@ interface InterviewData {
 interface CvNotesData {
   comments: Comment[];
   interview: InterviewData | null;
+}
+interface WorkTask {
+  id: string;
+  title: string;
+  description?: string;
+  priority: "low" | "medium" | "high";
+  status: "todo" | "in-progress" | "done";
+  reminder?: string;
+  created_at: string;
 }
 
 /* ─── Helpers ─── */
@@ -181,7 +191,19 @@ export default function AdminPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   /* Tabs state */
-  const [activeTab, setActiveTab] = useState<"jobs" | "cvs" | "users">("jobs");
+  const [activeTab, setActiveTab] = useState<"jobs" | "cvs" | "users" | "panel">("jobs");
+
+  /* Work Panel state */
+  const [tasks, setTasks] = useState<WorkTask[]>([]);
+  const [panelLoading, setPanelLoading] = useState(false);
+  const [panelFilter, setPanelFilter] = useState<"all" | "todo" | "in-progress" | "done">("all");
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDesc, setTaskDesc] = useState("");
+  const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high">("medium");
+  const [taskReminder, setTaskReminder] = useState("");
+  const [savingTask, setSavingTask] = useState(false);
+  const [firedReminders, setFiredReminders] = useState<Set<string>>(new Set());
 
   /* Auth state */
   const [session, setSession] = useState<Session | null>(null);
@@ -226,6 +248,8 @@ export default function AdminPage() {
     } else if (activeTab === "cvs") {
       loadCvs();
       loadStats();
+    } else if (activeTab === "panel") {
+      loadTasks();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -241,13 +265,37 @@ export default function AdminPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
-      if (tab === "jobs" || tab === "cvs" || tab === "users") {
+      if (tab === "jobs" || tab === "cvs" || tab === "users" || tab === "panel") {
         setActiveTab(tab);
       } else {
         setActiveTab("jobs");
       }
     }
   }, []);
+
+  /* Reminder checker — fires every 60 s */
+  useEffect(() => {
+    const check = () => {
+      const now = Date.now();
+      tasks.forEach((t) => {
+        if (!t.reminder || firedReminders.has(t.id) || t.status === "done") return;
+        const due = new Date(t.reminder).getTime();
+        if (due <= now) {
+          setFiredReminders((prev) => new Set(prev).add(t.id));
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            new Notification(`⏰ Reminder: ${t.title}`, {
+              body: t.description || "Task is due now!",
+              icon: "/favicon.ico",
+            });
+          }
+        }
+      });
+    };
+    check();
+    const interval = setInterval(check, 60_000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks]);
 
   /* ── Data loaders ── */
   async function loadJobs() {
@@ -275,6 +323,54 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.users) setAdminUsers(json.users);
     } catch { /* silently fail */ }
+  }
+
+  async function loadTasks() {
+    setPanelLoading(true);
+    try {
+      const res = await fetch("/api/work-panel");
+      const json = await res.json();
+      if (json.tasks) setTasks(json.tasks);
+    } catch { /* silently fail */ }
+    finally { setPanelLoading(false); }
+  }
+
+  async function handleAddTask() {
+    if (!taskTitle.trim()) return;
+    setSavingTask(true);
+    try {
+      const res = await fetch("/api/work-panel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: taskTitle, description: taskDesc, priority: taskPriority, reminder: taskReminder || undefined, status: "todo" }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setTasks((prev) => [json, ...prev]);
+        setTaskTitle(""); setTaskDesc(""); setTaskPriority("medium"); setTaskReminder("");
+        setShowAddTask(false);
+      }
+    } finally { setSavingTask(false); }
+  }
+
+  async function handleTaskStatus(id: string, status: WorkTask["status"]) {
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status } : t));
+    await fetch("/api/work-panel", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+  }
+
+  async function handleDeleteTask(id: string) {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    await fetch(`/api/work-panel?id=${id}`, { method: "DELETE" });
+  }
+
+  async function requestNotificationPermission() {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      await Notification.requestPermission();
+    }
   }
 
   async function loadStats() {
@@ -881,6 +977,8 @@ export default function AdminPage() {
               ? "Openings & Reviews."
               : activeTab === "cvs"
               ? "Talent index."
+              : activeTab === "panel"
+              ? "Work Panel."
               : "Supervisor accounts."}
           </h1>
           <p className="text-sm text-zinc-400 leading-relaxed max-w-lg">
@@ -888,6 +986,8 @@ export default function AdminPage() {
               ? "Publish job openings, review candidate applications per job, and manage active roles."
               : activeTab === "cvs"
               ? "Browse talent pool, evaluate submitted CVs, and manage recruitment notes."
+              : activeTab === "panel"
+              ? "Manage your tasks, set reminders, and track progress across your workflow."
               : "Configure administrator permissions and supervisor account credentials."}
           </p>
 
@@ -914,6 +1014,15 @@ export default function AdminPage() {
                 <span>SUPERVISORS: {adminUsers.length}</span>
                 <span>•</span>
                 <span>SUPERUSERS: {adminUsers.filter((u) => u.role === "superuser").length}</span>
+              </>
+            )}
+            {activeTab === "panel" && (
+              <>
+                <span>TASKS: {tasks.length}</span>
+                <span>•</span>
+                <span>TODO: {tasks.filter((t) => t.status === "todo").length}</span>
+                <span>•</span>
+                <span>DONE: {tasks.filter((t) => t.status === "done").length}</span>
               </>
             )}
           </div>
@@ -995,6 +1104,14 @@ export default function AdminPage() {
                 <UserPlus className="w-4 h-4" /> Provision Account
               </button>
             )}
+            {activeTab === "panel" && (
+              <button
+                onClick={() => { setShowAddTask(true); requestNotificationPermission(); }}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Add Task
+              </button>
+            )}
           </div>
 
           {/* Faint Category selector row */}
@@ -1049,6 +1166,25 @@ export default function AdminPage() {
                     }`}
                   >
                     {role}
+                  </button>
+                );
+              })}
+
+            {activeTab === "panel" &&
+              (["all", "todo", "in-progress", "done"] as const).map((f) => {
+                const isActive = panelFilter === f;
+                const labels: Record<string, string> = { all: "All", todo: "Todo", "in-progress": "In Progress", done: "Done" };
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setPanelFilter(f)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black border-transparent"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                    }`}
+                  >
+                    {labels[f]}
                   </button>
                 );
               })}
@@ -1350,9 +1486,263 @@ export default function AdminPage() {
       </section>
       <Footer />
 
+      {/* ─── Work Panel Tab ─── */}
+      {activeTab === "panel" && (
+        <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pb-24" style={{ marginTop: "-1.5rem" }}>
+          {panelLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <div className="w-8 h-8 border-2 border-white/10 border-t-white/60 rounded-full animate-spin" />
+              <p className="text-xs text-zinc-500 font-semibold">Loading tasks...</p>
+            </div>
+          ) : (() => {
+            const filteredTasks = tasks.filter((t) =>
+              panelFilter === "all" ? true : t.status === panelFilter
+            );
+
+            const priorityConfig = {
+              high:   { label: "High",   color: "text-rose-400",   bg: "bg-rose-950/30",   border: "border-rose-900/60"   },
+              medium: { label: "Medium", color: "text-amber-400",  bg: "bg-amber-950/30",  border: "border-amber-900/60"  },
+              low:    { label: "Low",    color: "text-emerald-400",bg: "bg-emerald-950/30",border: "border-emerald-900/60" },
+            };
+
+            const statusConfig: Record<WorkTask["status"], { label: string; icon: React.ReactNode; color: string }> = {
+              "todo":        { label: "Todo",        icon: <ListTodo className="w-3.5 h-3.5" />,    color: "text-zinc-400"   },
+              "in-progress": { label: "In Progress", icon: <CircleDot className="w-3.5 h-3.5" />,  color: "text-blue-400"   },
+              "done":        { label: "Done",        icon: <CircleCheck className="w-3.5 h-3.5" />, color: "text-emerald-400"},
+            };
+
+            function getReminderChip(reminder?: string, status?: string) {
+              if (!reminder || status === "done") return null;
+              const diff = new Date(reminder).getTime() - Date.now();
+              const hours = diff / 3_600_000;
+              if (diff < 0)        return { label: "Overdue",  cls: "bg-rose-950/50 border-rose-900/60 text-rose-400" };
+              if (hours < 1)       return { label: "Due soon", cls: "bg-amber-950/50 border-amber-900/60 text-amber-400" };
+              if (hours < 24)      return { label: `In ${Math.round(hours)}h`, cls: "bg-blue-950/50 border-blue-900/60 text-blue-400" };
+              return { label: new Date(reminder).toLocaleDateString("en-IN", { day: "numeric", month: "short" }), cls: "bg-zinc-900/60 border-zinc-800 text-zinc-400" };
+            }
+
+            if (filteredTasks.length === 0) {
+              return (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-14 text-center flex flex-col items-center gap-3"
+                >
+                  <ListTodo className="w-8 h-8 text-zinc-600 mb-1" />
+                  <p className="text-zinc-400 text-xs font-semibold">
+                    {tasks.length === 0 ? "No tasks yet. Add your first task to get started." : "No tasks match this filter."}
+                  </p>
+                  {tasks.length === 0 && (
+                    <button
+                      onClick={() => { setShowAddTask(true); requestNotificationPermission(); }}
+                      className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" /> Add First Task
+                    </button>
+                  )}
+                </motion.div>
+              );
+            }
+
+            return (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-3">
+                {filteredTasks.map((task) => {
+                  const pri = priorityConfig[task.priority];
+                  const st  = statusConfig[task.status];
+                  const chip = getReminderChip(task.reminder, task.status);
+                  return (
+                    <motion.div
+                      key={task.id}
+                      layout
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="group relative border border-zinc-900 bg-zinc-950/30 hover:bg-zinc-900/40 rounded-2xl p-5 transition-all duration-200 flex flex-col sm:flex-row sm:items-start gap-4"
+                    >
+                      {/* Left: title + description + chips */}
+                      <div className="flex-1 flex flex-col gap-2.5 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Priority badge */}
+                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${pri.bg} ${pri.border} ${pri.color}`}>
+                            {pri.label}
+                          </span>
+                          {/* Status badge */}
+                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-zinc-900/60 border border-zinc-800 ${st.color}`}>
+                            {st.icon}{st.label}
+                          </span>
+                          {/* Reminder chip */}
+                          {chip && (
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-md border ${chip.cls}`}>
+                              <Bell className="w-3 h-3" />{chip.label}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className={`text-sm font-bold transition-colors ${task.status === "done" ? "line-through text-zinc-500" : "text-white"}`}>
+                          {task.title}
+                        </h3>
+                        {task.description && (
+                          <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">{task.description}</p>
+                        )}
+                        {task.reminder && (
+                          <p className="text-[10px] text-zinc-600 font-semibold flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Reminder: {new Date(task.reminder).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Right: status cycler + delete */}
+                      <div className="flex sm:flex-col items-center gap-2 shrink-0">
+                        {/* Cycle status */}
+                        {task.status !== "done" && (
+                          <button
+                            onClick={() => handleTaskStatus(task.id, task.status === "todo" ? "in-progress" : "done")}
+                            title={task.status === "todo" ? "Mark In Progress" : "Mark Done"}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                          >
+                            {task.status === "todo" ? <><CircleDot className="w-3.5 h-3.5 text-blue-400" /> Start</> : <><CircleCheck className="w-3.5 h-3.5 text-emerald-400" /> Done</>}
+                          </button>
+                        )}
+                        {task.status === "done" && (
+                          <button
+                            onClick={() => handleTaskStatus(task.id, "todo")}
+                            title="Reopen task"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                          >
+                            <ListTodo className="w-3.5 h-3.5" /> Reopen
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteTask(task.id)}
+                          title="Delete task"
+                          className="p-2 rounded-xl border border-zinc-900 bg-zinc-950/40 hover:bg-rose-950/30 hover:border-rose-900/60 text-zinc-600 hover:text-rose-400 transition-all cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            );
+          })()}
+        </section>
+      )}
+
+      {/* ─── Add Task Modal ─── */}
+      <AnimatePresence>
+        {showAddTask && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-950/50 backdrop-blur-md"
+              onClick={() => setShowAddTask(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[28px] p-7 shadow-2xl flex flex-col gap-5 z-10"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-lg font-bold text-white">New Task</h2>
+                  <p className="text-xs text-zinc-500 font-semibold mt-0.5">Add a task to your work panel.</p>
+                </div>
+                <button onClick={() => setShowAddTask(false)} className="p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-white cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {/* Title */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Task Title *</label>
+                  <input
+                    value={taskTitle}
+                    onChange={(e) => setTaskTitle(e.target.value)}
+                    placeholder="e.g. Review Q3 candidate shortlist"
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-600"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Description</label>
+                  <textarea
+                    value={taskDesc}
+                    onChange={(e) => setTaskDesc(e.target.value)}
+                    placeholder="Optional details about this task..."
+                    rows={2}
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-600 resize-none"
+                  />
+                </div>
+
+                {/* Priority */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Priority</label>
+                  <div className="flex gap-2">
+                    {(["low", "medium", "high"] as const).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setTaskPriority(p)}
+                        className={`flex-1 py-2 rounded-xl text-[11px] font-bold border capitalize transition-all cursor-pointer ${
+                          taskPriority === p
+                            ? p === "high" ? "bg-rose-950/60 border-rose-900 text-rose-300"
+                              : p === "medium" ? "bg-amber-950/60 border-amber-900 text-amber-300"
+                              : "bg-emerald-950/60 border-emerald-900 text-emerald-300"
+                            : "bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reminder */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <BellRing className="w-3.5 h-3.5" /> Reminder (optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={taskReminder}
+                    onChange={(e) => setTaskReminder(e.target.value)}
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-zinc-300 outline-none [color-scheme:dark]"
+                  />
+                  {taskReminder && (
+                    <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-1">
+                      <Bell className="w-3 h-3" />
+                      You&apos;ll receive a browser notification at this time.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 mt-1">
+                <button
+                  onClick={() => setShowAddTask(false)}
+                  className="flex-1 py-3 rounded-xl text-xs font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-900 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddTask}
+                  disabled={savingTask || !taskTitle.trim()}
+                  className="flex-1 py-3 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {savingTask ? <div className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <><Plus className="w-3.5 h-3.5" /> Add Task</>}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* ── ╔══════╗ Right Slide-over profile preview drawer (Ashby Style) ╔══════╗ ── */}
       <AnimatePresence>
         {activePreviewCandidate && (
+
           <div className="fixed inset-0 z-[150] flex justify-end">
             {/* Backdrop Blur */}
             <motion.div
