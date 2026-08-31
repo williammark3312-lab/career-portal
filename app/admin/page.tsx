@@ -1591,110 +1591,89 @@ export default function AdminPage() {
               }
 
               return (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col divide-y divide-zinc-900 border border-zinc-900 rounded-2xl overflow-hidden bg-zinc-950/30">
                   {filteredTasks.map((task, index) => {
-                    const pri   = priorityConfig[task.priority];
-                    const st    = statusConfig[task.status];
-                    const chip  = getReminderState(task.reminder, task.status);
+                    const pri    = priorityConfig[task.priority];
+                    const st     = statusConfig[task.status];
+                    const chip   = getReminderState(task.reminder, task.status);
                     const isDone = task.status === "done";
                     return (
                       <motion.div
                         key={task.id}
                         layout
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.04 }}
-                        className={`group relative rounded-2xl border transition-all duration-200 overflow-hidden ${
-                          isDone
-                            ? "border-zinc-900 bg-zinc-950/20 opacity-60 hover:opacity-80"
-                            : "border-zinc-800/80 bg-zinc-950/40 hover:bg-zinc-900/50 hover:border-zinc-700"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.03 }}
+                        className={`group relative flex items-center gap-3 px-4 py-2.5 transition-all duration-150 ${
+                          isDone ? "opacity-50 hover:opacity-70" : "hover:bg-zinc-900/60"
                         }`}
                       >
-                        {/* Priority accent bar on left edge */}
-                        <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl ${pri.dot} ${ isDone ? "opacity-30" : "opacity-80" }`} />
+                        {/* Priority dot */}
+                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${pri.dot} ${isDone ? "opacity-30" : ""}`} />
 
-                        <div className="pl-5 pr-5 py-5 flex flex-col sm:flex-row gap-4">
-                          {/* Left: checkbox + content */}
-                          <div className="flex gap-3.5 flex-1 min-w-0">
-                            {/* Status toggle circle */}
-                            <button
-                              onClick={() => handleTaskStatus(task.id, task.status === "todo" ? "in-progress" : task.status === "in-progress" ? "done" : "todo")}
-                              title="Cycle status"
-                              className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
-                                isDone
-                                  ? "border-emerald-600 bg-emerald-950/40 hover:border-zinc-600 hover:bg-zinc-900"
-                                  : task.status === "in-progress"
-                                  ? "border-blue-500 bg-blue-950/30 hover:border-blue-400"
-                                  : `${st.ring} bg-transparent hover:border-zinc-500`
-                              }`}
-                            >
-                              {isDone && <Check className="w-2.5 h-2.5 text-emerald-400" />}
-                              {task.status === "in-progress" && <div className="w-2 h-2 rounded-full bg-blue-400" />}
-                            </button>
+                        {/* Status circle */}
+                        <button
+                          onClick={() => handleTaskStatus(task.id, task.status === "todo" ? "in-progress" : task.status === "in-progress" ? "done" : "todo")}
+                          title="Cycle status"
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                            isDone
+                              ? "border-emerald-600 bg-emerald-950/40 hover:border-zinc-600"
+                              : task.status === "in-progress"
+                              ? "border-blue-500 bg-blue-950/30"
+                              : `${st.ring} bg-transparent hover:border-zinc-500`
+                          }`}
+                        >
+                          {isDone && <Check className="w-2 h-2 text-emerald-400" />}
+                          {task.status === "in-progress" && <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                        </button>
 
-                            {/* Task content */}
-                            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                              <div className="flex items-start gap-2 flex-wrap">
-                                <h3 className={`text-sm font-semibold leading-snug transition-colors ${
-                                  isDone ? "line-through text-zinc-500" : "text-white"
-                                }`}>
-                                  {task.title}
-                                </h3>
-                              </div>
+                        {/* Title */}
+                        <span className={`text-xs font-semibold truncate flex-1 min-w-0 ${isDone ? "line-through text-zinc-500" : "text-white"}`}>
+                          {task.title}
+                        </span>
 
-                              {task.description && (
-                                <p className={`text-xs leading-relaxed ${ isDone ? "text-zinc-600" : "text-zinc-400" }`}>
-                                  {task.description}
-                                </p>
-                              )}
+                        {/* Description — hidden on small, truncated */}
+                        {task.description && (
+                          <span className="hidden md:block text-[11px] text-zinc-600 truncate max-w-[180px] shrink-0">
+                            {task.description}
+                          </span>
+                        )}
 
-                              {/* Meta row */}
-                              <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                                {/* Priority */}
-                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${ pri.bg } ${ pri.border } ${ pri.color }`}>
-                                  {pri.label}
-                                </span>
-                                {/* Status */}
-                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 ${ st.color }`}>
-                                  {st.icon}<span>{st.label}</span>
-                                </span>
-                                {/* Reminder chip */}
-                                {chip && (
-                                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${chip.cls}`}>
-                                    {chip.urgent ? <BellRing className="w-3 h-3" /> : <Bell className="w-3 h-3" />}
-                                    {chip.label}
-                                  </span>
-                                )}
-                                {/* Created date */}
-                                <span className="text-[10px] text-zinc-600 font-medium">
-                                  {new Date(task.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                        {/* Chips */}
+                        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${pri.bg} ${pri.border} ${pri.color}`}>
+                            {pri.label}
+                          </span>
+                          {chip && (
+                            <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border ${chip.cls}`}>
+                              {chip.urgent ? <BellRing className="w-2.5 h-2.5" /> : <Bell className="w-2.5 h-2.5" />}
+                              {chip.label}
+                            </span>
+                          )}
+                        </div>
 
-                          {/* Right: action buttons — visible on hover */}
-                          <div className="flex sm:flex-col items-center gap-1.5 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => openEditTask(task)}
-                              title="Edit task"
-                              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" /> Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTask(task.id)}
-                              title="Delete task"
-                              className="p-2 rounded-xl border border-zinc-900 bg-zinc-950/60 hover:bg-rose-950/40 hover:border-rose-800 text-zinc-600 hover:text-rose-400 transition-all cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                        {/* Actions — appear on row hover */}
+                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEditTask(task)}
+                            title="Edit"
+                            className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white transition-all cursor-pointer"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTask(task.id)}
+                            title="Delete"
+                            className="p-1.5 rounded-lg border border-zinc-900 bg-zinc-950 hover:bg-rose-950/40 hover:border-rose-800 text-zinc-700 hover:text-rose-400 transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
                         </div>
                       </motion.div>
                     );
                   })}
                 </div>
+
               );
             })()}
           </motion.div>
