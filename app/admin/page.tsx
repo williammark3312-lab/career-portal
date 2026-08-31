@@ -10,7 +10,8 @@ import {
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
   Copy, Lock, Search, LogOut, Shield, ChevronRight,
   Mail, Phone, Calendar, Check, Layers, Eye, EyeOff,
-  Bell, BellRing, ListTodo, CircleDot, CircleCheck, CirclePause, AlertTriangle, ChevronDown
+  Bell, BellRing, ListTodo, CircleDot, CircleCheck, CirclePause, AlertTriangle, ChevronDown,
+  UserCheck, UserMinus, DollarSign, Rocket, Laptop, Building2
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -47,6 +48,29 @@ interface WorkTask {
   priority: "low" | "medium" | "high";
   status: "todo" | "in-progress" | "paused" | "done";
   reminder?: string;
+  created_at: string;
+}
+
+interface OnboardingTask {
+  id: string;
+  name: string;
+  role: string;
+  department: string;
+  joining_date: string;
+  status: "offer_sent" | "doc_verification" | "it_setup" | "induction" | "completed";
+  buddy_or_hr?: string;
+  notes?: string;
+  created_at: string;
+}
+
+interface FnFTask {
+  id: string;
+  name: string;
+  department: string;
+  last_working_day: string;
+  status: "resigned" | "clearance_pending" | "assets_collected" | "fnf_calculation" | "settled";
+  settlement_amount?: string;
+  notes?: string;
   created_at: string;
 }
 
@@ -194,9 +218,14 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"jobs" | "cvs" | "users" | "panel">("jobs");
 
   /* Work Panel state */
+  const [panelSession, setPanelSession] = useState<"tasks" | "onboarding" | "fnf">("tasks");
   const [tasks, setTasks] = useState<WorkTask[]>([]);
+  const [onboardingList, setOnboardingList] = useState<OnboardingTask[]>([]);
+  const [fnfList, setFnfList] = useState<FnFTask[]>([]);
   const [panelLoading, setPanelLoading] = useState(false);
   const [panelFilter, setPanelFilter] = useState<"all" | "todo" | "in-progress" | "paused" | "done">("all");
+  const [onboardingFilter, setOnboardingFilter] = useState<"all" | "offer_sent" | "doc_verification" | "it_setup" | "induction" | "completed">("all");
+  const [fnfFilter, setFnfFilter] = useState<"all" | "resigned" | "clearance_pending" | "assets_collected" | "fnf_calculation" | "settled">("all");
   const [taskSearch, setTaskSearch] = useState("");
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTask, setEditingTask] = useState<WorkTask | null>(null);
@@ -207,6 +236,29 @@ export default function AdminPage() {
   const [savingTask, setSavingTask] = useState(false);
   const [firedReminders, setFiredReminders] = useState<Set<string>>(new Set());
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  /* Onboarding modal state */
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [editingOnboarding, setEditingOnboarding] = useState<OnboardingTask | null>(null);
+  const [onboardName, setOnboardName] = useState("");
+  const [onboardRole, setOnboardRole] = useState("");
+  const [onboardDept, setOnboardDept] = useState("Engineering");
+  const [onboardDate, setOnboardDate] = useState("");
+  const [onboardStage, setOnboardStage] = useState<OnboardingTask["status"]>("offer_sent");
+  const [onboardBuddy, setOnboardBuddy] = useState("");
+  const [onboardNotes, setOnboardNotes] = useState("");
+  const [savingOnboard, setSavingOnboard] = useState(false);
+
+  /* FnF modal state */
+  const [showFnFModal, setShowFnFModal] = useState(false);
+  const [editingFnF, setEditingFnF] = useState<FnFTask | null>(null);
+  const [fnfName, setFnfName] = useState("");
+  const [fnfDept, setFnfDept] = useState("Engineering");
+  const [fnfLwd, setFnfLwd] = useState("");
+  const [fnfStatus, setFnfStatus] = useState<FnFTask["status"]>("resigned");
+  const [fnfAmount, setFnfAmount] = useState("");
+  const [fnfNotes, setFnfNotes] = useState("");
+  const [savingFnF, setSavingFnF] = useState(false);
 
   /* Auth state */
   const [session, setSession] = useState<Session | null>(null);
@@ -334,6 +386,8 @@ export default function AdminPage() {
       const res = await fetch("/api/work-panel");
       const json = await res.json();
       if (json.tasks) setTasks(json.tasks.map((t: any) => ({ ...t, status: (["todo", "in-progress", "paused", "done"].includes(t.status) ? t.status : "todo") as WorkTask["status"] })));
+      if (json.onboarding) setOnboardingList(json.onboarding);
+      if (json.fnf) setFnfList(json.fnf);
     } catch { /* silently fail */ }
     finally { setPanelLoading(false); }
   }
@@ -345,7 +399,7 @@ export default function AdminPage() {
       const res = await fetch("/api/work-panel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: taskTitle, description: taskDesc, priority: taskPriority, reminder: taskReminder || undefined, status: "todo" }),
+        body: JSON.stringify({ type: "task", title: taskTitle, description: taskDesc, priority: taskPriority, reminder: taskReminder || undefined, status: "todo" }),
       });
       const json = await res.json();
       if (res.ok) {
@@ -364,7 +418,7 @@ export default function AdminPage() {
       const res = await fetch("/api/work-panel", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editingTask.id, ...updates }),
+        body: JSON.stringify({ id: editingTask.id, type: "task", ...updates }),
       });
       const json = await res.json();
       if (res.ok) {
@@ -399,13 +453,186 @@ export default function AdminPage() {
     await fetch("/api/work-panel", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
+      body: JSON.stringify({ id, type: "task", status }),
     });
   }
 
   async function handleDeleteTask(id: string) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
-    await fetch(`/api/work-panel?id=${id}`, { method: "DELETE" });
+    await fetch(`/api/work-panel?id=${id}&type=task`, { method: "DELETE" });
+  }
+
+  /* Onboarding Handlers */
+  async function handleAddOnboarding() {
+    if (!onboardName.trim()) return;
+    setSavingOnboard(true);
+    try {
+      const res = await fetch("/api/work-panel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "onboarding",
+          name: onboardName,
+          role: onboardRole,
+          department: onboardDept,
+          joining_date: onboardDate || new Date().toISOString().slice(0, 10),
+          status: onboardStage,
+          buddy_or_hr: onboardBuddy || undefined,
+          notes: onboardNotes || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setOnboardingList((prev) => [json, ...prev]);
+        setShowOnboardingModal(false);
+      }
+    } finally { setSavingOnboard(false); }
+  }
+
+  async function handleSaveEditOnboarding() {
+    if (!editingOnboarding || !onboardName.trim()) return;
+    setSavingOnboard(true);
+    try {
+      const updates = {
+        name: onboardName,
+        role: onboardRole,
+        department: onboardDept,
+        joining_date: onboardDate,
+        status: onboardStage,
+        buddy_or_hr: onboardBuddy || undefined,
+        notes: onboardNotes || undefined,
+      };
+      const res = await fetch("/api/work-panel", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingOnboarding.id, type: "onboarding", ...updates }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setOnboardingList((prev) => prev.map((item) => item.id === editingOnboarding.id ? json : item));
+        setEditingOnboarding(null);
+        setShowOnboardingModal(false);
+      }
+    } finally { setSavingOnboard(false); }
+  }
+
+  async function handleOnboardingStage(id: string, status: OnboardingTask["status"]) {
+    setOnboardingList((prev) => prev.map((item) => item.id === id ? { ...item, status } : item));
+    await fetch("/api/work-panel", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, type: "onboarding", status }),
+    });
+  }
+
+  async function handleDeleteOnboarding(id: string) {
+    setOnboardingList((prev) => prev.filter((item) => item.id !== id));
+    await fetch(`/api/work-panel?id=${id}&type=onboarding`, { method: "DELETE" });
+  }
+
+  function openAddOnboarding() {
+    setEditingOnboarding(null);
+    setOnboardName(""); setOnboardRole(""); setOnboardDept("Engineering");
+    setOnboardDate(new Date().toISOString().slice(0, 10));
+    setOnboardStage("offer_sent"); setOnboardBuddy(""); setOnboardNotes("");
+    setShowOnboardingModal(true);
+  }
+
+  function openEditOnboarding(record: OnboardingTask) {
+    setEditingOnboarding(record);
+    setOnboardName(record.name);
+    setOnboardRole(record.role);
+    setOnboardDept(record.department);
+    setOnboardDate(record.joining_date);
+    setOnboardStage(record.status);
+    setOnboardBuddy(record.buddy_or_hr || "");
+    setOnboardNotes(record.notes || "");
+    setShowOnboardingModal(true);
+  }
+
+  /* FnF Handlers */
+  async function handleAddFnF() {
+    if (!fnfName.trim()) return;
+    setSavingFnF(true);
+    try {
+      const res = await fetch("/api/work-panel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "fnf",
+          name: fnfName,
+          department: fnfDept,
+          last_working_day: fnfLwd || new Date().toISOString().slice(0, 10),
+          status: fnfStatus,
+          settlement_amount: fnfAmount || undefined,
+          notes: fnfNotes || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setFnfList((prev) => [json, ...prev]);
+        setShowFnFModal(false);
+      }
+    } finally { setSavingFnF(false); }
+  }
+
+  async function handleSaveEditFnF() {
+    if (!editingFnF || !fnfName.trim()) return;
+    setSavingFnF(true);
+    try {
+      const updates = {
+        name: fnfName,
+        department: fnfDept,
+        last_working_day: fnfLwd,
+        status: fnfStatus,
+        settlement_amount: fnfAmount || undefined,
+        notes: fnfNotes || undefined,
+      };
+      const res = await fetch("/api/work-panel", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingFnF.id, type: "fnf", ...updates }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setFnfList((prev) => prev.map((item) => item.id === editingFnF.id ? json : item));
+        setEditingFnF(null);
+        setShowFnFModal(false);
+      }
+    } finally { setSavingFnF(false); }
+  }
+
+  async function handleFnFStatus(id: string, status: FnFTask["status"]) {
+    setFnfList((prev) => prev.map((item) => item.id === id ? { ...item, status } : item));
+    await fetch("/api/work-panel", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, type: "fnf", status }),
+    });
+  }
+
+  async function handleDeleteFnF(id: string) {
+    setFnfList((prev) => prev.filter((item) => item.id !== id));
+    await fetch(`/api/work-panel?id=${id}&type=fnf`, { method: "DELETE" });
+  }
+
+  function openAddFnF() {
+    setEditingFnF(null);
+    setFnfName(""); setFnfDept("Engineering");
+    setFnfLwd(new Date().toISOString().slice(0, 10));
+    setFnfStatus("resigned"); setFnfAmount(""); setFnfNotes("");
+    setShowFnFModal(true);
+  }
+
+  function openEditFnF(record: FnFTask) {
+    setEditingFnF(record);
+    setFnfName(record.name);
+    setFnfDept(record.department);
+    setFnfLwd(record.last_working_day);
+    setFnfStatus(record.status);
+    setFnfAmount(record.settlement_amount || "");
+    setFnfNotes(record.notes || "");
+    setShowFnFModal(true);
   }
 
   async function requestNotificationPermission() {
@@ -1151,16 +1378,62 @@ export default function AdminPage() {
             )}
             {activeTab === "panel" && (
               <button
-                onClick={openAddTask}
+                onClick={panelSession === "tasks" ? openAddTask : panelSession === "onboarding" ? openAddOnboarding : openAddFnF}
                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm shrink-0"
               >
-                <Plus className="w-4 h-4" /> Add Task
+                <Plus className="w-4 h-4" />
+                {panelSession === "tasks" ? "Add Task" : panelSession === "onboarding" ? "Add Onboarding" : "Add FnF Record"}
               </button>
             )}
           </div>
 
           {/* Faint Category selector row */}
           <div className="flex items-center gap-2 flex-wrap pb-2">
+            {activeTab === "panel" && (
+              <div className="flex items-center gap-1.5 p-1 bg-zinc-950/80 border border-zinc-850 rounded-xl mr-2">
+                <button
+                  onClick={() => setPanelSession("tasks")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    panelSession === "tasks"
+                      ? "bg-zinc-800 text-white shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                  }`}
+                >
+                  <ListTodo className="w-3.5 h-3.5" /> Tasks
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-900 text-zinc-400 font-mono">
+                    {tasks.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setPanelSession("onboarding")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    panelSession === "onboarding"
+                      ? "bg-zinc-800 text-white shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                  }`}
+                >
+                  <Rocket className="w-3.5 h-3.5 text-indigo-400" /> Onboarding
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-900 text-zinc-400 font-mono">
+                    {onboardingList.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setPanelSession("fnf")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    panelSession === "fnf"
+                      ? "bg-zinc-800 text-white shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                  }`}
+                >
+                  <UserMinus className="w-3.5 h-3.5 text-amber-400" /> FnF Settlement
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-900 text-zinc-400 font-mono">
+                    {fnfList.length}
+                  </span>
+                </button>
+              </div>
+            )}
             {activeTab === "jobs" &&
               ["All", ...Array.from(new Set(jobs.map((j) => j.department).filter(Boolean)))].map((dept) => {
                 const isActive = jobDeptFilter === dept;
@@ -1215,7 +1488,7 @@ export default function AdminPage() {
                 );
               })}
 
-            {activeTab === "panel" &&
+            {activeTab === "panel" && panelSession === "tasks" &&
               (["all", "todo", "in-progress", "paused", "done"] as const).map((f) => {
                 const isActive = panelFilter === f;
                 const labels: Record<string, string> = { all: "All", todo: "To Do", "in-progress": "In Progress", paused: "Paused", done: "Done" };
@@ -1223,6 +1496,58 @@ export default function AdminPage() {
                   <button
                     key={f}
                     onClick={() => setPanelFilter(f)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black border-transparent"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                    }`}
+                  >
+                    {labels[f]}
+                  </button>
+                );
+              })}
+
+            {activeTab === "panel" && panelSession === "onboarding" &&
+              (["all", "offer_sent", "doc_verification", "it_setup", "induction", "completed"] as const).map((f) => {
+                const isActive = onboardingFilter === f;
+                const labels: Record<string, string> = {
+                  all: "All",
+                  offer_sent: "Offer Sent",
+                  doc_verification: "Doc Verification",
+                  it_setup: "IT Setup",
+                  induction: "Induction",
+                  completed: "Onboarded",
+                };
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setOnboardingFilter(f)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black border-transparent"
+                        : "bg-zinc-950/50 hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 border-zinc-900 hover:border-zinc-800"
+                    }`}
+                  >
+                    {labels[f]}
+                  </button>
+                );
+              })}
+
+            {activeTab === "panel" && panelSession === "fnf" &&
+              (["all", "resigned", "clearance_pending", "assets_collected", "fnf_calculation", "settled"] as const).map((f) => {
+                const isActive = fnfFilter === f;
+                const labels: Record<string, string> = {
+                  all: "All",
+                  resigned: "Resigned",
+                  clearance_pending: "Clearance Pending",
+                  assets_collected: "Assets Collected",
+                  fnf_calculation: "FnF Calculation",
+                  settled: "Settled",
+                };
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setFnfFilter(f)}
                     className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
                       isActive
                         ? "bg-white text-black border-transparent"
@@ -1535,9 +1860,9 @@ export default function AdminPage() {
             {panelLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <div className="w-8 h-8 border-2 border-white/10 border-t-white/60 rounded-full animate-spin" />
-                <p className="text-xs text-zinc-500 font-semibold">Loading tasks...</p>
+                <p className="text-xs text-zinc-500 font-semibold">Loading work panel...</p>
               </div>
-            ) : (() => {
+            ) : panelSession === "tasks" ? (() => {
               const filteredTasks = tasks
                 .filter((t) => {
                   const matchesFilter = panelFilter === "all" ? true : t.status === panelFilter;
@@ -1588,7 +1913,7 @@ export default function AdminPage() {
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-white text-sm font-bold">
-                        {tasks.length === 0 ? "Your work panel is empty" : "No tasks match this filter"}
+                        {tasks.length === 0 ? "Your task panel is empty" : "No tasks match this filter"}
                       </p>
                       <p className="text-zinc-500 text-xs">
                         {tasks.length === 0 ? "Add your first task to start tracking your work." : "Try selecting a different status filter."}
@@ -1616,7 +1941,6 @@ export default function AdminPage() {
                     const isPaused = task.status === "paused";
                     const menuOpen = openMenuId === task.id;
 
-                    // All available actions for this task
                     const menuActions: { label: string; icon: React.ReactNode; onClick: () => void; cls: string }[] = [
                       task.status === "todo"
                         ? { label: "Start",    icon: <CircleDot className="w-3.5 h-3.5" />,    onClick: () => handleTaskStatus(task.id, "in-progress"), cls: "text-blue-400" }
@@ -1689,7 +2013,6 @@ export default function AdminPage() {
                           {/* Dropdown */}
                           {menuOpen && (
                             <>
-                              {/* backdrop to close on outside click */}
                               <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />
                               <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden py-1">
                                 {menuActions.map((action) => (
@@ -1710,12 +2033,325 @@ export default function AdminPage() {
                     );
                   })}
                 </div>
+              );
+            })() : panelSession === "onboarding" ? (() => {
+              const stageConfig: Record<OnboardingTask["status"], { label: string; color: string; bg: string; border: string }> = {
+                offer_sent:        { label: "Offer Sent",        color: "text-blue-400",    bg: "bg-blue-950/40",    border: "border-blue-900/60" },
+                doc_verification:  { label: "Doc Verification",  color: "text-amber-400",   bg: "bg-amber-950/40",   border: "border-amber-900/60" },
+                it_setup:          { label: "IT Setup",          color: "text-purple-400",  bg: "bg-purple-950/40",  border: "border-purple-900/60" },
+                induction:         { label: "Induction",         color: "text-cyan-400",    bg: "bg-cyan-950/40",    border: "border-cyan-900/60" },
+                completed:         { label: "Onboarded",         color: "text-emerald-400", bg: "bg-emerald-950/40", border: "border-emerald-900/60" },
+              };
 
+              const filteredOnboarding = onboardingList
+                .filter((item) => {
+                  const matchesFilter = onboardingFilter === "all" ? true : item.status === onboardingFilter;
+                  const matchesSearch = !taskSearch.trim() ||
+                    item.name.toLowerCase().includes(taskSearch.toLowerCase()) ||
+                    item.role.toLowerCase().includes(taskSearch.toLowerCase()) ||
+                    item.department.toLowerCase().includes(taskSearch.toLowerCase());
+                  return matchesFilter && matchesSearch;
+                })
+                .sort((a, b) => {
+                  if (a.status === "completed" && b.status !== "completed") return 1;
+                  if (a.status !== "completed" && b.status === "completed") return -1;
+                  return new Date(a.joining_date).getTime() - new Date(b.joining_date).getTime();
+                });
+
+              if (filteredOnboarding.length === 0) {
+                return (
+                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-16 text-center flex flex-col items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-center">
+                      <Rocket className="w-6 h-6 text-indigo-400" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-white text-sm font-bold">
+                        {onboardingList.length === 0 ? "No active onboarding records" : "No candidates match this filter"}
+                      </p>
+                      <p className="text-zinc-500 text-xs">
+                        {onboardingList.length === 0 ? "Track candidate join dates, doc verification, and induction here." : "Try selecting a different filter."}
+                      </p>
+                    </div>
+                    {onboardingList.length === 0 && (
+                      <button
+                        onClick={openAddOnboarding}
+                        className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" /> Add First Onboarding
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="flex flex-col divide-y divide-zinc-900 border border-zinc-900 rounded-2xl overflow-hidden bg-zinc-950/30">
+                  {filteredOnboarding.map((item, index) => {
+                    const st = stageConfig[item.status] || stageConfig.offer_sent;
+                    const isDone = item.status === "completed";
+                    const menuOpen = openMenuId === item.id;
+
+                    const stagesList: OnboardingTask["status"][] = ["offer_sent", "doc_verification", "it_setup", "induction", "completed"];
+                    const currentStageIdx = stagesList.indexOf(item.status);
+                    const nextStage = currentStageIdx < stagesList.length - 1 ? stagesList[currentStageIdx + 1] : null;
+
+                    return (
+                      <motion.div
+                        key={item.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.03 }}
+                        className={`group relative flex items-center gap-3 px-4 py-2.5 transition-all duration-150 ${
+                          isDone ? "opacity-60 hover:opacity-80" : "hover:bg-zinc-900/60"
+                        }`}
+                      >
+                        {/* Avatar initials */}
+                        <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[10px] font-extrabold text-white shrink-0">
+                          {item.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                        </div>
+
+                        {/* Name + Role */}
+                        <div className="flex-1 min-w-0 flex items-center gap-2">
+                          <span className={`text-xs font-semibold truncate ${isDone ? "text-zinc-400" : "text-white"}`}>
+                            {item.name}
+                          </span>
+                          <span className="text-[11px] text-zinc-500 font-medium truncate hidden sm:inline">
+                            · {item.role} ({item.department})
+                          </span>
+                        </div>
+
+                        {/* Joining date */}
+                        <div className="hidden md:flex items-center gap-1 text-[11px] text-zinc-500 shrink-0">
+                          <Calendar className="w-3 h-3 text-zinc-600" />
+                          <span>Joins {new Date(item.joining_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                        </div>
+
+                        {/* Buddy/HR */}
+                        {item.buddy_or_hr && (
+                          <span className="hidden lg:inline text-[10px] text-zinc-500 bg-zinc-900/70 border border-zinc-800/80 px-2 py-0.5 rounded-md truncate max-w-[130px]">
+                            HR: {item.buddy_or_hr}
+                          </span>
+                        )}
+
+                        {/* Stage Badge */}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${st.bg} ${st.border} ${st.color}`}>
+                          {st.label}
+                        </span>
+
+                        {/* Single ⋯ Menu */}
+                        <div className="relative shrink-0">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(menuOpen ? null : item.id); }}
+                            className="p-1.5 rounded-lg border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-600 hover:text-zinc-300 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                            title="Actions"
+                          >
+                            <MoreHorizontal className="w-3.5 h-3.5" />
+                          </button>
+
+                          {menuOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />
+                              <div className="absolute right-0 top-full mt-1 z-50 min-w-[160px] bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden py-1">
+                                {nextStage && (
+                                  <button
+                                    onClick={() => { handleOnboardingStage(item.id, nextStage); setOpenMenuId(null); }}
+                                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-blue-400 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+                                  >
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                    Move to {stageConfig[nextStage].label}
+                                  </button>
+                                )}
+                                {item.status !== "completed" && (
+                                  <button
+                                    onClick={() => { handleOnboardingStage(item.id, "completed"); setOpenMenuId(null); }}
+                                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-emerald-400 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Mark Onboarded
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => { openEditOnboarding(item); setOpenMenuId(null); }}
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" /> Edit Record
+                                </button>
+                                <button
+                                  onClick={() => { handleDeleteOnboarding(item.id); setOpenMenuId(null); }}
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              );
+            })() : (() => {
+              /* FnF Session */
+              const fnfStatusConfig: Record<FnFTask["status"], { label: string; color: string; bg: string; border: string }> = {
+                resigned:           { label: "Resigned",            color: "text-zinc-400",    bg: "bg-zinc-900",       border: "border-zinc-800" },
+                clearance_pending:  { label: "Clearance Pending",   color: "text-amber-400",   bg: "bg-amber-950/40",   border: "border-amber-900/60" },
+                assets_collected:   { label: "Assets Collected",    color: "text-purple-400",  bg: "bg-purple-950/40",  border: "border-purple-900/60" },
+                fnf_calculation:    { label: "FnF Calculation",     color: "text-blue-400",    bg: "bg-blue-950/40",    border: "border-blue-900/60" },
+                settled:            { label: "Settled & Closed",    color: "text-emerald-400", bg: "bg-emerald-950/40", border: "border-emerald-900/60" },
+              };
+
+              const filteredFnf = fnfList
+                .filter((item) => {
+                  const matchesFilter = fnfFilter === "all" ? true : item.status === fnfFilter;
+                  const matchesSearch = !taskSearch.trim() ||
+                    item.name.toLowerCase().includes(taskSearch.toLowerCase()) ||
+                    item.department.toLowerCase().includes(taskSearch.toLowerCase()) ||
+                    (item.notes && item.notes.toLowerCase().includes(taskSearch.toLowerCase()));
+                  return matchesFilter && matchesSearch;
+                })
+                .sort((a, b) => {
+                  if (a.status === "settled" && b.status !== "settled") return 1;
+                  if (a.status !== "settled" && b.status === "settled") return -1;
+                  return new Date(a.last_working_day).getTime() - new Date(b.last_working_day).getTime();
+                });
+
+              if (filteredFnf.length === 0) {
+                return (
+                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-16 text-center flex flex-col items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-center">
+                      <UserMinus className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-white text-sm font-bold">
+                        {fnfList.length === 0 ? "No active FnF records" : "No records match this filter"}
+                      </p>
+                      <p className="text-zinc-500 text-xs">
+                        {fnfList.length === 0 ? "Track employee exit clearance, asset recovery, and FnF payouts here." : "Try selecting a different filter."}
+                      </p>
+                    </div>
+                    {fnfList.length === 0 && (
+                      <button
+                        onClick={openAddFnF}
+                        className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" /> Add First FnF Record
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="flex flex-col divide-y divide-zinc-900 border border-zinc-900 rounded-2xl overflow-hidden bg-zinc-950/30">
+                  {filteredFnf.map((item, index) => {
+                    const st = fnfStatusConfig[item.status] || fnfStatusConfig.resigned;
+                    const isDone = item.status === "settled";
+                    const menuOpen = openMenuId === item.id;
+
+                    const statusSequence: FnFTask["status"][] = ["resigned", "clearance_pending", "assets_collected", "fnf_calculation", "settled"];
+                    const currentIdx = statusSequence.indexOf(item.status);
+                    const nextStatus = currentIdx < statusSequence.length - 1 ? statusSequence[currentIdx + 1] : null;
+
+                    return (
+                      <motion.div
+                        key={item.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.03 }}
+                        className={`group relative flex items-center gap-3 px-4 py-2.5 transition-all duration-150 ${
+                          isDone ? "opacity-60 hover:opacity-80" : "hover:bg-zinc-900/60"
+                        }`}
+                      >
+                        {/* Avatar initials */}
+                        <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[10px] font-extrabold text-amber-300 shrink-0">
+                          {item.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                        </div>
+
+                        {/* Name + Dept */}
+                        <div className="flex-1 min-w-0 flex items-center gap-2">
+                          <span className={`text-xs font-semibold truncate ${isDone ? "text-zinc-400" : "text-white"}`}>
+                            {item.name}
+                          </span>
+                          <span className="text-[11px] text-zinc-500 font-medium truncate hidden sm:inline">
+                            · {item.department}
+                          </span>
+                        </div>
+
+                        {/* Last working day */}
+                        <div className="hidden md:flex items-center gap-1 text-[11px] text-zinc-500 shrink-0">
+                          <Calendar className="w-3 h-3 text-zinc-600" />
+                          <span>LWD: {new Date(item.last_working_day).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                        </div>
+
+                        {/* Settlement note/amount */}
+                        {item.settlement_amount && (
+                          <span className="hidden lg:inline text-[10px] font-mono text-emerald-400 bg-emerald-950/30 border border-emerald-900/40 px-2 py-0.5 rounded-md truncate max-w-[130px]">
+                            {item.settlement_amount}
+                          </span>
+                        )}
+
+                        {/* Status Badge */}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${st.bg} ${st.border} ${st.color}`}>
+                          {st.label}
+                        </span>
+
+                        {/* Single ⋯ Menu */}
+                        <div className="relative shrink-0">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(menuOpen ? null : item.id); }}
+                            className="p-1.5 rounded-lg border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-600 hover:text-zinc-300 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                            title="Actions"
+                          >
+                            <MoreHorizontal className="w-3.5 h-3.5" />
+                          </button>
+
+                          {menuOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />
+                              <div className="absolute right-0 top-full mt-1 z-50 min-w-[160px] bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden py-1">
+                                {nextStatus && (
+                                  <button
+                                    onClick={() => { handleFnFStatus(item.id, nextStatus); setOpenMenuId(null); }}
+                                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-blue-400 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+                                  >
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                    Move to {fnfStatusConfig[nextStatus].label}
+                                  </button>
+                                )}
+                                {item.status !== "settled" && (
+                                  <button
+                                    onClick={() => { handleFnFStatus(item.id, "settled"); setOpenMenuId(null); }}
+                                    className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-emerald-400 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Mark Settled & Closed
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => { openEditFnF(item); setOpenMenuId(null); }}
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" /> Edit Record
+                                </button>
+                                <button
+                                  onClick={() => { handleDeleteFnF(item.id); setOpenMenuId(null); }}
+                                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               );
             })()}
           </motion.div>
         )}
-
 
       </section>
       <Footer />
@@ -1840,6 +2476,274 @@ export default function AdminPage() {
                     : editingTask
                     ? <><Check className="w-3.5 h-3.5" /> Save Changes</>
                     : <><Plus className="w-3.5 h-3.5" /> Add Task</>}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Add / Edit Onboarding Modal ─── */}
+      <AnimatePresence>
+        {showOnboardingModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-950/60 backdrop-blur-md"
+              onClick={() => { setShowOnboardingModal(false); setEditingOnboarding(null); }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-[28px] p-7 shadow-2xl flex flex-col gap-5 z-10 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Rocket className="w-5 h-5 text-indigo-400" />
+                    {editingOnboarding ? "Edit Onboarding Candidate" : "New Onboarding Candidate"}
+                  </h2>
+                  <p className="text-xs text-zinc-500 font-semibold">
+                    {editingOnboarding ? "Update candidate onboarding tracking details." : "Track a new hire through offer, doc verification, IT & induction."}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setShowOnboardingModal(false); setEditingOnboarding(null); }}
+                  className="p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Candidate Name *</label>
+                  <input
+                    value={onboardName}
+                    onChange={(e) => setOnboardName(e.target.value)}
+                    placeholder="e.g. Sarah Jenkins"
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Designation / Role</label>
+                    <input
+                      value={onboardRole}
+                      onChange={(e) => setOnboardRole(e.target.value)}
+                      placeholder="e.g. Senior Frontend Engineer"
+                      className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Department</label>
+                    <input
+                      value={onboardDept}
+                      onChange={(e) => setOnboardDept(e.target.value)}
+                      placeholder="e.g. Engineering"
+                      className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Joining Date</label>
+                    <input
+                      type="date"
+                      value={onboardDate}
+                      onChange={(e) => setOnboardDate(e.target.value)}
+                      className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-zinc-300 outline-none [color-scheme:dark]"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Assigned HR / Buddy</label>
+                    <input
+                      value={onboardBuddy}
+                      onChange={(e) => setOnboardBuddy(e.target.value)}
+                      placeholder="e.g. Priya M."
+                      className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Current Stage</label>
+                  <select
+                    value={onboardStage}
+                    onChange={(e) => setOnboardStage(e.target.value as OnboardingTask["status"])}
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900 rounded-xl p-3 text-sm font-medium text-white outline-none"
+                  >
+                    <option value="offer_sent">📩 Offer Sent</option>
+                    <option value="doc_verification">📑 Document Verification</option>
+                    <option value="it_setup">💻 IT & Laptop Setup</option>
+                    <option value="induction">🎓 Induction & Training</option>
+                    <option value="completed">✅ Onboarded & Active</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Notes / Checklist Details</label>
+                  <textarea
+                    value={onboardNotes}
+                    onChange={(e) => setOnboardNotes(e.target.value)}
+                    placeholder="e.g. Laptop shipped, background verification pending, welcome kit delivered..."
+                    rows={2}
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600 resize-none leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowOnboardingModal(false); setEditingOnboarding(null); }}
+                  className="flex-1 py-3 rounded-xl text-xs font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-900 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={editingOnboarding ? handleSaveEditOnboarding : handleAddOnboarding}
+                  disabled={savingOnboard || !onboardName.trim()}
+                  className="flex-1 py-3 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {savingOnboard
+                    ? <div className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                    : editingOnboarding
+                    ? <><Check className="w-3.5 h-3.5" /> Save Changes</>
+                    : <><Plus className="w-3.5 h-3.5" /> Add Candidate</>}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Add / Edit FnF Modal ─── */}
+      <AnimatePresence>
+        {showFnFModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-950/60 backdrop-blur-md"
+              onClick={() => { setShowFnFModal(false); setEditingFnF(null); }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-[28px] p-7 shadow-2xl flex flex-col gap-5 z-10 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <UserMinus className="w-5 h-5 text-amber-400" />
+                    {editingFnF ? "Edit FnF Settlement" : "New FnF Settlement Record"}
+                  </h2>
+                  <p className="text-xs text-zinc-500 font-semibold">
+                    {editingFnF ? "Update employee clearance & settlement progress." : "Track employee exit, department clearances, asset recovery, and FnF payout."}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setShowFnFModal(false); setEditingFnF(null); }}
+                  className="p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Exiting Employee Name *</label>
+                  <input
+                    value={fnfName}
+                    onChange={(e) => setFnfName(e.target.value)}
+                    placeholder="e.g. David Miller"
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Department</label>
+                    <input
+                      value={fnfDept}
+                      onChange={(e) => setFnfDept(e.target.value)}
+                      placeholder="e.g. Product Design"
+                      className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Last Working Day (LWD)</label>
+                    <input
+                      type="date"
+                      value={fnfLwd}
+                      onChange={(e) => setFnfLwd(e.target.value)}
+                      className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-zinc-300 outline-none [color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Clearance Status</label>
+                    <select
+                      value={fnfStatus}
+                      onChange={(e) => setFnfStatus(e.target.value as FnFTask["status"])}
+                      className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900 rounded-xl p-3 text-sm font-medium text-white outline-none"
+                    >
+                      <option value="resigned">✉️ Resigned / Notice Period</option>
+                      <option value="clearance_pending">📋 Dept Clearance Pending</option>
+                      <option value="assets_collected">💻 Assets Collected (IT/ID)</option>
+                      <option value="fnf_calculation">🧮 FnF Payout Calculation</option>
+                      <option value="settled">💵 Settled & Relieving Issued</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Settlement Note / Amount</label>
+                    <input
+                      value={fnfAmount}
+                      onChange={(e) => setFnfAmount(e.target.value)}
+                      placeholder="e.g. ₹68,500 or All Cleared"
+                      className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Exit Notes / Clearance Checklist</label>
+                  <textarea
+                    value={fnfNotes}
+                    onChange={(e) => setFnfNotes(e.target.value)}
+                    placeholder="e.g. Handover done to Alex, MacBook returned, gratuity calculated..."
+                    rows={2}
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600 resize-none leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowFnFModal(false); setEditingFnF(null); }}
+                  className="flex-1 py-3 rounded-xl text-xs font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-900 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={editingFnF ? handleSaveEditFnF : handleAddFnF}
+                  disabled={savingFnF || !fnfName.trim()}
+                  className="flex-1 py-3 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {savingFnF
+                    ? <div className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                    : editingFnF
+                    ? <><Check className="w-3.5 h-3.5" /> Save Changes</>
+                    : <><Plus className="w-3.5 h-3.5" /> Add FnF Record</>}
                 </button>
               </div>
             </motion.div>

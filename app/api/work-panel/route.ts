@@ -10,6 +10,35 @@ export interface WorkTask {
   created_at: string;
 }
 
+export interface OnboardingTask {
+  id: string;
+  name: string;
+  role: string;
+  department: string;
+  joining_date: string;
+  status: "offer_sent" | "doc_verification" | "it_setup" | "induction" | "completed";
+  buddy_or_hr?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface FnFTask {
+  id: string;
+  name: string;
+  department: string;
+  last_working_day: string;
+  status: "resigned" | "clearance_pending" | "assets_collected" | "fnf_calculation" | "settled";
+  settlement_amount?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface WorkPanelStore {
+  tasks: WorkTask[];
+  onboarding: OnboardingTask[];
+  fnf: FnFTask[];
+}
+
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   "https://fxksnkvyeyypkckehqpx.supabase.co";
@@ -19,7 +48,7 @@ const supabaseAnonKey =
 
 const STORE_KEY = "work_panel";
 
-let inMemoryTasks: WorkTask[] | null = null;
+let inMemoryStore: WorkPanelStore | null = null;
 
 function getSupabase() {
   return createClient(supabaseUrl, supabaseAnonKey, {
@@ -27,7 +56,7 @@ function getSupabase() {
   });
 }
 
-async function readTasks(): Promise<WorkTask[]> {
+async function readStore(): Promise<WorkPanelStore> {
   const supabase = getSupabase();
   try {
     const { data, error } = await supabase
@@ -37,23 +66,28 @@ async function readTasks(): Promise<WorkTask[]> {
       .limit(1)
       .maybeSingle();
 
-    if (!error && data && Array.isArray((data.data as Record<string, unknown>)?.tasks)) {
-      inMemoryTasks = (data.data as { tasks: WorkTask[] }).tasks;
-      return inMemoryTasks;
+    if (!error && data && data.data && typeof data.data === "object") {
+      const raw = data.data as Record<string, unknown>;
+      inMemoryStore = {
+        tasks: Array.isArray(raw.tasks) ? (raw.tasks as WorkTask[]) : [],
+        onboarding: Array.isArray(raw.onboarding) ? (raw.onboarding as OnboardingTask[]) : [],
+        fnf: Array.isArray(raw.fnf) ? (raw.fnf as FnFTask[]) : [],
+      };
+      return inMemoryStore;
     }
   } catch (err) {
     console.error("[work-panel] read error:", err);
   }
-  return inMemoryTasks ?? [];
+  return inMemoryStore ?? { tasks: [], onboarding: [], fnf: [] };
 }
 
-async function writeTasks(tasks: WorkTask[]) {
-  inMemoryTasks = tasks;
+async function writeStore(store: WorkPanelStore) {
+  inMemoryStore = store;
   const supabase = getSupabase();
   try {
     await supabase
       .from("workspace_store")
-      .upsert({ key: STORE_KEY, data: { tasks } }, { onConflict: "key" });
+      .upsert({ key: STORE_KEY, data: store }, { onConflict: "key" });
   } catch (err) {
     console.error("[work-panel] write error:", err);
   }
@@ -61,8 +95,8 @@ async function writeTasks(tasks: WorkTask[]) {
 
 export async function GET() {
   try {
-    const tasks = await readTasks();
-    return Response.json({ tasks });
+    const store = await readStore();
+    return Response.json(store);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal server error.";
     return Response.json({ error: msg }, { status: 500 });
@@ -72,8 +106,54 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, description, priority, status, reminder } = body;
+    const type = body.type || "task";
+    const store = await readStore();
 
+    if (type === "onboarding") {
+      const { name, role, department, joining_date, status, buddy_or_hr, notes } = body;
+      if (!name?.trim()) return Response.json({ error: "Candidate name is required." }, { status: 400 });
+
+      const newOnboarding: OnboardingTask = {
+        id: `onboard-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: name.trim(),
+        role: role?.trim() || "New Hire",
+        department: department?.trim() || "General",
+        joining_date: joining_date || new Date().toISOString().slice(0, 10),
+        status: (["offer_sent", "doc_verification", "it_setup", "induction", "completed"].includes(status)
+          ? status
+          : "offer_sent") as OnboardingTask["status"],
+        buddy_or_hr: buddy_or_hr?.trim() || undefined,
+        notes: notes?.trim() || undefined,
+        created_at: new Date().toISOString(),
+      };
+      store.onboarding.unshift(newOnboarding);
+      await writeStore(store);
+      return Response.json(newOnboarding);
+    }
+
+    if (type === "fnf") {
+      const { name, department, last_working_day, status, settlement_amount, notes } = body;
+      if (!name?.trim()) return Response.json({ error: "Employee name is required." }, { status: 400 });
+
+      const newFnF: FnFTask = {
+        id: `fnf-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: name.trim(),
+        department: department?.trim() || "General",
+        last_working_day: last_working_day || new Date().toISOString().slice(0, 10),
+        status: (["resigned", "clearance_pending", "assets_collected", "fnf_calculation", "settled"].includes(status)
+          ? status
+          : "resigned") as FnFTask["status"],
+        settlement_amount: settlement_amount?.trim() || undefined,
+        notes: notes?.trim() || undefined,
+        created_at: new Date().toISOString(),
+      };
+      store.fnf.unshift(newFnF);
+      await writeStore(store);
+      return Response.json(newFnF);
+    }
+
+    // Default: Task
+    const { title, description, priority, status, reminder } = body;
     if (!title?.trim()) {
       return Response.json({ error: "Title is required." }, { status: 400 });
     }
@@ -88,9 +168,8 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
     };
 
-    const tasks = await readTasks();
-    tasks.unshift(newTask);
-    await writeTasks(tasks);
+    store.tasks.unshift(newTask);
+    await writeStore(store);
 
     return Response.json(newTask);
   } catch (err) {
@@ -102,22 +181,40 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, ...updates } = body;
+    const { id, type, ...updates } = body;
 
     if (!id) {
-      return Response.json({ error: "Task ID is required." }, { status: 400 });
+      return Response.json({ error: "ID is required." }, { status: 400 });
     }
 
-    const tasks = await readTasks();
-    const idx = tasks.findIndex((t) => t.id === id);
+    const store = await readStore();
+
+    if (type === "onboarding" || id.startsWith("onboard-")) {
+      const idx = store.onboarding.findIndex((item) => item.id === id);
+      if (idx === -1) return Response.json({ error: "Onboarding record not found." }, { status: 404 });
+      store.onboarding[idx] = { ...store.onboarding[idx], ...updates };
+      await writeStore(store);
+      return Response.json(store.onboarding[idx]);
+    }
+
+    if (type === "fnf" || id.startsWith("fnf-")) {
+      const idx = store.fnf.findIndex((item) => item.id === id);
+      if (idx === -1) return Response.json({ error: "FnF record not found." }, { status: 404 });
+      store.fnf[idx] = { ...store.fnf[idx], ...updates };
+      await writeStore(store);
+      return Response.json(store.fnf[idx]);
+    }
+
+    // Default: Task
+    const idx = store.tasks.findIndex((t) => t.id === id);
     if (idx === -1) {
       return Response.json({ error: "Task not found." }, { status: 404 });
     }
 
-    tasks[idx] = { ...tasks[idx], ...updates };
-    await writeTasks(tasks);
+    store.tasks[idx] = { ...store.tasks[idx], ...updates };
+    await writeStore(store);
 
-    return Response.json(tasks[idx]);
+    return Response.json(store.tasks[idx]);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal server error.";
     return Response.json({ error: msg }, { status: 500 });
@@ -128,16 +225,26 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    const type = searchParams.get("type");
 
     if (!id) {
-      return Response.json({ error: "Task ID is required." }, { status: 400 });
+      return Response.json({ error: "ID is required." }, { status: 400 });
     }
 
-    const tasks = await readTasks();
-    const filtered = tasks.filter((t) => t.id !== id);
-    await writeTasks(filtered);
+    const store = await readStore();
 
-    return Response.json({ success: true, tasks: filtered });
+    if (type === "onboarding" || id.startsWith("onboard-")) {
+      store.onboarding = store.onboarding.filter((o) => o.id !== id);
+    } else if (type === "fnf" || id.startsWith("fnf-")) {
+      store.fnf = store.fnf.filter((f) => f.id !== id);
+    } else {
+      store.tasks = store.tasks.filter((t) => t.id !== id);
+      store.onboarding = store.onboarding.filter((o) => o.id !== id);
+      store.fnf = store.fnf.filter((f) => f.id !== id);
+    }
+
+    await writeStore(store);
+    return Response.json({ success: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal server error.";
     return Response.json({ error: msg }, { status: 500 });
