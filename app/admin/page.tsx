@@ -11,7 +11,7 @@ import {
   Copy, Lock, Search, LogOut, Shield, ChevronRight,
   Mail, Phone, Calendar, Check, Layers, Eye, EyeOff,
   Bell, BellRing, ListTodo, CircleDot, CircleCheck, CirclePause, AlertTriangle, ChevronDown,
-  UserCheck, UserMinus, DollarSign, Rocket, Laptop, Building2
+  UserCheck, UserMinus, DollarSign, Rocket, Laptop, Building2, FileSpreadsheet
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -20,6 +20,7 @@ import GlassBackground from "../../src/components/GlassBackground";
 import { getAppBaseUrl } from "../../src/lib/appUrl";
 import { playPleasantLoginSound } from "../../src/lib/audio";
 import DigitalClock from "../../src/components/DigitalClock";
+import ExcelReportViewer from "../../src/components/ExcelReportViewer";
 
 /* ─── Interfaces ─── */
 interface Job {
@@ -218,7 +219,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"jobs" | "cvs" | "users" | "panel">("jobs");
 
   /* Work Panel state */
-  const [panelSession, setPanelSession] = useState<"tasks" | "onboarding" | "fnf">("tasks");
+  const [panelSession, setPanelSession] = useState<"tasks" | "onboarding" | "fnf" | "reports">("tasks");
   const [tasks, setTasks] = useState<WorkTask[]>([]);
   const [onboardingList, setOnboardingList] = useState<OnboardingTask[]>([]);
   const [fnfList, setFnfList] = useState<FnFTask[]>([]);
@@ -1432,6 +1433,17 @@ export default function AdminPage() {
                     {fnfList.length}
                   </span>
                 </button>
+
+                <button
+                  onClick={() => setPanelSession("reports")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    panelSession === "reports"
+                      ? "bg-zinc-800 text-white shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                  }`}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" /> Excel & Reports
+                </button>
               </div>
             )}
             {activeTab === "jobs" &&
@@ -1862,6 +1874,14 @@ export default function AdminPage() {
                 <div className="w-8 h-8 border-2 border-white/10 border-t-white/60 rounded-full animate-spin" />
                 <p className="text-xs text-zinc-500 font-semibold">Loading work panel...</p>
               </div>
+            ) : panelSession === "reports" ? (
+              <ExcelReportViewer
+                tasks={tasks}
+                onboardingList={onboardingList}
+                fnfList={fnfList}
+                jobs={jobs}
+                cvs={cvs}
+              />
             ) : panelSession === "tasks" ? (() => {
               const filteredTasks = tasks
                 .filter((t) => {
