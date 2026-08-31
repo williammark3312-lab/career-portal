@@ -2007,7 +2007,7 @@ export default function AdminPage() {
                           </span>
                         )}
 
-                        {/* Priority + reminder chips */}
+                        {/* Priority + reminder chips + interactive status selector */}
                         <div className="hidden sm:flex items-center gap-1.5 shrink-0">
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${pri.bg} ${pri.border} ${pri.color}`}>
                             {pri.label}
@@ -2018,6 +2018,19 @@ export default function AdminPage() {
                               {chip.label}
                             </span>
                           )}
+                          <div className="relative shrink-0">
+                            <select
+                              value={task.status}
+                              onChange={(e) => handleTaskStatus(task.id, e.target.value as WorkTask["status"])}
+                              className={`text-[9px] font-bold px-2 py-0.5 rounded border appearance-none pr-4 cursor-pointer outline-none transition-all bg-zinc-900 border-zinc-800 ${st.color} hover:border-zinc-700`}
+                            >
+                              <option value="todo" className="bg-zinc-950 text-zinc-400">To Do</option>
+                              <option value="in-progress" className="bg-zinc-950 text-blue-400">In Progress</option>
+                              <option value="paused" className="bg-zinc-950 text-amber-400">Paused</option>
+                              <option value="done" className="bg-zinc-950 text-emerald-400">Done</option>
+                            </select>
+                            <ChevronDown className={`w-2 h-2 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none ${st.color} opacity-60`} />
+                          </div>
                         </div>
 
                         {/* Single ⋯ menu button */}
@@ -2154,10 +2167,22 @@ export default function AdminPage() {
                           </span>
                         )}
 
-                        {/* Stage Badge */}
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${st.bg} ${st.border} ${st.color}`}>
-                          {st.label}
-                        </span>
+                        {/* Interactive Stage Selector Badge */}
+                        <div className="relative shrink-0">
+                          <select
+                            value={item.status}
+                            onChange={(e) => handleOnboardingStage(item.id, e.target.value as OnboardingTask["status"])}
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-md border appearance-none pr-5 cursor-pointer outline-none transition-all ${st.bg} ${st.border} ${st.color} hover:brightness-125 focus:ring-1 focus:ring-indigo-500`}
+                            title="Click to change candidate stage"
+                          >
+                            <option value="offer_sent" className="bg-zinc-950 text-blue-400">Offer Sent</option>
+                            <option value="doc_verification" className="bg-zinc-950 text-amber-400">Doc Verification</option>
+                            <option value="it_setup" className="bg-zinc-950 text-purple-400">IT Setup</option>
+                            <option value="induction" className="bg-zinc-950 text-cyan-400">Induction</option>
+                            <option value="completed" className="bg-zinc-950 text-emerald-400">Onboarded</option>
+                          </select>
+                          <ChevronDown className={`w-2.5 h-2.5 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none ${st.color} opacity-70`} />
+                        </div>
 
                         {/* Single ⋯ Menu */}
                         <div className="relative shrink-0">
@@ -2312,10 +2337,22 @@ export default function AdminPage() {
                           </span>
                         )}
 
-                        {/* Status Badge */}
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${st.bg} ${st.border} ${st.color}`}>
-                          {st.label}
-                        </span>
+                        {/* Interactive Status Selector Badge */}
+                        <div className="relative shrink-0">
+                          <select
+                            value={item.status}
+                            onChange={(e) => handleFnFStatus(item.id, e.target.value as FnFTask["status"])}
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-md border appearance-none pr-5 cursor-pointer outline-none transition-all ${st.bg} ${st.border} ${st.color} hover:brightness-125 focus:ring-1 focus:ring-amber-500`}
+                            title="Click to change FnF clearance status"
+                          >
+                            <option value="resigned" className="bg-zinc-950 text-zinc-300">Resigned</option>
+                            <option value="clearance_pending" className="bg-zinc-950 text-amber-400">Clearance Pending</option>
+                            <option value="assets_collected" className="bg-zinc-950 text-purple-400">Assets Collected</option>
+                            <option value="fnf_calculation" className="bg-zinc-950 text-blue-400">FnF Calculation</option>
+                            <option value="settled" className="bg-zinc-950 text-emerald-400">Settled</option>
+                          </select>
+                          <ChevronDown className={`w-2.5 h-2.5 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none ${st.color} opacity-70`} />
+                        </div>
 
                         {/* Single ⋯ Menu */}
                         <div className="relative shrink-0">
