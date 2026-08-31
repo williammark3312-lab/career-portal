@@ -10,7 +10,7 @@ import {
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
   Copy, Lock, Search, LogOut, Shield, ChevronRight,
   Mail, Phone, Calendar, Check, Layers, Eye, EyeOff,
-  Bell, BellRing, ListTodo, CircleDot, CircleCheck, AlertTriangle, ChevronDown
+  Bell, BellRing, ListTodo, CircleDot, CircleCheck, CirclePause, AlertTriangle, ChevronDown
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Header from "../../src/components/Header";
@@ -45,7 +45,7 @@ interface WorkTask {
   title: string;
   description?: string;
   priority: "low" | "medium" | "high";
-  status: "todo" | "in-progress" | "done";
+  status: "todo" | "in-progress" | "paused" | "done";
   reminder?: string;
   created_at: string;
 }
@@ -196,7 +196,7 @@ export default function AdminPage() {
   /* Work Panel state */
   const [tasks, setTasks] = useState<WorkTask[]>([]);
   const [panelLoading, setPanelLoading] = useState(false);
-  const [panelFilter, setPanelFilter] = useState<"all" | "todo" | "in-progress" | "done">("all");
+  const [panelFilter, setPanelFilter] = useState<"all" | "todo" | "in-progress" | "paused" | "done">("all");
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTask, setEditingTask] = useState<WorkTask | null>(null);
   const [taskTitle, setTaskTitle] = useState("");
@@ -331,7 +331,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/work-panel");
       const json = await res.json();
-      if (json.tasks) setTasks(json.tasks);
+      if (json.tasks) setTasks(json.tasks.map((t: any) => ({ ...t, status: (["todo", "in-progress", "paused", "done"].includes(t.status) ? t.status : "todo") as WorkTask["status"] })));
     } catch { /* silently fail */ }
     finally { setPanelLoading(false); }
   }
@@ -1212,9 +1212,9 @@ export default function AdminPage() {
               })}
 
             {activeTab === "panel" &&
-              (["all", "todo", "in-progress", "done"] as const).map((f) => {
+              (["all", "todo", "in-progress", "paused", "done"] as const).map((f) => {
                 const isActive = panelFilter === f;
-                const labels: Record<string, string> = { all: "All", todo: "Todo", "in-progress": "In Progress", done: "Done" };
+                const labels: Record<string, string> = { all: "All", todo: "To Do", "in-progress": "In Progress", paused: "Paused", done: "Done" };
                 return (
                   <button
                     key={f}
@@ -1545,9 +1545,10 @@ export default function AdminPage() {
               };
 
               const statusConfig: Record<WorkTask["status"], { label: string; icon: React.ReactNode; color: string; ring: string }> = {
-                "todo":        { label: "To Do",       icon: <ListTodo className="w-3.5 h-3.5" />,   color: "text-zinc-400",    ring: "border-zinc-700"    },
-                "in-progress": { label: "In Progress", icon: <CircleDot className="w-3.5 h-3.5" />,  color: "text-blue-400",    ring: "border-blue-700"    },
-                "done":        { label: "Done",        icon: <CircleCheck className="w-3.5 h-3.5" />, color: "text-emerald-400", ring: "border-emerald-700" },
+                "todo":        { label: "To Do",       icon: <ListTodo className="w-3.5 h-3.5" />,     color: "text-zinc-400",    ring: "border-zinc-700"    },
+                "in-progress": { label: "In Progress", icon: <CircleDot className="w-3.5 h-3.5" />,    color: "text-blue-400",    ring: "border-blue-700"    },
+                "paused":      { label: "Paused",      icon: <CirclePause className="w-3.5 h-3.5" />,  color: "text-amber-400",   ring: "border-amber-700"   },
+                "done":        { label: "Done",        icon: <CircleCheck className="w-3.5 h-3.5" />,  color: "text-emerald-400", ring: "border-emerald-700" },
               };
 
               function getReminderState(reminder?: string, status?: string) {
@@ -1596,7 +1597,19 @@ export default function AdminPage() {
                     const pri    = priorityConfig[task.priority];
                     const st     = statusConfig[task.status];
                     const chip   = getReminderState(task.reminder, task.status);
-                    const isDone = task.status === "done";
+                    const isDone   = task.status === "done";
+                    const isPaused = task.status === "paused";
+
+                    // Contextual next-action button config
+                    const actionBtn = isDone
+                      ? { label: "Reopen",   icon: <ListTodo className="w-3 h-3" />,       next: "todo"        as WorkTask["status"], cls: "text-zinc-400 hover:text-white border-zinc-800 bg-zinc-900 hover:bg-zinc-800" }
+                      : task.status === "todo"
+                      ? { label: "Start",    icon: <CircleDot className="w-3 h-3" />,      next: "in-progress" as WorkTask["status"], cls: "text-blue-400 hover:text-blue-300 border-blue-900/60 bg-blue-950/20 hover:bg-blue-950/40" }
+                      : task.status === "in-progress"
+                      ? { label: "Pause",    icon: <CirclePause className="w-3 h-3" />,    next: "paused"      as WorkTask["status"], cls: "text-amber-400 hover:text-amber-300 border-amber-900/60 bg-amber-950/20 hover:bg-amber-950/40" }
+                      : /* paused */
+                        { label: "Resume",   icon: <CircleDot className="w-3 h-3" />,      next: "in-progress" as WorkTask["status"], cls: "text-blue-400 hover:text-blue-300 border-blue-900/60 bg-blue-950/20 hover:bg-blue-950/40" };
+
                     return (
                       <motion.div
                         key={task.id}
@@ -1605,30 +1618,19 @@ export default function AdminPage() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: index * 0.03 }}
                         className={`group relative flex items-center gap-3 px-4 py-2.5 transition-all duration-150 ${
-                          isDone ? "opacity-50 hover:opacity-70" : "hover:bg-zinc-900/60"
+                          isDone ? "opacity-50 hover:opacity-70" : isPaused ? "bg-amber-950/5 hover:bg-amber-950/10" : "hover:bg-zinc-900/60"
                         }`}
                       >
                         {/* Priority dot */}
                         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${pri.dot} ${isDone ? "opacity-30" : ""}`} />
 
-                        {/* Status circle */}
-                        <button
-                          onClick={() => handleTaskStatus(task.id, task.status === "todo" ? "in-progress" : task.status === "in-progress" ? "done" : "todo")}
-                          title="Cycle status"
-                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
-                            isDone
-                              ? "border-emerald-600 bg-emerald-950/40 hover:border-zinc-600"
-                              : task.status === "in-progress"
-                              ? "border-blue-500 bg-blue-950/30"
-                              : `${st.ring} bg-transparent hover:border-zinc-500`
-                          }`}
-                        >
-                          {isDone && <Check className="w-2 h-2 text-emerald-400" />}
-                          {task.status === "in-progress" && <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
-                        </button>
+                        {/* Status icon */}
+                        <span className={`shrink-0 ${st.color}`}>{st.icon}</span>
 
                         {/* Title */}
-                        <span className={`text-xs font-semibold truncate flex-1 min-w-0 ${isDone ? "line-through text-zinc-500" : "text-white"}`}>
+                        <span className={`text-xs font-semibold truncate flex-1 min-w-0 ${
+                          isDone ? "line-through text-zinc-500" : isPaused ? "text-amber-200/80" : "text-white"
+                        }`}>
                           {task.title}
                         </span>
 
@@ -1639,7 +1641,7 @@ export default function AdminPage() {
                           </span>
                         )}
 
-                        {/* Chips */}
+                        {/* Priority + reminder chips */}
                         <div className="hidden sm:flex items-center gap-1.5 shrink-0">
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${pri.bg} ${pri.border} ${pri.color}`}>
                             {pri.label}
@@ -1652,19 +1654,42 @@ export default function AdminPage() {
                           )}
                         </div>
 
-                        {/* Actions — appear on row hover */}
-                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Action buttons — always visible (action), hover for edit/delete */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {/* Primary contextual action */}
+                          <button
+                            onClick={() => handleTaskStatus(task.id, actionBtn.next)}
+                            title={actionBtn.label}
+                            className={`hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${actionBtn.cls}`}
+                          >
+                            {actionBtn.icon}{actionBtn.label}
+                          </button>
+
+                          {/* Complete button — only when in-progress or paused */}
+                          {(task.status === "in-progress" || task.status === "paused") && (
+                            <button
+                              onClick={() => handleTaskStatus(task.id, "done")}
+                              title="Complete"
+                              className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border border-emerald-900/60 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer"
+                            >
+                              <CircleCheck className="w-3 h-3" />Complete
+                            </button>
+                          )}
+
+                          {/* Edit */}
                           <button
                             onClick={() => openEditTask(task)}
                             title="Edit"
-                            className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white transition-all cursor-pointer opacity-0 group-hover:opacity-100"
                           >
                             <Edit2 className="w-3 h-3" />
                           </button>
+
+                          {/* Delete */}
                           <button
                             onClick={() => handleDeleteTask(task.id)}
                             title="Delete"
-                            className="p-1.5 rounded-lg border border-zinc-900 bg-zinc-950 hover:bg-rose-950/40 hover:border-rose-800 text-zinc-700 hover:text-rose-400 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-zinc-900 bg-zinc-950 hover:bg-rose-950/40 hover:border-rose-800 text-zinc-700 hover:text-rose-400 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>

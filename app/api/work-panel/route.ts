@@ -5,7 +5,7 @@ export interface WorkTask {
   title: string;
   description?: string;
   priority: "low" | "medium" | "high";
-  status: "todo" | "in-progress" | "done";
+  status: "todo" | "in-progress" | "paused" | "done";
   reminder?: string;
   created_at: string;
 }
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       title: title.trim(),
       description: description?.trim() || undefined,
       priority: (["low", "medium", "high"].includes(priority) ? priority : "medium") as WorkTask["priority"],
-      status: (["todo", "in-progress", "done"].includes(status) ? status : "todo") as WorkTask["status"],
+      status: (["todo", "in-progress", "paused", "done"].includes(status) ? status : "todo") as WorkTask["status"],
       reminder: reminder || undefined,
       created_at: new Date().toISOString(),
     };
