@@ -198,6 +198,7 @@ export default function AdminPage() {
   const [panelLoading, setPanelLoading] = useState(false);
   const [panelFilter, setPanelFilter] = useState<"all" | "todo" | "in-progress" | "done">("all");
   const [showAddTask, setShowAddTask] = useState(false);
+  const [editingTask, setEditingTask] = useState<WorkTask | null>(null);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
   const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high">("medium");
@@ -351,6 +352,44 @@ export default function AdminPage() {
         setShowAddTask(false);
       }
     } finally { setSavingTask(false); }
+  }
+
+  async function handleSaveEdit() {
+    if (!editingTask || !taskTitle.trim()) return;
+    setSavingTask(true);
+    try {
+      const updates = { title: taskTitle, description: taskDesc, priority: taskPriority, reminder: taskReminder || undefined };
+      const res = await fetch("/api/work-panel", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingTask.id, ...updates }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setTasks((prev) => prev.map((t) => t.id === editingTask.id ? json : t));
+        setEditingTask(null); setShowAddTask(false);
+        setTaskTitle(""); setTaskDesc(""); setTaskPriority("medium"); setTaskReminder("");
+      }
+    } finally { setSavingTask(false); }
+  }
+
+  function openAddTask() {
+    setEditingTask(null);
+    setTaskTitle(""); setTaskDesc(""); setTaskPriority("medium"); setTaskReminder("");
+    setShowAddTask(true);
+    requestNotificationPermission();
+  }
+
+  function openEditTask(task: WorkTask) {
+    setEditingTask(task);
+    setTaskTitle(task.title);
+    setTaskDesc(task.description || "");
+    setTaskPriority(task.priority);
+    setTaskReminder(task.reminder
+      ? new Date(task.reminder).toISOString().slice(0, 16)
+      : ""
+    );
+    setShowAddTask(true);
   }
 
   async function handleTaskStatus(id: string, status: WorkTask["status"]) {
@@ -1108,7 +1147,7 @@ export default function AdminPage() {
             )}
             {activeTab === "panel" && (
               <button
-                onClick={() => { setShowAddTask(true); requestNotificationPermission(); }}
+                onClick={openAddTask}
                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-sm shrink-0"
               >
                 <Plus className="w-4 h-4" /> Add Task
@@ -1500,38 +1539,49 @@ export default function AdminPage() {
               );
 
               const priorityConfig = {
-                high:   { label: "High",   color: "text-rose-400",    bg: "bg-rose-950/30",    border: "border-rose-900/60"    },
-                medium: { label: "Medium", color: "text-amber-400",   bg: "bg-amber-950/30",   border: "border-amber-900/60"   },
-                low:    { label: "Low",    color: "text-emerald-400", bg: "bg-emerald-950/30", border: "border-emerald-900/60" },
+                high:   { label: "High",   color: "text-rose-400",    bg: "bg-rose-950/30",    border: "border-rose-900/50",   dot: "bg-rose-500"    },
+                medium: { label: "Medium", color: "text-amber-400",   bg: "bg-amber-950/30",   border: "border-amber-900/50",  dot: "bg-amber-500"   },
+                low:    { label: "Low",    color: "text-emerald-400", bg: "bg-emerald-950/30", border: "border-emerald-900/50", dot: "bg-emerald-500" },
               };
 
-              const statusConfig: Record<WorkTask["status"], { label: string; icon: React.ReactNode; color: string }> = {
-                "todo":        { label: "Todo",        icon: <ListTodo className="w-3.5 h-3.5" />,    color: "text-zinc-400"    },
-                "in-progress": { label: "In Progress", icon: <CircleDot className="w-3.5 h-3.5" />,   color: "text-blue-400"    },
-                "done":        { label: "Done",        icon: <CircleCheck className="w-3.5 h-3.5" />,  color: "text-emerald-400" },
+              const statusConfig: Record<WorkTask["status"], { label: string; icon: React.ReactNode; color: string; ring: string }> = {
+                "todo":        { label: "To Do",       icon: <ListTodo className="w-3.5 h-3.5" />,   color: "text-zinc-400",    ring: "border-zinc-700"    },
+                "in-progress": { label: "In Progress", icon: <CircleDot className="w-3.5 h-3.5" />,  color: "text-blue-400",    ring: "border-blue-700"    },
+                "done":        { label: "Done",        icon: <CircleCheck className="w-3.5 h-3.5" />, color: "text-emerald-400", ring: "border-emerald-700" },
               };
 
-              function getReminderChip(reminder?: string, status?: string) {
+              function getReminderState(reminder?: string, status?: string) {
                 if (!reminder || status === "done") return null;
                 const diff = new Date(reminder).getTime() - Date.now();
                 const hours = diff / 3_600_000;
-                if (diff < 0)   return { label: "Overdue",  cls: "bg-rose-950/50 border-rose-900/60 text-rose-400" };
-                if (hours < 1)  return { label: "Due soon", cls: "bg-amber-950/50 border-amber-900/60 text-amber-400" };
-                if (hours < 24) return { label: `In ${Math.round(hours)}h`, cls: "bg-blue-950/50 border-blue-900/60 text-blue-400" };
-                return { label: new Date(reminder).toLocaleDateString("en-IN", { day: "numeric", month: "short" }), cls: "bg-zinc-900/60 border-zinc-800 text-zinc-400" };
+                if (diff < 0)   return { label: "Overdue",  urgent: true,  cls: "bg-rose-950/60 border-rose-700 text-rose-300" };
+                if (hours < 1)  return { label: "Due in <1h",urgent: true, cls: "bg-amber-950/60 border-amber-700 text-amber-300" };
+                if (hours < 24) return { label: `Due in ${Math.round(hours)}h`, urgent: false, cls: "bg-blue-950/50 border-blue-800 text-blue-300" };
+                return {
+                  label: new Date(reminder).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }),
+                  urgent: false,
+                  cls: "bg-zinc-900 border-zinc-700 text-zinc-400"
+                };
               }
 
               if (filteredTasks.length === 0) {
                 return (
-                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-14 text-center flex flex-col items-center gap-3">
-                    <ListTodo className="w-8 h-8 text-zinc-600 mb-1" />
-                    <p className="text-zinc-400 text-xs font-semibold">
-                      {tasks.length === 0 ? "No tasks yet. Add your first task to get started." : "No tasks match this filter."}
-                    </p>
+                  <div className="border border-zinc-900 bg-zinc-950/20 rounded-2xl p-16 text-center flex flex-col items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-center">
+                      <ListTodo className="w-6 h-6 text-zinc-600" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-white text-sm font-bold">
+                        {tasks.length === 0 ? "Your work panel is empty" : "No tasks match this filter"}
+                      </p>
+                      <p className="text-zinc-500 text-xs">
+                        {tasks.length === 0 ? "Add your first task to start tracking your work." : "Try selecting a different status filter."}
+                      </p>
+                    </div>
                     {tasks.length === 0 && (
                       <button
-                        onClick={() => { setShowAddTask(true); requestNotificationPermission(); }}
-                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer"
+                        onClick={openAddTask}
+                        className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 transition-all cursor-pointer"
                       >
                         <Plus className="w-4 h-4" /> Add First Task
                       </button>
@@ -1541,75 +1591,105 @@ export default function AdminPage() {
               }
 
               return (
-                <div className="grid grid-cols-1 gap-3">
-                  {filteredTasks.map((task) => {
-                    const pri  = priorityConfig[task.priority];
-                    const st   = statusConfig[task.status];
-                    const chip = getReminderChip(task.reminder, task.status);
+                <div className="flex flex-col gap-2">
+                  {filteredTasks.map((task, index) => {
+                    const pri   = priorityConfig[task.priority];
+                    const st    = statusConfig[task.status];
+                    const chip  = getReminderState(task.reminder, task.status);
+                    const isDone = task.status === "done";
                     return (
                       <motion.div
                         key={task.id}
                         layout
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="group relative border border-zinc-900 bg-zinc-950/30 hover:bg-zinc-900/40 rounded-2xl p-5 transition-all duration-200 flex flex-col sm:flex-row sm:items-start gap-4"
+                        transition={{ delay: index * 0.04 }}
+                        className={`group relative rounded-2xl border transition-all duration-200 overflow-hidden ${
+                          isDone
+                            ? "border-zinc-900 bg-zinc-950/20 opacity-60 hover:opacity-80"
+                            : "border-zinc-800/80 bg-zinc-950/40 hover:bg-zinc-900/50 hover:border-zinc-700"
+                        }`}
                       >
-                        {/* Left: title + description + chips */}
-                        <div className="flex-1 flex flex-col gap-2.5 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${pri.bg} ${pri.border} ${pri.color}`}>
-                              {pri.label}
-                            </span>
-                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-zinc-900/60 border border-zinc-800 ${st.color}`}>
-                              {st.icon}{st.label}
-                            </span>
-                            {chip && (
-                              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-md border ${chip.cls}`}>
-                                <Bell className="w-3 h-3" />{chip.label}
-                              </span>
-                            )}
-                          </div>
-                          <h3 className={`text-sm font-bold transition-colors ${task.status === "done" ? "line-through text-zinc-500" : "text-white"}`}>
-                            {task.title}
-                          </h3>
-                          {task.description && (
-                            <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">{task.description}</p>
-                          )}
-                          {task.reminder && (
-                            <p className="text-[10px] text-zinc-600 font-semibold flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              Reminder: {new Date(task.reminder).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          )}
-                        </div>
+                        {/* Priority accent bar on left edge */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl ${pri.dot} ${ isDone ? "opacity-30" : "opacity-80" }`} />
 
-                        {/* Right: status cycler + delete */}
-                        <div className="flex sm:flex-col items-center gap-2 shrink-0">
-                          {task.status !== "done" && (
+                        <div className="pl-5 pr-5 py-5 flex flex-col sm:flex-row gap-4">
+                          {/* Left: checkbox + content */}
+                          <div className="flex gap-3.5 flex-1 min-w-0">
+                            {/* Status toggle circle */}
                             <button
-                              onClick={() => handleTaskStatus(task.id, task.status === "todo" ? "in-progress" : "done")}
-                              title={task.status === "todo" ? "Mark In Progress" : "Mark Done"}
-                              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                              onClick={() => handleTaskStatus(task.id, task.status === "todo" ? "in-progress" : task.status === "in-progress" ? "done" : "todo")}
+                              title="Cycle status"
+                              className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                                isDone
+                                  ? "border-emerald-600 bg-emerald-950/40 hover:border-zinc-600 hover:bg-zinc-900"
+                                  : task.status === "in-progress"
+                                  ? "border-blue-500 bg-blue-950/30 hover:border-blue-400"
+                                  : `${st.ring} bg-transparent hover:border-zinc-500`
+                              }`}
                             >
-                              {task.status === "todo" ? <><CircleDot className="w-3.5 h-3.5 text-blue-400" /> Start</> : <><CircleCheck className="w-3.5 h-3.5 text-emerald-400" /> Done</>}
+                              {isDone && <Check className="w-2.5 h-2.5 text-emerald-400" />}
+                              {task.status === "in-progress" && <div className="w-2 h-2 rounded-full bg-blue-400" />}
                             </button>
-                          )}
-                          {task.status === "done" && (
+
+                            {/* Task content */}
+                            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                              <div className="flex items-start gap-2 flex-wrap">
+                                <h3 className={`text-sm font-semibold leading-snug transition-colors ${
+                                  isDone ? "line-through text-zinc-500" : "text-white"
+                                }`}>
+                                  {task.title}
+                                </h3>
+                              </div>
+
+                              {task.description && (
+                                <p className={`text-xs leading-relaxed ${ isDone ? "text-zinc-600" : "text-zinc-400" }`}>
+                                  {task.description}
+                                </p>
+                              )}
+
+                              {/* Meta row */}
+                              <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                {/* Priority */}
+                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${ pri.bg } ${ pri.border } ${ pri.color }`}>
+                                  {pri.label}
+                                </span>
+                                {/* Status */}
+                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 ${ st.color }`}>
+                                  {st.icon}<span>{st.label}</span>
+                                </span>
+                                {/* Reminder chip */}
+                                {chip && (
+                                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${chip.cls}`}>
+                                    {chip.urgent ? <BellRing className="w-3 h-3" /> : <Bell className="w-3 h-3" />}
+                                    {chip.label}
+                                  </span>
+                                )}
+                                {/* Created date */}
+                                <span className="text-[10px] text-zinc-600 font-medium">
+                                  {new Date(task.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: action buttons — visible on hover */}
+                          <div className="flex sm:flex-col items-center gap-1.5 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <button
-                              onClick={() => handleTaskStatus(task.id, "todo")}
-                              title="Reopen task"
-                              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                              onClick={() => openEditTask(task)}
+                              title="Edit task"
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer"
                             >
-                              <ListTodo className="w-3.5 h-3.5" /> Reopen
+                              <Edit2 className="w-3.5 h-3.5" /> Edit
                             </button>
-                          )}
-                          <button
-                            onClick={() => handleDeleteTask(task.id)}
-                            title="Delete task"
-                            className="p-2 rounded-xl border border-zinc-900 bg-zinc-950/40 hover:bg-rose-950/30 hover:border-rose-900/60 text-zinc-600 hover:text-rose-400 transition-all cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                            <button
+                              onClick={() => handleDeleteTask(task.id)}
+                              title="Delete task"
+                              className="p-2 rounded-xl border border-zinc-900 bg-zinc-950/60 hover:bg-rose-950/40 hover:border-rose-800 text-zinc-600 hover:text-rose-400 transition-all cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     );
@@ -1620,31 +1700,39 @@ export default function AdminPage() {
           </motion.div>
         )}
 
+
       </section>
       <Footer />
 
 
-      {/* ─── Add Task Modal ─── */}
+      {/* ─── Add / Edit Task Modal ─── */}
       <AnimatePresence>
         {showAddTask && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-zinc-950/50 backdrop-blur-md"
-              onClick={() => setShowAddTask(false)}
+              className="absolute inset-0 bg-zinc-950/60 backdrop-blur-md"
+              onClick={() => { setShowAddTask(false); setEditingTask(null); }}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="relative w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[28px] p-7 shadow-2xl flex flex-col gap-5 z-10"
+              className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-[28px] p-7 shadow-2xl flex flex-col gap-5 z-10 max-h-[90vh] overflow-y-auto"
             >
               {/* Header */}
               <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-lg font-bold text-white">New Task</h2>
-                  <p className="text-xs text-zinc-500 font-semibold mt-0.5">Add a task to your work panel.</p>
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="text-lg font-bold text-white">
+                    {editingTask ? "Edit Task" : "New Task"}
+                  </h2>
+                  <p className="text-xs text-zinc-500 font-semibold">
+                    {editingTask ? "Update the task details below." : "Add a task to your work panel."}
+                  </p>
                 </div>
-                <button onClick={() => setShowAddTask(false)} className="p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-white cursor-pointer">
+                <button
+                  onClick={() => { setShowAddTask(false); setEditingTask(null); }}
+                  className="p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-white cursor-pointer"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -1656,8 +1744,9 @@ export default function AdminPage() {
                   <input
                     value={taskTitle}
                     onChange={(e) => setTaskTitle(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { editingTask ? handleSaveEdit() : handleAddTask(); } }}
                     placeholder="e.g. Review Q3 candidate shortlist"
-                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-600"
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600"
                     autoFocus
                   />
                 </div>
@@ -1668,9 +1757,9 @@ export default function AdminPage() {
                   <textarea
                     value={taskDesc}
                     onChange={(e) => setTaskDesc(e.target.value)}
-                    placeholder="Optional details about this task..."
-                    rows={2}
-                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-white outline-none placeholder-zinc-600 resize-none"
+                    placeholder="Add details, context, or notes for this task..."
+                    rows={3}
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-white outline-none placeholder-zinc-600 resize-none leading-relaxed"
                   />
                 </div>
 
@@ -1682,12 +1771,12 @@ export default function AdminPage() {
                       <button
                         key={p}
                         onClick={() => setTaskPriority(p)}
-                        className={`flex-1 py-2 rounded-xl text-[11px] font-bold border capitalize transition-all cursor-pointer ${
+                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold border capitalize transition-all cursor-pointer ${
                           taskPriority === p
-                            ? p === "high" ? "bg-rose-950/60 border-rose-900 text-rose-300"
-                              : p === "medium" ? "bg-amber-950/60 border-amber-900 text-amber-300"
-                              : "bg-emerald-950/60 border-emerald-900 text-emerald-300"
-                            : "bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                            ? p === "high"   ? "bg-rose-950/70 border-rose-700 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.15)]"
+                              : p === "medium" ? "bg-amber-950/70 border-amber-700 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+                              : "bg-emerald-950/70 border-emerald-700 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                            : "bg-zinc-900/40 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
                         }`}
                       >
                         {p}
@@ -1699,37 +1788,42 @@ export default function AdminPage() {
                 {/* Reminder */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                    <BellRing className="w-3.5 h-3.5" /> Reminder (optional)
+                    <BellRing className="w-3.5 h-3.5" /> Reminder
+                    <span className="text-zinc-700 font-normal normal-case tracking-normal">— optional</span>
                   </label>
                   <input
                     type="datetime-local"
                     value={taskReminder}
                     onChange={(e) => setTaskReminder(e.target.value)}
-                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-xs font-semibold text-zinc-300 outline-none [color-scheme:dark]"
+                    className="w-full border border-zinc-800 focus:border-zinc-600 transition-colors bg-zinc-900/60 rounded-xl p-3 text-sm font-medium text-zinc-300 outline-none [color-scheme:dark]"
                   />
                   {taskReminder && (
                     <p className="text-[10px] text-zinc-500 font-semibold flex items-center gap-1">
                       <Bell className="w-3 h-3" />
-                      You&apos;ll receive a browser notification at this time.
+                      Browser notification will fire at this time.
                     </p>
                   )}
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 mt-1">
+              <div className="flex gap-3">
                 <button
-                  onClick={() => setShowAddTask(false)}
+                  onClick={() => { setShowAddTask(false); setEditingTask(null); }}
                   className="flex-1 py-3 rounded-xl text-xs font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-900 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleAddTask}
+                  onClick={editingTask ? handleSaveEdit : handleAddTask}
                   disabled={savingTask || !taskTitle.trim()}
                   className="flex-1 py-3 rounded-xl text-xs font-bold text-black bg-white hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
-                  {savingTask ? <div className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <><Plus className="w-3.5 h-3.5" /> Add Task</>}
+                  {savingTask
+                    ? <div className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                    : editingTask
+                    ? <><Check className="w-3.5 h-3.5" /> Save Changes</>
+                    : <><Plus className="w-3.5 h-3.5" /> Add Task</>}
                 </button>
               </div>
             </motion.div>
