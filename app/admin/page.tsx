@@ -197,6 +197,7 @@ export default function AdminPage() {
   const [tasks, setTasks] = useState<WorkTask[]>([]);
   const [panelLoading, setPanelLoading] = useState(false);
   const [panelFilter, setPanelFilter] = useState<"all" | "todo" | "in-progress" | "paused" | "done">("all");
+  const [taskSearch, setTaskSearch] = useState("");
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTask, setEditingTask] = useState<WorkTask | null>(null);
   const [taskTitle, setTaskTitle] = useState("");
@@ -1097,21 +1098,23 @@ export default function AdminPage() {
                     ? "Search tasks..."
                     : "Search supervisor accounts..."
                 }
-                value={activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch}
+                value={activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : activeTab === "panel" ? taskSearch : userSearch}
                 onChange={(e) => {
                   if (activeTab === "jobs") setJobSearch(e.target.value);
                   else if (activeTab === "cvs") setCvSearch(e.target.value);
+                  else if (activeTab === "panel") setTaskSearch(e.target.value);
                   else setUserSearch(e.target.value);
                 }}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
                 className="w-full bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-650 font-semibold"
               />
-              {(activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : userSearch) && (
+              {(activeTab === "jobs" ? jobSearch : activeTab === "cvs" ? cvSearch : activeTab === "panel" ? taskSearch : userSearch) && (
                 <button
                   onClick={() => {
                     if (activeTab === "jobs") setJobSearch("");
                     else if (activeTab === "cvs") setCvSearch("");
+                    else if (activeTab === "panel") setTaskSearch("");
                     else setUserSearch("");
                   }}
                   className="ml-2 p-1 rounded-full hover:bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-colors"
@@ -1535,9 +1538,20 @@ export default function AdminPage() {
                 <p className="text-xs text-zinc-500 font-semibold">Loading tasks...</p>
               </div>
             ) : (() => {
-              const filteredTasks = tasks.filter((t) =>
-                panelFilter === "all" ? true : t.status === panelFilter
-              );
+              const filteredTasks = tasks
+                .filter((t) => {
+                  const matchesFilter = panelFilter === "all" ? true : t.status === panelFilter;
+                  const matchesSearch = !taskSearch.trim() ||
+                    t.title.toLowerCase().includes(taskSearch.toLowerCase()) ||
+                    (t.description && t.description.toLowerCase().includes(taskSearch.toLowerCase()));
+                  return matchesFilter && matchesSearch;
+                })
+                .sort((a, b) => {
+                  // Completed tasks go down to the bottom
+                  if (a.status === "done" && b.status !== "done") return 1;
+                  if (a.status !== "done" && b.status === "done") return -1;
+                  return 0;
+                });
 
               const priorityConfig = {
                 high:   { label: "High",   color: "text-rose-400",    bg: "bg-rose-950/30",    border: "border-rose-900/50",   dot: "bg-rose-500"    },
