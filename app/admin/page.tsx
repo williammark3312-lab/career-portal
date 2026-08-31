@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../src/lib/supabase";
 import {
-  Plus, MapPin, Briefcase, FileText, X, ExternalLink,
+  Plus, MapPin, Briefcase, FileText, X, ExternalLink, MoreHorizontal,
   CheckCircle2, Upload, MessageSquare, Send, Users,
   UserPlus, ArrowRight, Clock, Trash2, Edit2, Sparkles,
   Copy, Lock, Search, LogOut, Shield, ChevronRight,
@@ -205,6 +205,7 @@ export default function AdminPage() {
   const [taskReminder, setTaskReminder] = useState("");
   const [savingTask, setSavingTask] = useState(false);
   const [firedReminders, setFiredReminders] = useState<Set<string>>(new Set());
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   /* Auth state */
   const [session, setSession] = useState<Session | null>(null);
@@ -1599,16 +1600,23 @@ export default function AdminPage() {
                     const chip   = getReminderState(task.reminder, task.status);
                     const isDone   = task.status === "done";
                     const isPaused = task.status === "paused";
+                    const menuOpen = openMenuId === task.id;
 
-                    // Contextual next-action button config
-                    const actionBtn = isDone
-                      ? { label: "Reopen",   icon: <ListTodo className="w-3 h-3" />,       next: "todo"        as WorkTask["status"], cls: "text-zinc-400 hover:text-white border-zinc-800 bg-zinc-900 hover:bg-zinc-800" }
-                      : task.status === "todo"
-                      ? { label: "Start",    icon: <CircleDot className="w-3 h-3" />,      next: "in-progress" as WorkTask["status"], cls: "text-blue-400 hover:text-blue-300 border-blue-900/60 bg-blue-950/20 hover:bg-blue-950/40" }
-                      : task.status === "in-progress"
-                      ? { label: "Pause",    icon: <CirclePause className="w-3 h-3" />,    next: "paused"      as WorkTask["status"], cls: "text-amber-400 hover:text-amber-300 border-amber-900/60 bg-amber-950/20 hover:bg-amber-950/40" }
-                      : /* paused */
-                        { label: "Resume",   icon: <CircleDot className="w-3 h-3" />,      next: "in-progress" as WorkTask["status"], cls: "text-blue-400 hover:text-blue-300 border-blue-900/60 bg-blue-950/20 hover:bg-blue-950/40" };
+                    // All available actions for this task
+                    const menuActions: { label: string; icon: React.ReactNode; onClick: () => void; cls: string }[] = [
+                      task.status === "todo"
+                        ? { label: "Start",    icon: <CircleDot className="w-3.5 h-3.5" />,    onClick: () => handleTaskStatus(task.id, "in-progress"), cls: "text-blue-400" }
+                        : task.status === "in-progress"
+                        ? { label: "Pause",    icon: <CirclePause className="w-3.5 h-3.5" />,  onClick: () => handleTaskStatus(task.id, "paused"),      cls: "text-amber-400" }
+                        : task.status === "paused"
+                        ? { label: "Resume",   icon: <CircleDot className="w-3.5 h-3.5" />,    onClick: () => handleTaskStatus(task.id, "in-progress"), cls: "text-blue-400" }
+                        : { label: "Reopen",   icon: <ListTodo className="w-3.5 h-3.5" />,     onClick: () => handleTaskStatus(task.id, "todo"),        cls: "text-zinc-400" },
+                      ...(task.status === "in-progress" || task.status === "paused"
+                        ? [{ label: "Complete", icon: <CircleCheck className="w-3.5 h-3.5" />, onClick: () => handleTaskStatus(task.id, "done"),        cls: "text-emerald-400" }]
+                        : []),
+                      { label: "Edit",    icon: <Edit2 className="w-3.5 h-3.5" />,   onClick: () => { openEditTask(task); setOpenMenuId(null); }, cls: "text-zinc-300" },
+                      { label: "Delete",  icon: <Trash2 className="w-3.5 h-3.5" />,  onClick: () => { handleDeleteTask(task.id); setOpenMenuId(null); }, cls: "text-rose-400" },
+                    ];
 
                     return (
                       <motion.div
@@ -1634,7 +1642,7 @@ export default function AdminPage() {
                           {task.title}
                         </span>
 
-                        {/* Description — hidden on small, truncated */}
+                        {/* Description */}
                         {task.description && (
                           <span className="hidden md:block text-[11px] text-zinc-600 truncate max-w-[180px] shrink-0">
                             {task.description}
@@ -1654,45 +1662,35 @@ export default function AdminPage() {
                           )}
                         </div>
 
-                        {/* Action buttons — always visible (action), hover for edit/delete */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          {/* Primary contextual action */}
+                        {/* Single ⋯ menu button */}
+                        <div className="relative shrink-0">
                           <button
-                            onClick={() => handleTaskStatus(task.id, actionBtn.next)}
-                            title={actionBtn.label}
-                            className={`hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${actionBtn.cls}`}
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(menuOpen ? null : task.id); }}
+                            className="p-1.5 rounded-lg border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-600 hover:text-zinc-300 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                            title="Actions"
                           >
-                            {actionBtn.icon}{actionBtn.label}
+                            <MoreHorizontal className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Complete button — only when in-progress or paused */}
-                          {(task.status === "in-progress" || task.status === "paused") && (
-                            <button
-                              onClick={() => handleTaskStatus(task.id, "done")}
-                              title="Complete"
-                              className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border border-emerald-900/60 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer"
-                            >
-                              <CircleCheck className="w-3 h-3" />Complete
-                            </button>
+                          {/* Dropdown */}
+                          {menuOpen && (
+                            <>
+                              {/* backdrop to close on outside click */}
+                              <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />
+                              <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden py-1">
+                                {menuActions.map((action) => (
+                                  <button
+                                    key={action.label}
+                                    onClick={(e) => { e.stopPropagation(); action.onClick(); setOpenMenuId(null); }}
+                                    className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold hover:bg-zinc-900 transition-colors cursor-pointer text-left ${action.cls}`}
+                                  >
+                                    {action.icon}
+                                    {action.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
                           )}
-
-                          {/* Edit */}
-                          <button
-                            onClick={() => openEditTask(task)}
-                            title="Edit"
-                            className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white transition-all cursor-pointer opacity-0 group-hover:opacity-100"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-
-                          {/* Delete */}
-                          <button
-                            onClick={() => handleDeleteTask(task.id)}
-                            title="Delete"
-                            className="p-1.5 rounded-lg border border-zinc-900 bg-zinc-950 hover:bg-rose-950/40 hover:border-rose-800 text-zinc-700 hover:text-rose-400 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
                         </div>
                       </motion.div>
                     );
