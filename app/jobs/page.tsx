@@ -67,7 +67,7 @@ export default function JobsPage() {
             Open positions.
           </h1>
           <p className="text-sm text-zinc-400 leading-relaxed max-w-lg">
-            Explore opportunities across our engineering, product, and operations teams. Find your place.
+            Explore opportunities across our tourism, aviation, and hospitality teams. Start your journey.
           </p>
 
           {/* Minimal Info Row */}
