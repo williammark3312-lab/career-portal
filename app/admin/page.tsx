@@ -1042,8 +1042,6 @@ export default function AdminPage() {
         <Header session={session} handleLogout={handleLogout} />
 
         <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-12">
-          {/* Subtle Ambient Radial Lighting */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/[0.02] blur-[140px] pointer-events-none" />
 
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.98 }}

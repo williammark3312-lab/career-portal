@@ -36,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${jakarta.variable} ${mono.variable} ${spaceGrotesk.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans text-[#121317]">
+      <body className="min-h-full flex flex-col font-sans bg-black text-white">
         {children}
       </body>
     </html>
